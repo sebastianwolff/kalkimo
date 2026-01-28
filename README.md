@@ -1,4 +1,4 @@
-# ImmoInvest Planner
+# Kalkimo Planner
 
 Realistische, bankstandardnahe Immobilien-Investitionskalkulation für **iOS / Android / Web** – mit **vollständiger Steuerlogik (DE)**, Szenarien, Cashflow/Liquidität, Maßnahmen-/Sanierungslogik, Multi-Investor-Splits und revisionssicherer Versionierung.
 
