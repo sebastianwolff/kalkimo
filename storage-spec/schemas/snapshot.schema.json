@@ -1,0 +1,512 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kalkimo.app/schemas/snapshot.schema.json",
+  "title": "ProjectSnapshot",
+  "description": "Vollständiger Projektzustand für Kalkimo Planner",
+  "type": "object",
+  "required": ["id", "name", "schemaVersion", "currency", "startPeriod", "endPeriod", "property", "purchase", "financing", "rent", "costs", "taxProfile"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Eindeutige Projekt-ID"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "Schema-Version (z.B. 1.0)"
+    },
+    "engineVersion": {
+      "type": "string",
+      "description": "Version der Berechnungs-Engine"
+    },
+    "currency": {
+      "type": "string",
+      "default": "EUR",
+      "enum": ["EUR", "CHF", "USD"]
+    },
+    "startPeriod": { "$ref": "#/$defs/yearMonth" },
+    "endPeriod": { "$ref": "#/$defs/yearMonth" },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Versionsnummer des Snapshots"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "createdBy": { "type": "string" },
+    "updatedBy": { "type": "string" },
+
+    "property": { "$ref": "#/$defs/property" },
+    "purchase": { "$ref": "#/$defs/purchase" },
+    "financing": { "$ref": "#/$defs/financing" },
+    "rent": { "$ref": "#/$defs/rentConfiguration" },
+    "costs": { "$ref": "#/$defs/costConfiguration" },
+    "taxProfile": { "$ref": "#/$defs/taxProfile" },
+    "capEx": { "$ref": "#/$defs/capExConfiguration" },
+    "investors": { "$ref": "#/$defs/investorConfiguration" },
+    "valuation": { "$ref": "#/$defs/valuationConfiguration" },
+    "scenarios": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/scenario" }
+    }
+  },
+
+  "$defs": {
+    "yearMonth": {
+      "type": "object",
+      "required": ["year", "month"],
+      "properties": {
+        "year": { "type": "integer", "minimum": 1900, "maximum": 2100 },
+        "month": { "type": "integer", "minimum": 1, "maximum": 12 }
+      }
+    },
+    "money": {
+      "type": "object",
+      "required": ["amount", "currency"],
+      "properties": {
+        "amount": { "type": "number" },
+        "currency": { "type": "string", "default": "EUR" }
+      }
+    },
+
+    "property": {
+      "type": "object",
+      "required": ["id", "type", "constructionYear", "overallCondition", "totalArea", "livingArea"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "enum": ["SingleFamilyHome", "MultiFamilyHome", "Condominium"] },
+        "constructionYear": { "type": "integer", "minimum": 1800, "maximum": 2100 },
+        "overallCondition": { "enum": ["Good", "Medium", "Poor"] },
+        "totalArea": { "type": "number", "minimum": 0 },
+        "livingArea": { "type": "number", "minimum": 0 },
+        "landArea": { "type": "number", "minimum": 0 },
+        "unitCount": { "type": "integer", "minimum": 1, "default": 1 },
+        "units": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/unit" }
+        },
+        "components": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/componentCondition" }
+        },
+        "wegReserveBalance": { "$ref": "#/$defs/money" },
+        "mea": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    },
+
+    "unit": {
+      "type": "object",
+      "required": ["id", "name", "type", "area"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "enum": ["Residential", "Commercial", "Parking", "Storage"] },
+        "area": { "type": "number", "minimum": 0 },
+        "rooms": { "type": "integer", "minimum": 0 },
+        "floor": { "type": "string" },
+        "status": { "enum": ["Rented", "Vacant", "OwnerOccupied", "Renovation"], "default": "Rented" }
+      }
+    },
+
+    "componentCondition": {
+      "type": "object",
+      "required": ["category", "condition", "expectedCycleYears"],
+      "properties": {
+        "category": { "enum": ["Heating", "Roof", "Facade", "Windows", "Electrical", "Plumbing", "Interior", "Energy", "Other"] },
+        "condition": { "enum": ["Good", "Medium", "Poor"] },
+        "lastRenovationYear": { "type": "integer" },
+        "expectedCycleYears": { "type": "integer", "minimum": 1 }
+      }
+    },
+
+    "purchase": {
+      "type": "object",
+      "required": ["purchasePrice", "landValue", "purchaseDate", "acquisitionCosts"],
+      "properties": {
+        "purchasePrice": { "$ref": "#/$defs/money" },
+        "landValue": { "$ref": "#/$defs/money" },
+        "purchaseDate": { "type": "string", "format": "date" },
+        "paymentTranches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["amount", "paymentDate"],
+            "properties": {
+              "amount": { "$ref": "#/$defs/money" },
+              "paymentDate": { "type": "string", "format": "date" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "acquisitionCosts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/acquisitionCost" }
+        }
+      }
+    },
+
+    "acquisitionCost": {
+      "type": "object",
+      "required": ["type", "amount"],
+      "properties": {
+        "type": { "enum": ["Notary", "LandRegistry", "TransferTax", "BrokerFee", "Appraisal", "FinancingCosts", "DueDiligence", "Other"] },
+        "amount": { "$ref": "#/$defs/money" },
+        "description": { "type": "string" },
+        "paymentDate": { "type": "string", "format": "date" },
+        "isCapitalizable": { "type": "boolean", "default": true }
+      }
+    },
+
+    "financing": {
+      "type": "object",
+      "required": ["equityContributions", "loans"],
+      "properties": {
+        "equityContributions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/equityContribution" }
+        },
+        "loans": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/loan" }
+        }
+      }
+    },
+
+    "equityContribution": {
+      "type": "object",
+      "required": ["investorId", "amount", "contributionDate"],
+      "properties": {
+        "investorId": { "type": "string" },
+        "amount": { "$ref": "#/$defs/money" },
+        "contributionDate": { "type": "string", "format": "date" },
+        "description": { "type": "string" }
+      }
+    },
+
+    "loan": {
+      "type": "object",
+      "required": ["id", "name", "type", "principal", "disbursementDate", "interestRatePercent", "fixedInterestPeriodMonths"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "enum": ["Annuity", "BulletLoan", "KfW", "Subordinated"] },
+        "principal": { "$ref": "#/$defs/money" },
+        "disbursementDate": { "type": "string", "format": "date" },
+        "interestRatePercent": { "type": "number", "minimum": 0 },
+        "initialRepaymentPercent": { "type": "number", "minimum": 0 },
+        "fixedMonthlyPayment": { "$ref": "#/$defs/money" },
+        "fixedInterestPeriodMonths": { "type": "integer", "minimum": 0 },
+        "annualSpecialRepaymentAllowed": { "$ref": "#/$defs/money" },
+        "commitmentFeePercent": { "type": "number" },
+        "commitmentFreeMonths": { "type": "integer" },
+        "specialRepayments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["period", "amount"],
+            "properties": {
+              "period": { "$ref": "#/$defs/yearMonth" },
+              "amount": { "$ref": "#/$defs/money" }
+            }
+          }
+        },
+        "refinancing": { "$ref": "#/$defs/refinancingScenario" }
+      }
+    },
+
+    "refinancingScenario": {
+      "type": "object",
+      "required": ["interestRatePercent"],
+      "properties": {
+        "interestRatePercent": { "type": "number", "minimum": 0 },
+        "repaymentPercent": { "type": "number", "minimum": 0 },
+        "termMonths": { "type": "integer" },
+        "fixedMonthlyPayment": { "$ref": "#/$defs/money" }
+      }
+    },
+
+    "rentConfiguration": {
+      "type": "object",
+      "required": ["tenancies"],
+      "properties": {
+        "tenancies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/tenancy" }
+        },
+        "vacancyRatePercent": { "type": "number", "minimum": 0, "maximum": 100, "default": 0 },
+        "vacancyEvents": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/vacancyEvent" }
+        }
+      }
+    },
+
+    "tenancy": {
+      "type": "object",
+      "required": ["id", "startDate", "netRent", "developmentModel"],
+      "properties": {
+        "id": { "type": "string" },
+        "unitId": { "type": "string" },
+        "tenantLabel": { "type": "string", "default": "Mieter" },
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "netRent": { "$ref": "#/$defs/money" },
+        "serviceChargeAdvance": { "$ref": "#/$defs/money" },
+        "developmentModel": { "enum": ["Fixed", "Annual", "Indexed", "Graduated"] },
+        "annualIncreasePercent": { "type": "number" },
+        "rentSteps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["effectiveDate", "newNetRent"],
+            "properties": {
+              "effectiveDate": { "type": "string", "format": "date" },
+              "newNetRent": { "$ref": "#/$defs/money" }
+            }
+          }
+        },
+        "indexThresholdPercent": { "type": "number" },
+        "deposit": { "$ref": "#/$defs/money" },
+        "status": { "enum": ["Active", "Terminated", "Ended"], "default": "Active" }
+      }
+    },
+
+    "vacancyEvent": {
+      "type": "object",
+      "required": ["startPeriod", "durationMonths"],
+      "properties": {
+        "startPeriod": { "$ref": "#/$defs/yearMonth" },
+        "durationMonths": { "type": "integer", "minimum": 1 },
+        "unitId": { "type": "string" },
+        "description": { "type": "string" },
+        "additionalDamage": { "$ref": "#/$defs/money" },
+        "insuranceCoverage": { "$ref": "#/$defs/money" }
+      }
+    },
+
+    "costConfiguration": {
+      "type": "object",
+      "required": ["items"],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/costItem" }
+        },
+        "reserveAccount": { "$ref": "#/$defs/reserveAccountConfig" }
+      }
+    },
+
+    "costItem": {
+      "type": "object",
+      "required": ["id", "name", "classification", "monthlyAmount"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "classification": { "enum": ["Transferable", "NonTransferable", "Administration", "Insurance", "Maintenance", "Other"] },
+        "monthlyAmount": { "$ref": "#/$defs/money" },
+        "amountPerSqmPerYear": { "type": "number" },
+        "isTaxDeductible": { "type": "boolean", "default": true },
+        "annualInflationPercent": { "type": "number", "default": 0 },
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" }
+      }
+    },
+
+    "reserveAccountConfig": {
+      "type": "object",
+      "properties": {
+        "initialBalance": { "$ref": "#/$defs/money" },
+        "monthlyContribution": { "$ref": "#/$defs/money" },
+        "contributionPerSqmPerYear": { "type": "number" },
+        "contributionPercentOfRent": { "type": "number" },
+        "minimumThreshold": { "$ref": "#/$defs/money" },
+        "annualInflationPercent": { "type": "number", "default": 0 }
+      }
+    },
+
+    "taxProfile": {
+      "type": "object",
+      "required": ["ownershipType", "marginalTaxRatePercent"],
+      "properties": {
+        "ownershipType": { "enum": ["PrivateIndividual", "Partnership", "Corporation"] },
+        "marginalTaxRatePercent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "solidaritySurchargePercent": { "type": "number", "default": 5.5 },
+        "churchTaxPercent": { "type": "number" },
+        "customDepreciationRatePercent": { "type": "number" },
+        "lossOffsetEnabled": { "type": "boolean", "default": true },
+        "lossCarryforward": { "$ref": "#/$defs/money" }
+      }
+    },
+
+    "capExConfiguration": {
+      "type": "object",
+      "required": ["measures"],
+      "properties": {
+        "measures": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/capExMeasure" }
+        }
+      }
+    },
+
+    "capExMeasure": {
+      "type": "object",
+      "required": ["id", "name", "category", "plannedPeriod", "estimatedCost", "taxClassification"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "enum": ["Heating", "Roof", "Facade", "Windows", "Electrical", "Plumbing", "Interior", "Energy", "Other"] },
+        "plannedPeriod": { "$ref": "#/$defs/yearMonth" },
+        "estimatedCost": { "$ref": "#/$defs/money" },
+        "riskBufferPercent": { "type": "number", "default": 0 },
+        "taxClassification": { "enum": ["MaintenanceExpense", "MaintenanceExpenseDistributed", "ManufacturingCosts", "AcquisitionRelatedCosts"] },
+        "distributionYears": { "type": "integer", "minimum": 2, "maximum": 5 },
+        "paymentSchedule": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["period", "amount"],
+            "properties": {
+              "period": { "$ref": "#/$defs/yearMonth" },
+              "amount": { "$ref": "#/$defs/money" }
+            }
+          }
+        },
+        "isValueEnhancing": { "type": "boolean", "default": false },
+        "valueImpact": { "$ref": "#/$defs/money" },
+        "valueImpactPercent": { "type": "number" },
+        "rentImpact": {
+          "type": "object",
+          "properties": {
+            "absoluteIncrease": { "$ref": "#/$defs/money" },
+            "relativeIncreasePercent": { "type": "number" },
+            "delayMonths": { "type": "integer", "default": 0 },
+            "cap": { "$ref": "#/$defs/money" }
+          }
+        },
+        "isNecessary": { "type": "boolean", "default": false },
+        "isExecuted": { "type": "boolean", "default": false },
+        "priority": { "enum": ["Critical", "High", "Medium", "Low"], "default": "Medium" }
+      }
+    },
+
+    "investorConfiguration": {
+      "type": "object",
+      "required": ["investors"],
+      "properties": {
+        "investors": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/investor" }
+        },
+        "shareholderLoans": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/shareholderLoan" }
+        },
+        "distributionPolicy": { "$ref": "#/$defs/distributionPolicy" }
+      }
+    },
+
+    "investor": {
+      "type": "object",
+      "required": ["id", "name", "sharePercent"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "sharePercent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "taxProfile": { "$ref": "#/$defs/taxProfile" }
+      }
+    },
+
+    "shareholderLoan": {
+      "type": "object",
+      "required": ["id", "investorId", "principal", "disbursementDate", "interestRatePercent"],
+      "properties": {
+        "id": { "type": "string" },
+        "investorId": { "type": "string" },
+        "principal": { "$ref": "#/$defs/money" },
+        "disbursementDate": { "type": "string", "format": "date" },
+        "interestRatePercent": { "type": "number" },
+        "monthlyRepayment": { "$ref": "#/$defs/money" },
+        "termMonths": { "type": "integer" }
+      }
+    },
+
+    "distributionPolicy": {
+      "type": "object",
+      "properties": {
+        "minimumReserve": { "$ref": "#/$defs/money" },
+        "frequency": { "enum": ["Monthly", "Quarterly", "Annual", "OnDemand"], "default": "Annual" },
+        "distributionRatePercent": { "type": "number", "default": 100 }
+      }
+    },
+
+    "valuationConfiguration": {
+      "type": "object",
+      "properties": {
+        "marketGrowthRatePercent": { "type": "number", "default": 0 },
+        "plannedSaleDate": { "$ref": "#/$defs/yearMonth" },
+        "saleCostsPercent": { "type": "number", "default": 3 },
+        "deferredMaintenanceImpact": {
+          "type": "object",
+          "properties": {
+            "discountPerOverdueYearPercent": { "type": "number", "default": 1 },
+            "maxTotalDiscountPercent": { "type": "number", "default": 20 }
+          }
+        },
+        "capitalGainsTax": {
+          "type": "object",
+          "properties": {
+            "holdingPeriodYears": { "type": "integer", "default": 10 },
+            "exemptionThreshold": { "$ref": "#/$defs/money" },
+            "ownerOccupiedExemption": { "type": "boolean", "default": false }
+          }
+        }
+      }
+    },
+
+    "scenario": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "isBase": { "type": "boolean", "default": false },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "marketGrowthRatePercent": { "type": "number" },
+            "rentGrowthRatePercent": { "type": "number" },
+            "vacancyRatePercent": { "type": "number" },
+            "refinancingInterestRatePercent": { "type": "number" },
+            "costInflationPercent": { "type": "number" },
+            "additionalCapEx": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/capExMeasure" }
+            },
+            "additionalVacancyEvents": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/vacancyEvent" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

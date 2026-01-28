@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Kalkimo.Api/Dockerfile
+      target: build
+    command: dotnet watch run --project Kalkimo.Api/Kalkimo.Api.csproj
+    working_dir: /src
+    volumes:
+      - ./backend:/src
+      - dotnet-cache:/root/.nuget/packages
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+      - DATA_ROOT=/data
+      - SECRETS_PROVIDER=LocalDev
+    volumes:
+      - ./backend:/src
+      - ./data:/data
+      - dotnet-cache:/root/.nuget/packages
+    networks:
+      - kalkimo-network
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+      target: development
+    volumes:
+      - ./apps/frontend:/app
+      - /app/node_modules
+    ports:
+      - "8100:8100"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:5000
+    depends_on:
+      - backend
+    networks:
+      - kalkimo-network
+
+networks:
+  kalkimo-network:
+    driver: bridge
+
+volumes:
+  dotnet-cache:
