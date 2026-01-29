@@ -14,6 +14,19 @@ public record ValuationConfiguration
     /// <summary>Verkaufskosten (% vom Verkaufspreis)</summary>
     public decimal SaleCostsPercent { get; init; } = 3m;
 
+    /// <summary>Diskontierungszins für NPV-Berechnung (%)</summary>
+    public decimal DiscountRatePercent { get; init; } = 5m;
+
+    /// <summary>Alternativ: Risikoloser Zins + Risikoprämie</summary>
+    public decimal? RiskFreeRatePercent { get; init; }
+    public decimal? RiskPremiumPercent { get; init; }
+
+    /// <summary>Effektiver Diskontierungszins (berücksichtigt Risiko-Komponenten)</summary>
+    public decimal EffectiveDiscountRate =>
+        RiskFreeRatePercent.HasValue && RiskPremiumPercent.HasValue
+            ? RiskFreeRatePercent.Value + RiskPremiumPercent.Value
+            : DiscountRatePercent;
+
     /// <summary>Wertabschlag bei unterlassenen Maßnahmen</summary>
     public DeferredMaintenanceImpact DeferredMaintenanceImpact { get; init; } = new();
 

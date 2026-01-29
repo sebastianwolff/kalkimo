@@ -9,24 +9,46 @@ public static class FinancingCalculator
 {
     /// <summary>
     /// Berechnet den monatlichen Tilgungsplan für ein Darlehen
+    /// Berücksichtigt: Bereitstellungszinsen, KfW tilgungsfreie Anlaufjahre, Disagio
     /// </summary>
     public static LoanSchedule CalculateLoanSchedule(
         Loan loan,
         YearMonth startPeriod,
-        YearMonth endPeriod)
+        YearMonth endPeriod,
+        string currency = "EUR")
     {
         var schedule = new LoanSchedule
         {
             LoanId = loan.Id,
             Principal = loan.Principal,
-            InterestPayments = new MoneyTimeSeries(startPeriod, endPeriod),
-            PrincipalPayments = new MoneyTimeSeries(startPeriod, endPeriod),
-            OutstandingBalance = new MoneyTimeSeries(startPeriod, endPeriod),
-            TotalPayments = new MoneyTimeSeries(startPeriod, endPeriod)
+            InterestPayments = new MoneyTimeSeries(startPeriod, endPeriod, currency),
+            PrincipalPayments = new MoneyTimeSeries(startPeriod, endPeriod, currency),
+            OutstandingBalance = new MoneyTimeSeries(startPeriod, endPeriod, currency),
+            TotalPayments = new MoneyTimeSeries(startPeriod, endPeriod, currency),
+            CommitmentFees = new MoneyTimeSeries(startPeriod, endPeriod, currency),
+            DisagioAmortization = new MoneyTimeSeries(startPeriod, endPeriod, currency)
         };
 
         var disbursementPeriod = YearMonth.FromDate(loan.DisbursementDate);
         var fixedInterestEndPeriod = disbursementPeriod.AddMonths(loan.FixedInterestPeriodMonths);
+
+        // Bereitstellungsfreie Zeit berechnen
+        var commitmentFreeEnd = loan.CommitmentFreeMonths > 0
+            ? disbursementPeriod.AddMonths(-loan.CommitmentFreeMonths)
+            : disbursementPeriod;
+
+        // KfW tilgungsfreie Periode
+        var tilgungsfreieEnde = loan.TilgungsfreieAnlaufjahre > 0
+            ? disbursementPeriod.AddYears(loan.TilgungsfreieAnlaufjahre)
+            : disbursementPeriod;
+
+        // Disagio-Verteilung über Zinsbindungsfrist
+        var disagioPerMonth = Money.Zero(currency);
+        if (loan.DisagioPercent.HasValue && loan.FixedInterestPeriodMonths > 0)
+        {
+            var disagioTotal = loan.Principal * loan.DisagioPercent.Value / 100;
+            disagioPerMonth = disagioTotal / loan.FixedInterestPeriodMonths;
+        }
 
         var outstandingBalance = loan.Principal;
         var monthlyRate = loan.InterestRatePercent / 100 / 12;
@@ -37,10 +59,19 @@ public static class FinancingCalculator
 
         foreach (var period in schedule.InterestPayments.Periods)
         {
-            // Vor Auszahlung: keine Zahlungen
+            // Vor Auszahlung: Bereitstellungszinsen berechnen
             if (period < disbursementPeriod)
             {
-                schedule.OutstandingBalance[period] = Money.Zero();
+                schedule.OutstandingBalance[period] = Money.Zero(currency);
+
+                // Bereitstellungszinsen nach bereitstellungsfreier Zeit
+                if (loan.CommitmentFeePercent.HasValue && period >= commitmentFreeEnd)
+                {
+                    var commitmentFee = loan.Principal * loan.CommitmentFeePercent.Value / 100 / 12;
+                    schedule.CommitmentFees[period] = commitmentFee.Round();
+                    schedule.InterestPayments[period] = commitmentFee.Round();
+                    schedule.TotalPayments[period] = commitmentFee.Round();
+                }
                 continue;
             }
 
@@ -66,8 +97,26 @@ public static class FinancingCalculator
             // Zinsanteil
             var interestPayment = outstandingBalance * currentRate;
 
-            // Tilgungsanteil
-            var principalPayment = currentPayment - interestPayment;
+            // Disagio-Anteil (steuerlich als Zinsaufwand)
+            if (period <= fixedInterestEndPeriod)
+            {
+                schedule.DisagioAmortization[period] = disagioPerMonth.Round();
+            }
+
+            // Tilgungsanteil - bei KfW in tilgungsfreier Zeit: keine Tilgung
+            Money principalPayment;
+            if (loan.Type == LoanType.KfW && period <= tilgungsfreieEnde)
+            {
+                // Tilgungsfreie Anlaufjahre: nur Zinsen, keine Tilgung
+                principalPayment = Money.Zero(currency);
+                schedule.InterestPayments[period] = interestPayment.Round();
+                schedule.PrincipalPayments[period] = Money.Zero(currency);
+                schedule.TotalPayments[period] = interestPayment.Round();
+                schedule.OutstandingBalance[period] = outstandingBalance;
+                continue;
+            }
+
+            principalPayment = currentPayment - interestPayment;
 
             // Sondertilgung
             if (specialRepayments.TryGetValue(period, out var specialRepayment))
@@ -85,7 +134,7 @@ public static class FinancingCalculator
             outstandingBalance -= principalPayment;
             if (outstandingBalance.Amount < 0.01m)
             {
-                outstandingBalance = Money.Zero();
+                outstandingBalance = Money.Zero(currency);
             }
 
             schedule.InterestPayments[period] = interestPayment.Round();
@@ -165,7 +214,7 @@ public static class FinancingCalculator
         var power = Math.Pow(1 + factor, termMonths);
         var payment = (double)principal.Amount * (factor * power) / (power - 1);
 
-        return Money.Euro((decimal)payment).Round();
+        return new Money((decimal)payment, principal.Currency).Round();
     }
 
     /// <summary>
@@ -174,23 +223,24 @@ public static class FinancingCalculator
     public static AggregatedFinancingResult AggregateLoans(
         IEnumerable<LoanSchedule> schedules,
         YearMonth startPeriod,
-        YearMonth endPeriod)
+        YearMonth endPeriod,
+        string currency = "EUR")
     {
         var result = new AggregatedFinancingResult
         {
-            TotalInterest = new MoneyTimeSeries(startPeriod, endPeriod),
-            TotalPrincipal = new MoneyTimeSeries(startPeriod, endPeriod),
-            TotalDebtService = new MoneyTimeSeries(startPeriod, endPeriod),
-            TotalOutstandingDebt = new MoneyTimeSeries(startPeriod, endPeriod)
+            TotalInterest = new MoneyTimeSeries(startPeriod, endPeriod, currency),
+            TotalPrincipal = new MoneyTimeSeries(startPeriod, endPeriod, currency),
+            TotalDebtService = new MoneyTimeSeries(startPeriod, endPeriod, currency),
+            TotalOutstandingDebt = new MoneyTimeSeries(startPeriod, endPeriod, currency)
         };
 
         var scheduleList = schedules.ToList();
 
         foreach (var period in result.TotalInterest.Periods)
         {
-            var interest = Money.Zero("EUR");
-            var principal = Money.Zero("EUR");
-            var outstanding = Money.Zero("EUR");
+            var interest = Money.Zero(currency);
+            var principal = Money.Zero(currency);
+            var outstanding = Money.Zero(currency);
 
             foreach (var schedule in scheduleList)
             {
@@ -220,6 +270,12 @@ public class LoanSchedule
     public required MoneyTimeSeries PrincipalPayments { get; init; }
     public required MoneyTimeSeries TotalPayments { get; init; }
     public required MoneyTimeSeries OutstandingBalance { get; init; }
+
+    /// <summary>Bereitstellungszinsen (vor Auszahlung)</summary>
+    public MoneyTimeSeries CommitmentFees { get; init; } = null!;
+
+    /// <summary>Disagio-Amortisation (steuerlich als Zinsaufwand)</summary>
+    public MoneyTimeSeries DisagioAmortization { get; init; } = null!;
 }
 
 /// <summary>

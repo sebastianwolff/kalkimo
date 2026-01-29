@@ -41,6 +41,9 @@ public record CalculationResult
 
     // === Warnungen ===
     public IReadOnlyList<CalculationWarning> Warnings { get; init; } = [];
+
+    // === Investor-Ergebnisse ===
+    public IReadOnlyList<InvestorResult> InvestorResults { get; init; } = [];
 }
 
 /// <summary>
@@ -192,4 +195,43 @@ public enum WarningSeverity
     Info,
     Warning,
     Critical
+}
+
+/// <summary>
+/// Ergebnis für einen einzelnen Investor
+/// </summary>
+public record InvestorResult
+{
+    public required string InvestorId { get; init; }
+    public required string InvestorName { get; init; }
+
+    /// <summary>Beteiligungsquote (%)</summary>
+    public required decimal SharePercent { get; init; }
+
+    /// <summary>Eigenkapital-Beitrag</summary>
+    public required Money EquityContribution { get; init; }
+
+    /// <summary>Anteilige Cashflow-Zeitreihe (vor Steuern)</summary>
+    public required MoneyTimeSeries ProRataCashflow { get; init; }
+
+    /// <summary>Anteilige Ausschüttungen</summary>
+    public required MoneyTimeSeries Distributions { get; init; }
+
+    /// <summary>Kumulierte Ausschüttungen</summary>
+    public required Money TotalDistributions { get; init; }
+
+    /// <summary>IRR vor Steuern für diesen Investor (%)</summary>
+    public decimal IrrBeforeTaxPercent { get; init; }
+
+    /// <summary>IRR nach Steuern für diesen Investor (falls individuelles Steuerprofil)</summary>
+    public decimal? IrrAfterTaxPercent { get; init; }
+
+    /// <summary>Kapitalwert vor Steuern</summary>
+    public Money NpvBeforeTax { get; init; } = Money.Zero();
+
+    /// <summary>Equity Multiple</summary>
+    public decimal EquityMultiple { get; init; }
+
+    /// <summary>Cash-on-Cash Return (%)</summary>
+    public decimal CashOnCashPercent { get; init; }
 }

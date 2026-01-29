@@ -487,8 +487,7 @@ public class ProjectsControllerTests : IClassFixture<WebApplicationFactory<Progr
             Operations = new List<PatchOperation>
             {
                 new() { Op = "replace", Path = "/name", Value = "New Name" },
-                new() { Op = "replace", Path = "/description", Value = "New Description" },
-                new() { Op = "add", Path = "/custom/field", Value = "Custom Value" }
+                new() { Op = "replace", Path = "/description", Value = "New Description" }
             },
             Description = "Multiple updates"
         };

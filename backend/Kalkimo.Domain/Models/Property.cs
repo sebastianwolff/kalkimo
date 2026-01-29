@@ -28,11 +28,19 @@ public record Property
     /// <summary>Bauteilzustände für Maßnahmenvorschläge</summary>
     public IReadOnlyList<ComponentCondition> Components { get; init; } = [];
 
-    /// <summary>WEG-Rücklagenstand (nur für ETW)</summary>
+    /// <summary>WEG-Rücklagenstand (nur für ETW) - veraltet, verwende WegConfiguration</summary>
+    [Obsolete("Use WegConfiguration.CurrentReserveBalance instead")]
     public Money? WegReserveBalance { get; init; }
 
-    /// <summary>Miteigentumsanteil (nur für ETW)</summary>
+    /// <summary>Miteigentumsanteil (nur für ETW) - veraltet, verwende WegConfiguration</summary>
+    [Obsolete("Use WegConfiguration.MeaPerMille instead")]
     public decimal? Mea { get; init; }
+
+    /// <summary>WEG-Konfiguration (für ETW mit Teilungserklärung)</summary>
+    public WegConfiguration? WegConfiguration { get; init; }
+
+    /// <summary>Ist dies eine WEG-Einheit (ETW)?</summary>
+    public bool IsWegUnit => Type == PropertyType.Condominium && WegConfiguration != null;
 }
 
 /// <summary>

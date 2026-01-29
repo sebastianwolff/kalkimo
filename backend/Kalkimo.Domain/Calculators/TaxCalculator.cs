@@ -19,19 +19,53 @@ public class TaxCalculator
     }
 
     /// <summary>
+    /// Berechnet die effektive AfA-Bemessungsgrundlage (inkl. anschaffungsnaher HK wenn 15%-Regel greift)
+    /// </summary>
+    public Money CalculateEffectiveDepreciationBase(
+        Purchase purchase,
+        CapExConfiguration? capEx)
+    {
+        var baseAmount = purchase.DepreciationBase;
+
+        if (capEx == null || !capEx.Measures.Any())
+            return baseAmount;
+
+        // Check for 15% rule
+        var acquisitionRelatedResult = CheckAcquisitionRelatedCosts(purchase, capEx.Measures);
+
+        if (!acquisitionRelatedResult.IsTriggered)
+            return baseAmount;
+
+        // 15%-Rule triggered: Add all maintenance costs within 3-year period to depreciation base
+        // These costs become manufacturing costs (Herstellungskosten) and are depreciated
+        var purchaseDate = purchase.PurchaseDate;
+        var threeYearsLater = purchaseDate.AddYears(AcquisitionRelatedCostsRule.PeriodYears);
+
+        var acquisitionRelatedCosts = capEx.Measures
+            .Where(m => m.TaxClassification == TaxClassification.MaintenanceExpense ||
+                       m.TaxClassification == TaxClassification.MaintenanceExpenseDistributed)
+            .Where(m => m.PlannedPeriod.ToFirstDayOfMonth() >= purchaseDate &&
+                       m.PlannedPeriod.ToFirstDayOfMonth() < threeYearsLater)
+            .Aggregate(Money.Zero(purchase.PurchasePrice.Currency), (sum, m) => sum + m.EstimatedCost);
+
+        return baseAmount + acquisitionRelatedCosts;
+    }
+
+    /// <summary>
     /// Berechnet die jährliche AfA
     /// </summary>
     public Money CalculateAnnualDepreciation(
         Purchase purchase,
         Property property,
-        TaxProfile taxProfile)
+        TaxProfile taxProfile,
+        CapExConfiguration? capEx = null)
     {
         // Custom rate aus Gutachten überschreibt Standard
         var rate = taxProfile.CustomDepreciationRatePercent
             ?? DepreciationRates.GetAnnualRate(property.ConstructionYear);
 
-        // AfA-Bemessungsgrundlage = Gebäudewert + aktivierbare Nebenkosten
-        var depreciationBase = purchase.DepreciationBase;
+        // AfA-Bemessungsgrundlage = Gebäudewert + aktivierbare Nebenkosten + anschaffungsnahe HK (wenn 15%-Regel greift)
+        var depreciationBase = CalculateEffectiveDepreciationBase(purchase, capEx);
 
         return (depreciationBase * rate / 100).Round();
     }
@@ -42,9 +76,10 @@ public class TaxCalculator
     public Money CalculateMonthlyDepreciation(
         Purchase purchase,
         Property property,
-        TaxProfile taxProfile)
+        TaxProfile taxProfile,
+        CapExConfiguration? capEx = null)
     {
-        return CalculateAnnualDepreciation(purchase, property, taxProfile) / 12;
+        return CalculateAnnualDepreciation(purchase, property, taxProfile, capEx) / 12;
     }
 
     /// <summary>
@@ -55,11 +90,12 @@ public class TaxCalculator
         Property property,
         TaxProfile taxProfile,
         YearMonth startPeriod,
-        YearMonth endPeriod)
+        YearMonth endPeriod,
+        CapExConfiguration? capEx = null)
     {
         var result = new MoneyTimeSeries(startPeriod, endPeriod);
         var purchasePeriod = YearMonth.FromDate(purchase.PurchaseDate);
-        var monthlyDepreciation = CalculateMonthlyDepreciation(purchase, property, taxProfile);
+        var monthlyDepreciation = CalculateMonthlyDepreciation(purchase, property, taxProfile, capEx);
 
         // AfA-Dauer in Jahren
         var usefulLifeYears = taxProfile.CustomDepreciationRatePercent.HasValue
@@ -163,6 +199,7 @@ public class TaxCalculator
 
     /// <summary>
     /// Berechnet die Steuer auf einen Verkaufsgewinn (§23 EStG)
+    /// Bei Kapitalgesellschaften gilt §23 EStG NICHT - Veräußerungsgewinne sind laufende gewerbliche Einkünfte
     /// </summary>
     public CapitalGainsTaxResult CalculateCapitalGainsTax(
         Purchase purchase,
@@ -173,12 +210,37 @@ public class TaxCalculator
         TaxProfile taxProfile,
         CapitalGainsTaxParameters parameters)
     {
-        // Prüfe 10-Jahres-Frist
-        var holdingPeriodYears = (saleDate.Year - purchase.PurchaseDate.Year) +
-            ((saleDate.Month >= purchase.PurchaseDate.Month) ? 0 : -1);
+        // Bei Kapitalgesellschaft: KEINE Haltefrist, volle Besteuerung als gewerbliche Einkünfte
+        if (taxProfile.OwnershipType == OwnershipType.Corporation)
+        {
+            var corpAdjustedBasis = purchase.TotalInvestment - accumulatedDepreciation;
+            var corpGain = salePrice - saleCosts - corpAdjustedBasis;
 
-        var isTaxExempt = holdingPeriodYears >= parameters.HoldingPeriodYears ||
-                         parameters.OwnerOccupiedExemption;
+            // Veräußerungsgewinn ist laufender Gewinn, besteuert mit KSt + GewSt
+            var corpTax = corpGain > Money.Zero() ? CalculateCorporateTax(corpGain, taxProfile) : Money.Zero();
+
+            return new CapitalGainsTaxResult
+            {
+                IsTaxExempt = false,
+                HoldingPeriodYears = 0, // Irrelevant bei GmbH
+                SalePrice = salePrice,
+                SaleCosts = saleCosts,
+                AdjustedBasis = corpAdjustedBasis,
+                Gain = corpGain,
+                TaxAmount = corpTax,
+                Reason = "Gewerbliche Einkünfte (§8 KStG)"
+            };
+        }
+
+        // Exakte Tagesberechnung für §23 EStG (Haltedauer)
+        // Die 10-Jahres-Frist endet am Tag NACH dem 10. Jahrestag des Kaufs
+        var holdingDays = saleDate.DayNumber - purchase.PurchaseDate.DayNumber;
+        // Berücksichtigt Schaltjahre (365.25 Tage pro Jahr)
+        var holdingPeriodYears = (int)(holdingDays / 365.25);
+
+        // Präzise Prüfung: Verkauf muss NACH dem Jahrestag erfolgen
+        var tenYearDeadline = purchase.PurchaseDate.AddYears(parameters.HoldingPeriodYears);
+        var isTaxExempt = saleDate > tenYearDeadline || parameters.OwnerOccupiedExemption;
 
         if (isTaxExempt)
         {
@@ -186,6 +248,7 @@ public class TaxCalculator
             {
                 IsTaxExempt = true,
                 HoldingPeriodYears = holdingPeriodYears,
+                TaxAmount = Money.Zero(salePrice.Currency),
                 Reason = holdingPeriodYears >= parameters.HoldingPeriodYears
                     ? "Spekulationsfrist abgelaufen"
                     : "Eigennutzung"
@@ -206,6 +269,7 @@ public class TaxCalculator
                 IsTaxExempt = true,
                 HoldingPeriodYears = holdingPeriodYears,
                 Gain = gain,
+                TaxAmount = Money.Zero(salePrice.Currency),
                 Reason = "Unter Freigrenze"
             };
         }
@@ -227,7 +291,8 @@ public class TaxCalculator
     }
 
     /// <summary>
-    /// Berechnet die jährliche Steuerlast (vereinfachte Version)
+    /// Berechnet die jährliche Steuerlast
+    /// Unterscheidet zwischen Privatperson, Personengesellschaft und Kapitalgesellschaft
     /// </summary>
     public Money CalculateAnnualTax(
         Money taxableIncome,
@@ -240,6 +305,44 @@ public class TaxCalculator
             return Money.Zero();
         }
 
+        return taxProfile.OwnershipType switch
+        {
+            OwnershipType.Corporation => CalculateCorporateTax(taxableIncome, taxProfile),
+            OwnershipType.Partnership => CalculatePartnershipTax(taxableIncome, taxProfile),
+            _ => (taxableIncome * taxProfile.EffectiveTaxRatePercent / 100).Round()
+        };
+    }
+
+    /// <summary>
+    /// Berechnet die Körperschaftsteuer für Kapitalgesellschaften
+    /// KSt 15% + Soli 5,5% + Gewerbesteuer
+    /// </summary>
+    private Money CalculateCorporateTax(Money taxableIncome, TaxProfile taxProfile)
+    {
+        const decimal CORP_TAX_RATE = 15m;
+        const decimal SOLI_ON_CORP = 5.5m;
+
+        var corpTax = taxableIncome * CORP_TAX_RATE / 100;
+        var soliOnCorp = corpTax * SOLI_ON_CORP / 100;
+
+        // Gewerbesteuer: Messbetrag * Hebesatz
+        // Messbetrag = 3,5% vom Gewerbeertrag
+        // Hebesatz ist kommunal unterschiedlich (min 200%, oft 400-500%)
+        var tradeTaxRate = taxProfile.TradeTaxMultiplier ?? 400m; // Default 400%
+        var tradeTaxBase = taxableIncome * 3.5m / 100;
+        var tradeTax = tradeTaxBase * tradeTaxRate / 100;
+
+        return (corpTax + soliOnCorp + tradeTax).Round();
+    }
+
+    /// <summary>
+    /// Berechnet die Steuer für Personengesellschaften
+    /// Transparenzprinzip: Besteuerung auf Gesellschafterebene
+    /// </summary>
+    private Money CalculatePartnershipTax(Money taxableIncome, TaxProfile taxProfile)
+    {
+        // Bei Personengesellschaften: Besteuerung nach persönlichem Steuersatz
+        // (Transparenzprinzip - Einkünfte werden den Gesellschaftern zugerechnet)
         return (taxableIncome * taxProfile.EffectiveTaxRatePercent / 100).Round();
     }
 
@@ -260,7 +363,8 @@ public class TaxCalculator
             project.Property,
             project.TaxProfile,
             startPeriod,
-            endPeriod);
+            endPeriod,
+            project.CapEx);
 
         var taxableIncome = new MoneyTimeSeries(startPeriod, endPeriod);
         var taxPayment = new MoneyTimeSeries(startPeriod, endPeriod);

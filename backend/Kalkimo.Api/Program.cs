@@ -126,7 +126,12 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("Development", policy =>
     {
-        policy.WithOrigins("http://localhost:8100", "http://localhost:3000")
+        policy.WithOrigins(
+                  "http://localhost:8100",  // Ionic serve
+                  "http://localhost:3000",  // Alternative dev server
+                  "http://localhost:5173",  // Vite default
+                  "http://localhost:5174",  // Vite alternative
+                  "http://localhost:5175")  // Vite alternative
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -155,6 +160,9 @@ else
 
 builder.Services.AddSingleton<IProjectStore>(sp =>
     new FlatfileProjectStore(dataRoot, sp.GetRequiredService<IEncryptionService>()));
+
+builder.Services.AddSingleton<IAuthStore>(sp =>
+    new FlatfileAuthStore(dataRoot, sp.GetRequiredService<IEncryptionService>()));
 
 // Domain Services
 builder.Services.AddSingleton<IDateProvider, SystemDateProvider>();

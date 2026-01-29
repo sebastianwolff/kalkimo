@@ -7,7 +7,19 @@
       "Bash(dotnet build:*)",
       "Bash(dotnet test:*)",
       "Bash(dotnet add:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(tree:*)",
+      "Bash(node --version:*)",
+      "Bash(npm:*)",
+      "Bash(ionic start:*)",
+      "Bash(del /q \"c:\\\\Users\\\\swolf\\\\source\\\\repos\\\\kalkimo\\\\backend\\\\Kalkimo.Api.Tests\\\\bin\\\\Debug\\\\net8.0\\\\data\\\\auth\\\\*.enc\")",
+      "Bash(docker-compose:*)",
+      "Bash(docker logs:*)",
+      "Bash(curl:*)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(dir:*)",
+      "Bash(npx vue-tsc:*)"
     ]
   }
 }

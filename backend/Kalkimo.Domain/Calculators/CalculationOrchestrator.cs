@@ -27,12 +27,14 @@ public class CalculationOrchestrator
         var endPeriod = effectiveProject.EndPeriod;
         var livingArea = effectiveProject.Property.LivingArea;
 
+        var currency = effectiveProject.Currency;
+
         // === 1. Finanzierung ===
         var loanSchedules = effectiveProject.Financing.Loans
-            .Select(loan => FinancingCalculator.CalculateLoanSchedule(loan, startPeriod, endPeriod))
+            .Select(loan => FinancingCalculator.CalculateLoanSchedule(loan, startPeriod, endPeriod, currency))
             .ToList();
 
-        var aggregatedFinancing = FinancingCalculator.AggregateLoans(loanSchedules, startPeriod, endPeriod);
+        var aggregatedFinancing = FinancingCalculator.AggregateLoans(loanSchedules, startPeriod, endPeriod, currency);
 
         // === 2. Mieteinnahmen ===
         var grossRent = CashflowCalculator.CalculateGrossRent(
@@ -51,28 +53,29 @@ public class CalculationOrchestrator
             effectiveProject.Rent,
             startPeriod,
             endPeriod,
-            effectiveProject.Currency);
+            currency);
 
         var transferableCosts = CashflowCalculator.CalculateTransferableCosts(
             effectiveProject.Costs,
             livingArea,
             startPeriod,
             endPeriod,
-            effectiveProject.Currency);
+            currency);
 
         var nonTransferableCosts = CashflowCalculator.CalculateNonTransferableCosts(
             effectiveProject.Costs,
             livingArea,
             startPeriod,
             endPeriod,
-            effectiveProject.Currency);
+            currency);
 
         // === 4. Betriebskosten (Gesamt) ===
         var operatingCosts = CashflowCalculator.CalculateOperatingCosts(
             effectiveProject.Costs,
             livingArea,
             startPeriod,
-            endPeriod);
+            endPeriod,
+            currency);
 
         // === 5. NOI (Net Operating Income) ===
         // NOI = Effective Rent + Service Charge Income - Operating Costs
@@ -102,7 +105,7 @@ public class CalculationOrchestrator
         var maintenanceExpense = CalculateMaintenanceExpenseForTax(effectiveProject, startPeriod, endPeriod);
 
         // Other deductions (non-transferable costs that are tax deductible)
-        var otherDeductions = CalculateOtherTaxDeductions(effectiveProject.Costs, livingArea, startPeriod, endPeriod);
+        var otherDeductions = CalculateOtherTaxDeductions(effectiveProject.Costs, livingArea, startPeriod, endPeriod, currency);
 
         var taxTimeSeries = _taxCalculator.CalculateTaxTimeSeries(
             effectiveProject,
@@ -130,7 +133,8 @@ public class CalculationOrchestrator
             livingArea,
             capExPayments,
             startPeriod,
-            endPeriod);
+            endPeriod,
+            currency);
 
         // === 12. Objektwert ===
         var initialValue = effectiveProject.Purchase.PurchasePrice;
@@ -185,6 +189,9 @@ public class CalculationOrchestrator
         var equity = effectiveProject.Financing.TotalEquity;
         var initialInvestment = effectiveProject.Purchase.TotalInvestment;
 
+        // Verwende konfigurierbaren Diskontierungszins aus Valuation
+        var discountRate = effectiveProject.Valuation.EffectiveDiscountRate;
+
         var metrics = MetricsCalculator.CalculateAllMetrics(
             initialInvestment,
             equity,
@@ -199,7 +206,7 @@ public class CalculationOrchestrator
             effectiveProject.CapEx,
             reserveBalance,
             saleNetProceeds,
-            discountRate: 5m, // Default discount rate for NPV
+            discountRate,
             startPeriod,
             endPeriod);
 
@@ -213,6 +220,17 @@ public class CalculationOrchestrator
             taxSummary,
             startPeriod,
             endPeriod);
+
+        // === 16. Investor-Ergebnisse ===
+        var investorResults = InvestorCalculator.CalculateInvestorResults(
+            effectiveProject.Investors,
+            effectiveProject.Financing,
+            cashflowBeforeTax,
+            saleNetProceeds,
+            discountRate,
+            startPeriod,
+            endPeriod,
+            currency);
 
         return new CalculationResult
         {
@@ -247,7 +265,8 @@ public class CalculationOrchestrator
             // Kennzahlen und Zusammenfassungen
             Metrics = metrics,
             TaxSummary = taxSummary,
-            Warnings = warnings
+            Warnings = warnings,
+            InvestorResults = investorResults
         };
     }
 
@@ -282,6 +301,25 @@ public class CalculationOrchestrator
             {
                 VacancyRatePercent = parameters.VacancyRatePercent.Value
             };
+        }
+
+        // Apply rent growth rate override to all tenancies
+        if (parameters.RentGrowthRatePercent.HasValue)
+        {
+            var modifiedTenancies = project.Rent.Tenancies.Select(tenancy =>
+            {
+                // Only override for tenancies using Annual development model
+                if (tenancy.DevelopmentModel == RentDevelopmentModel.Annual)
+                {
+                    return tenancy with
+                    {
+                        AnnualIncreasePercent = parameters.RentGrowthRatePercent.Value
+                    };
+                }
+                return tenancy;
+            }).ToArray();
+
+            modifiedRent = modifiedRent with { Tenancies = modifiedTenancies };
         }
 
         // Add additional vacancy events from scenario
@@ -430,13 +468,14 @@ public class CalculationOrchestrator
         CostConfiguration costs,
         decimal livingAreaSqm,
         YearMonth startPeriod,
-        YearMonth endPeriod)
+        YearMonth endPeriod,
+        string currency = "EUR")
     {
-        var result = new MoneyTimeSeries(startPeriod, endPeriod);
+        var result = new MoneyTimeSeries(startPeriod, endPeriod, currency);
 
         foreach (var period in result.Periods)
         {
-            var totalDeductions = Money.Zero();
+            var totalDeductions = Money.Zero(currency);
             var periodDate = period.ToFirstDayOfMonth();
             var yearsElapsed = period.Year - startPeriod.Year;
 
@@ -453,7 +492,7 @@ public class CalculationOrchestrator
                     continue;
 
                 var baseAmount = item.AmountPerSqmPerYear.HasValue
-                    ? Money.Euro(item.AmountPerSqmPerYear.Value * livingAreaSqm / 12)
+                    ? new Money(item.AmountPerSqmPerYear.Value * livingAreaSqm / 12, currency)
                     : item.MonthlyAmount;
 
                 var inflatedAmount = baseAmount *

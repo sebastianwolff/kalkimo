@@ -1,8 +1,9 @@
-using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
+using Kalkimo.Api.Infrastructure;
 using Kalkimo.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,16 +19,13 @@ public class AuthController : ControllerBase
 {
     private readonly IConfiguration _config;
     private readonly ILogger<AuthController> _logger;
+    private readonly IAuthStore _authStore;
 
-    // Thread-safe In-Memory User Store für MVP (später durch echte Datenbank ersetzen)
-    // WARNING: Data is lost on restart - use proper persistence in production
-    private static readonly ConcurrentDictionary<string, UserRecord> _users = new();
-    private static readonly ConcurrentDictionary<string, RefreshTokenRecord> _refreshTokens = new();
-
-    public AuthController(IConfiguration config, ILogger<AuthController> logger)
+    public AuthController(IConfiguration config, ILogger<AuthController> logger, IAuthStore authStore)
     {
         _config = config;
         _logger = logger;
+        _authStore = authStore;
     }
 
     /// <summary>
@@ -35,8 +33,15 @@ public class AuthController : ControllerBase
     /// </summary>
     [HttpPost("register")]
     [AllowAnonymous]
-    public async Task<ActionResult<LoginResponse>> Register([FromBody] RegisterRequest request)
+    public async Task<ActionResult<LoginResponse>> Register([FromBody] RegisterRequest request, CancellationToken ct)
     {
+        // Validate password complexity
+        var passwordErrors = ValidatePasswordComplexity(request.Password);
+        if (passwordErrors.Count > 0)
+        {
+            return BadRequest(new { error = "Password does not meet complexity requirements", details = passwordErrors });
+        }
+
         var userId = Guid.NewGuid().ToString();
         var passwordHash = HashPassword(request.Password);
         var emailKey = request.Email.ToLowerInvariant();
@@ -52,14 +57,14 @@ public class AuthController : ControllerBase
         };
 
         // Atomic check-and-add to prevent race conditions
-        if (!_users.TryAdd(emailKey, newUser))
+        if (!await _authStore.TryAddUserAsync(emailKey, newUser, ct))
         {
             return BadRequest(new { error = "Email already registered" });
         }
 
         _logger.LogInformation("User registered: {Email}", request.Email);
 
-        return await GenerateTokens(userId, request.Email, request.Name, new[] { "User" });
+        return await GenerateTokens(userId, request.Email, request.Name, new[] { "User" }, ct);
     }
 
     /// <summary>
@@ -67,11 +72,12 @@ public class AuthController : ControllerBase
     /// </summary>
     [HttpPost("login")]
     [AllowAnonymous]
-    public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
+    public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
         var emailKey = request.Email.ToLowerInvariant();
 
-        if (!_users.TryGetValue(emailKey, out var user))
+        var user = await _authStore.GetUserByEmailAsync(emailKey, ct);
+        if (user == null)
         {
             return Unauthorized(new { error = "Invalid credentials" });
         }
@@ -83,7 +89,7 @@ public class AuthController : ControllerBase
 
         _logger.LogInformation("User logged in: {Email}", request.Email);
 
-        return await GenerateTokens(user.Id, user.Email, user.Name, user.Roles);
+        return await GenerateTokens(user.Id, user.Email, user.Name, user.Roles, ct);
     }
 
     /// <summary>
@@ -91,10 +97,11 @@ public class AuthController : ControllerBase
     /// </summary>
     [HttpPost("refresh")]
     [AllowAnonymous]
-    public async Task<ActionResult<LoginResponse>> Refresh([FromBody] RefreshRequest request)
+    public async Task<ActionResult<LoginResponse>> Refresh([FromBody] RefreshRequest request, CancellationToken ct)
     {
         // Atomic removal - if we can't remove it, it's already been used or doesn't exist
-        if (!_refreshTokens.TryRemove(request.RefreshToken, out var tokenRecord))
+        var tokenRecord = await _authStore.TryRemoveRefreshTokenAsync(request.RefreshToken, ct);
+        if (tokenRecord == null)
         {
             return Unauthorized(new { error = "Invalid refresh token" });
         }
@@ -104,13 +111,13 @@ public class AuthController : ControllerBase
             return Unauthorized(new { error = "Refresh token expired" });
         }
 
-        var user = _users.Values.FirstOrDefault(u => u.Id == tokenRecord.UserId);
+        var user = await _authStore.GetUserByIdAsync(tokenRecord.UserId, ct);
         if (user == null)
         {
             return Unauthorized(new { error = "User not found" });
         }
 
-        return await GenerateTokens(user.Id, user.Email, user.Name, user.Roles);
+        return await GenerateTokens(user.Id, user.Email, user.Name, user.Roles, ct);
     }
 
     /// <summary>
@@ -118,19 +125,14 @@ public class AuthController : ControllerBase
     /// </summary>
     [HttpPost("logout")]
     [Authorize]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout(CancellationToken ct)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        // Alle Refresh Tokens des Users invalidieren
-        var tokensToRemove = _refreshTokens
-            .Where(kv => kv.Value.UserId == userId)
-            .Select(kv => kv.Key)
-            .ToList();
-
-        foreach (var token in tokensToRemove)
+        if (!string.IsNullOrEmpty(userId))
         {
-            _refreshTokens.TryRemove(token, out _);
+            // Alle Refresh Tokens des Users invalidieren
+            await _authStore.RemoveAllRefreshTokensForUserAsync(userId, ct);
         }
 
         return Ok(new { message = "Logged out" });
@@ -158,7 +160,7 @@ public class AuthController : ControllerBase
         });
     }
 
-    private Task<ActionResult<LoginResponse>> GenerateTokens(string userId, string email, string name, string[] roles)
+    private async Task<ActionResult<LoginResponse>> GenerateTokens(string userId, string email, string name, string[] roles, CancellationToken ct)
     {
         var jwtKey = _config["Jwt:Key"]
             ?? throw new InvalidOperationException("JWT signing key not configured");
@@ -202,7 +204,7 @@ public class AuthController : ControllerBase
         do
         {
             refreshToken = GenerateRefreshToken();
-        } while (!_refreshTokens.TryAdd(refreshToken, tokenRecord));
+        } while (!await _authStore.TryAddRefreshTokenAsync(refreshToken, tokenRecord, ct));
 
         var response = new LoginResponse
         {
@@ -219,7 +221,7 @@ public class AuthController : ControllerBase
             }
         };
 
-        return Task.FromResult<ActionResult<LoginResponse>>(Ok(response));
+        return Ok(response);
     }
 
     private static string GenerateRefreshToken()
@@ -256,20 +258,49 @@ public class AuthController : ControllerBase
         return CryptographicOperations.FixedTimeEquals(computedHash, storedHashBytes);
     }
 
-    private record UserRecord
+    /// <summary>
+    /// Validates password complexity requirements
+    /// </summary>
+    private static List<string> ValidatePasswordComplexity(string password)
     {
-        public required string Id { get; init; }
-        public required string Email { get; init; }
-        public required string Name { get; init; }
-        public required string PasswordHash { get; init; }
-        public required string[] Roles { get; init; }
-        public DateTimeOffset CreatedAt { get; init; }
-    }
+        var errors = new List<string>();
 
-    private record RefreshTokenRecord
-    {
-        public required string UserId { get; init; }
-        public DateTimeOffset CreatedAt { get; init; }
-        public DateTimeOffset ExpiresAt { get; init; }
+        if (string.IsNullOrEmpty(password))
+        {
+            errors.Add("Passwort ist erforderlich");
+            return errors;
+        }
+
+        if (password.Length < 8)
+        {
+            errors.Add("Passwort muss mindestens 8 Zeichen lang sein");
+        }
+
+        if (password.Length > 128)
+        {
+            errors.Add("Passwort darf maximal 128 Zeichen lang sein");
+        }
+
+        if (!Regex.IsMatch(password, @"[A-Z]"))
+        {
+            errors.Add("Passwort muss mindestens einen Großbuchstaben enthalten");
+        }
+
+        if (!Regex.IsMatch(password, @"[a-z]"))
+        {
+            errors.Add("Passwort muss mindestens einen Kleinbuchstaben enthalten");
+        }
+
+        if (!Regex.IsMatch(password, @"\d"))
+        {
+            errors.Add("Passwort muss mindestens eine Ziffer enthalten");
+        }
+
+        if (!Regex.IsMatch(password, @"[!@#$%^&*(),.?""':{}|<>_\-+=\[\]\\\/~`]"))
+        {
+            errors.Add("Passwort muss mindestens ein Sonderzeichen enthalten");
+        }
+
+        return errors;
     }
 }

@@ -6,6 +6,7 @@ COPY Kalkimo.sln .
 COPY Kalkimo.Domain/Kalkimo.Domain.csproj Kalkimo.Domain/
 COPY Kalkimo.Api/Kalkimo.Api.csproj Kalkimo.Api/
 COPY Kalkimo.Domain.Tests/Kalkimo.Domain.Tests.csproj Kalkimo.Domain.Tests/
+COPY Kalkimo.Api.Tests/Kalkimo.Api.Tests.csproj Kalkimo.Api.Tests/
 
 # Restore dependencies
 RUN dotnet restore

@@ -63,11 +63,15 @@ public class LocalDevEncryptionService : IEncryptionService
     private readonly Dictionary<string, byte[]> _projectKeys = new();
     private readonly byte[] _masterKey;
 
+    // Deterministischer Schlüssel für Entwicklung/Tests (NICHT für Produktion!)
+    // Dieser Schlüssel ist absichtlich statisch, damit Tests konsistent funktionieren
+    private static readonly byte[] DevMasterKey = Convert.FromHexString(
+        "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF");
+
     public LocalDevEncryptionService()
     {
-        // Für lokale Entwicklung: statischer Master Key (NICHT für Produktion!)
-        _masterKey = new byte[32];
-        RandomNumberGenerator.Fill(_masterKey);
+        // Für lokale Entwicklung: deterministischer Master Key (NICHT für Produktion!)
+        _masterKey = DevMasterKey;
     }
 
     public Task<EncryptedData> EncryptAsync(byte[] plaintext, string projectId, CancellationToken ct = default)

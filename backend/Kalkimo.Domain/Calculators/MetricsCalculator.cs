@@ -107,7 +107,8 @@ public static class MetricsCalculator
         Money initialInvestment,
         MoneyTimeSeries cashflows,
         decimal annualDiscountRatePercent,
-        Money? terminalValue = null)
+        Money? terminalValue = null,
+        string currency = "EUR")
     {
         var monthlyRate = annualDiscountRatePercent / 100 / 12;
         var npv = -initialInvestment.Amount;
@@ -127,7 +128,7 @@ public static class MetricsCalculator
             npv += terminalValue.Value.Amount * discountFactor;
         }
 
-        return Money.Euro(npv).Round();
+        return new Money(npv, currency).Round();
     }
 
     /// <summary>

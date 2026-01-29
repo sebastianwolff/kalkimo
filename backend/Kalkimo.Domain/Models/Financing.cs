@@ -75,6 +75,12 @@ public record Loan
     /// <summary>Bereitstellungsfreie Zeit in Monaten</summary>
     public int CommitmentFreeMonths { get; init; }
 
+    /// <summary>Tilgungsfreie Anlaufjahre (typisch bei KfW-Darlehen)</summary>
+    public int TilgungsfreieAnlaufjahre { get; init; } = 0;
+
+    /// <summary>Disagio in Prozent (Abschlag vom Darlehensbetrag)</summary>
+    public decimal? DisagioPercent { get; init; }
+
     /// <summary>Geplante Sondertilgungen</summary>
     public IReadOnlyList<SpecialRepayment> SpecialRepayments { get; init; } = [];
 

@@ -26,6 +26,12 @@ public record TaxProfile
     /// <summary>Verlustvortrag aus Vorjahren</summary>
     public Money LossCarryforward { get; init; } = Money.Zero();
 
+    /// <summary>Gewerbesteuer-Hebesatz in % (nur bei Corporation, default 400%)</summary>
+    public decimal? TradeTaxMultiplier { get; init; }
+
+    /// <summary>Zusammenveranlagung (für Soli-Freigrenzen)</summary>
+    public bool JointAssessment { get; init; } = false;
+
     /// <summary>Effektiver Steuersatz inkl. Soli/Kirchensteuer</summary>
     public decimal EffectiveTaxRatePercent
     {

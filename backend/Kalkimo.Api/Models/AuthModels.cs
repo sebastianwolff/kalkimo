@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Kalkimo.Api.Models;
 
 /// <summary>
@@ -5,7 +7,11 @@ namespace Kalkimo.Api.Models;
 /// </summary>
 public record LoginRequest
 {
+    [Required(ErrorMessage = "E-Mail ist erforderlich")]
+    [EmailAddress(ErrorMessage = "Ungültiges E-Mail-Format")]
     public required string Email { get; init; }
+
+    [Required(ErrorMessage = "Passwort ist erforderlich")]
     public required string Password { get; init; }
 }
 
@@ -45,7 +51,17 @@ public record UserInfo
 /// </summary>
 public record RegisterRequest
 {
+    [Required(ErrorMessage = "E-Mail ist erforderlich")]
+    [EmailAddress(ErrorMessage = "Ungültiges E-Mail-Format")]
     public required string Email { get; init; }
+
+    [Required(ErrorMessage = "Passwort ist erforderlich")]
+    [MinLength(8, ErrorMessage = "Passwort muss mindestens 8 Zeichen lang sein")]
+    [MaxLength(128, ErrorMessage = "Passwort darf maximal 128 Zeichen lang sein")]
     public required string Password { get; init; }
+
+    [Required(ErrorMessage = "Name ist erforderlich")]
+    [MinLength(2, ErrorMessage = "Name muss mindestens 2 Zeichen lang sein")]
+    [MaxLength(100, ErrorMessage = "Name darf maximal 100 Zeichen lang sein")]
     public required string Name { get; init; }
 }
