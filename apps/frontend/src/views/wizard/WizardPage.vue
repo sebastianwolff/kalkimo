@@ -93,19 +93,27 @@ function handleValidationChange(valid: boolean) {
   isStepValid.value = valid;
 }
 
-function handleFinish() {
+async function handleFinish() {
   if (!projectStore.currentProject) return;
 
   // Save project locally (to localStorage)
   projectStore.saveProjectLocally();
 
-  // Show success message
-  uiStore.showToast('Projekt gespeichert', 'success');
-
-  // Navigate based on auth status
+  // Sync to server for authenticated users
   if (isAuthenticated.value) {
+    isLoading.value = true;
+    const synced = await projectStore.syncProjectToServer();
+    isLoading.value = false;
+
+    if (synced) {
+      uiStore.showToast('Projekt gespeichert', 'success');
+    } else {
+      uiStore.showToast('Lokal gespeichert (Server-Sync fehlgeschlagen)', 'warning');
+    }
+
     router.push('/projects');
   } else {
+    uiStore.showToast('Projekt gespeichert', 'success');
     router.push('/home');
   }
 }

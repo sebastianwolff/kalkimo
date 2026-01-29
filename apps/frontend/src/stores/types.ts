@@ -184,6 +184,19 @@ export interface CostConfiguration {
 }
 
 // CapEx models
+
+/** Wirtschaftliche Auswirkung einer Maßnahme (Betriebskostenersparnis, Mietpotenzial) */
+export interface MeasureImpact {
+  /** Monatliche Betriebskostenersparnis (z.B. geringere Heizkosten) */
+  costSavingsMonthly?: Money;
+  /** Mieterhöhung absolut pro Monat (z.B. Modernisierungsumlage) */
+  rentIncreaseMonthly?: Money;
+  /** Mieterhöhung relativ (%) */
+  rentIncreasePercent?: number;
+  /** Verzögerung in Monaten (Bauzeit, erst danach wirken Einsparungen) */
+  delayMonths?: number;
+}
+
 export interface CapExMeasure {
   id: string;
   name: string;
@@ -192,6 +205,7 @@ export interface CapExMeasure {
   scheduledDate: YearMonth;
   taxClassification: TaxClassification;
   distributionYears?: number; // for §82b
+  impact?: MeasureImpact;
 }
 
 // Tax profile
@@ -231,9 +245,12 @@ export interface YearlyCashflowRow {
   grossRent: number;
   vacancyLoss: number;
   effectiveRent: number;
+  serviceChargeIncome: number;
   operatingCosts: number;
   netOperatingIncome: number;
   debtService: number;
+  interestPortion: number;
+  principalPortion: number;
   capexPayments: number;
   cashflowBeforeTax: number;
   depreciation: number;
@@ -244,6 +261,33 @@ export interface YearlyCashflowRow {
   cashflowAfterTax: number;
   cumulativeCashflow: number;
   outstandingDebt: number;
+  ltvPercent: number;
+  dscrYear: number;
+  icrYear: number;
+}
+
+// Steuer-Bridge: waterfall of tax drivers per year
+export interface TaxBridgeRow {
+  year: number;
+  grossIncome: number;
+  depreciation: number;
+  interestExpense: number;
+  maintenanceExpense: number;
+  operatingExpenses: number;
+  taxableIncome: number;
+  taxPayment: number;
+}
+
+// CapEx timeline item for Gantt-style display
+export interface CapExTimelineItem {
+  id: string;
+  name: string;
+  category: CapExCategory;
+  year: number;
+  month: number;
+  amount: number;
+  taxClassification: TaxClassification;
+  distributionYears?: number;
 }
 
 // Investment metrics
@@ -256,10 +300,13 @@ export interface InvestmentMetrics {
   equityMultiple: number;
   dscrMin: number;
   dscrAvg: number;
+  icrMin: number;
   ltvInitialPercent: number;
   ltvFinalPercent: number;
   breakEvenRent: Money;
   roiPercent: number;
+  maintenanceRiskScore: number;   // 0-100
+  liquidityRiskScore: number;     // 0-100
 }
 
 // Tax summary
@@ -267,12 +314,15 @@ export interface TaxSummary {
   totalDepreciation: Money;
   totalInterestDeduction: Money;
   totalMaintenanceDeduction: Money;
+  totalOperatingDeduction: Money;
   acquisitionRelatedCostsTriggered: boolean;
   acquisitionRelatedCostsAmount: Money;
   totalTaxPayment: Money;
+  totalTaxSavings: Money;
   annualDepreciation: Money;
   depreciationRatePercent: number;
   depreciationBasis: Money;
+  effectiveTaxRatePercent: number;
 }
 
 // Calculation warning
@@ -290,6 +340,8 @@ export interface CalculationResult {
   calculatedAt: string;
   metrics: InvestmentMetrics;
   yearlyCashflows: YearlyCashflowRow[];
+  taxBridge: TaxBridgeRow[];
+  capexTimeline: CapExTimelineItem[];
   taxSummary: TaxSummary;
   warnings: CalculationWarning[];
   totalEquityInvested: number;

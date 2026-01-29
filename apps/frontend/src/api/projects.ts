@@ -5,10 +5,10 @@ export interface ProjectSummary {
   id: string;
   name: string;
   description?: string;
-  propertyType: string;
-  currency: string;
+  version: number;
   createdAt: string;
   updatedAt: string;
+  status: string;
 }
 
 export interface CreateProjectRequest {
@@ -87,6 +87,23 @@ export const projectsApi = {
   async calculate(id: string): Promise<CalculationResult> {
     try {
       const response = await apiClient.get<CalculationResult>(`/projects/${id}/calculate`);
+      return response.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  },
+
+  async saveData(id: string, projectData: Project): Promise<void> {
+    try {
+      await apiClient.put(`/projects/${id}/data`, projectData);
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  },
+
+  async getData(id: string): Promise<Project> {
+    try {
+      const response = await apiClient.get<Project>(`/projects/${id}/data`);
       return response.data;
     } catch (error) {
       throw new Error(getErrorMessage(error));

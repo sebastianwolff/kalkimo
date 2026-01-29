@@ -146,8 +146,10 @@ public class LocalDevEncryptionService : IEncryptionService
     {
         if (!_projectKeys.TryGetValue(projectId, out var key))
         {
-            key = new byte[32];
-            RandomNumberGenerator.Fill(key);
+            // Deterministisch: Key wird aus MasterKey + ProjectId abgeleitet (HMAC-SHA256)
+            // So erzeugt jede Instanz denselben Key für denselben ProjectId
+            using var hmac = new System.Security.Cryptography.HMACSHA256(_masterKey);
+            key = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(projectId));
             _projectKeys[projectId] = key;
         }
         return key;

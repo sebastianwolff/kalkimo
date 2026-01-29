@@ -56,7 +56,8 @@ export default {
     newProject: 'New Project',
     settings: 'Settings',
     help: 'Help',
-    about: 'About'
+    about: 'About',
+    admin: 'Administration'
   },
 
   wizard: {
@@ -122,6 +123,23 @@ export default {
       totalMea: 'Total MEA',
       sharePercent: 'Share in %',
       reserveBalance: 'Reserve Balance'
+    },
+    components: {
+      title: 'Building Components',
+      hint: 'Optional. Construction year is used as default if not specified.',
+      lastRenovation: 'Last Renovation',
+      expectedCycle: 'Exp. Cycle (Years)',
+      condition: 'Condition',
+      categories: {
+        Heating: 'Heating',
+        Roof: 'Roof',
+        Facade: 'Facade',
+        Windows: 'Windows',
+        Electrical: 'Electrical',
+        Plumbing: 'Plumbing',
+        Interior: 'Interior',
+        Energy: 'Energy Renovation'
+      }
     }
   },
 
@@ -238,7 +256,15 @@ export default {
       category: 'Category',
       amount: 'Amount',
       scheduledDate: 'Scheduled For',
-      taxClassification: 'Tax Classification'
+      taxClassification: 'Tax Classification',
+      impact: 'Economic Impact',
+      costSavings: 'Operating Cost Savings/Month',
+      costSavingsHint: 'E.g. lower heating costs after energy renovation',
+      rentIncrease: 'Rent Increase/Month',
+      rentIncreaseHint: 'E.g. modernization surcharge or higher rent at re-letting',
+      rentIncreasePercent: 'Rent Increase (%)',
+      delayMonths: 'Construction Period (Months)',
+      delayMonthsHint: 'Savings and rent increase take effect only after completion'
     },
     categories: {
       Roof: 'Roof',
@@ -257,7 +283,25 @@ export default {
       ImprovementCost: 'Improvement Cost (Depreciation)',
       NotDeductible: 'Not Deductible'
     },
-    totalCapex: 'Total Capital Expenditure'
+    totalCapex: 'Total Capital Expenditure',
+    suggestMeasures: 'Suggest Measures',
+    suggestions: {
+      title: 'Suggested Measures',
+      accept: 'Accept',
+      dismiss: 'Dismiss',
+      acceptAll: 'Accept All',
+      reasoning: 'Reasoning',
+      age: 'Age',
+      cycle: 'Cycle',
+      priority: 'Priority',
+      priorities: {
+        Critical: 'Critical',
+        High: 'High',
+        Medium: 'Medium',
+        Low: 'Low'
+      },
+      empty: 'No measures recommended for the analysis period'
+    }
   },
 
   summary: {
@@ -267,8 +311,13 @@ export default {
     calculate: 'Calculate',
     recalculate: 'Recalculate',
     export: 'Export',
+    cashflowChart: 'Cashflow Development',
     cashflowTable: 'Cashflow Overview',
+    financingChart: 'Financing Development',
+    taxBridge: 'Tax Bridge',
     taxSummary: 'Tax Summary',
+    capexTimeline: 'CapEx Timeline',
+    riskIndicators: 'Risk Indicators',
     warnings: 'Notes & Warnings',
     returnMetrics: 'Return Metrics',
     bankMetrics: 'Bank Metrics',
@@ -282,6 +331,7 @@ export default {
       roi: 'Return on Equity p.a.',
       dscrMin: 'DSCR (Minimum)',
       dscrAvg: 'DSCR (Average)',
+      icrMin: 'ICR (Minimum)',
       ltvInitial: 'LTV initial',
       ltvFinal: 'LTV final',
       breakEvenRent: 'Break-Even Rent'
@@ -294,12 +344,16 @@ export default {
       operatingCosts: 'Operating Costs',
       noi: 'NOI',
       debtService: 'Debt Service',
+      interest: 'Interest',
+      principal: 'Principal',
       capex: 'CapEx',
       beforeTax: 'CF before Tax',
       tax: 'Tax',
       afterTax: 'CF after Tax',
       cumulative: 'Cumulative',
-      debt: 'Outstanding Debt'
+      debt: 'Outstanding Debt',
+      ltv: 'LTV',
+      dscr: 'DSCR'
     },
     tax: {
       depreciationRate: 'Depreciation Rate',
@@ -308,11 +362,31 @@ export default {
       totalDepreciation: 'Total Depreciation',
       totalInterest: 'Total Interest Deduction',
       totalMaintenance: 'Total Maintenance Deduction',
+      totalOperating: 'Total Operating Costs',
       totalTax: 'Total Tax Paid',
+      totalSavings: 'Tax Savings from Deductions',
+      effectiveRate: 'Effective Tax Rate',
       rule15: '15% Rule',
       rule15Triggered: '15% Rule Triggered',
       rule15NotTriggered: '15% Rule Not Triggered',
-      rule15Amount: 'Maintenance in 3 Years'
+      rule15Amount: 'Maintenance in 3 Years',
+      bridge: {
+        income: 'Rental Income',
+        depreciation: 'Depreciation',
+        interest: 'Interest',
+        maintenance: 'Maintenance',
+        operating: 'Operating Costs',
+        taxableIncome: 'Taxable Income',
+        taxPayment: 'Tax Payment'
+      }
+    },
+    risk: {
+      maintenance: 'Maintenance Risk',
+      liquidity: 'Liquidity Risk',
+      low: 'Low',
+      medium: 'Medium',
+      high: 'High',
+      critical: 'Critical'
     },
     totals: {
       totalEquity: 'Total Equity Invested',
@@ -338,6 +412,20 @@ export default {
     glossary: 'Glossary',
     faq: 'FAQ',
     contact: 'Contact'
+  },
+
+  admin: {
+    title: 'Administration',
+    users: 'Users',
+    userCount: 'Registered Users',
+    projectCount: 'Total Projects',
+    userDetail: 'User Details',
+    userInfo: 'User Information',
+    roles: 'Roles',
+    registeredAt: 'Registered',
+    projects: 'Projects',
+    noProjects: 'No projects',
+    backToUsers: 'Back to overview'
   },
 
   errors: {

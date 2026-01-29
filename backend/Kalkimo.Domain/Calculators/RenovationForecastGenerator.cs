@@ -1,0 +1,181 @@
+using Kalkimo.Domain.Models;
+
+namespace Kalkimo.Domain.Calculators;
+
+/// <summary>
+/// Generiert Sanierungsprognosen basierend auf Bauteilzuständen,
+/// Gebäudedaten und Standard-Lebenszyklusdaten.
+/// </summary>
+public static class RenovationForecastGenerator
+{
+    /// <summary>
+    /// Generiert eine Liste empfohlener CapEx-Maßnahmen basierend auf den
+    /// Bauteilzuständen der Immobilie und den Standard-Lebenszyklen.
+    /// </summary>
+    /// <param name="property">Immobilienobjekt mit Bauteilzuständen</param>
+    /// <param name="startPeriod">Beginn des Analysezeitraums</param>
+    /// <param name="endPeriod">Ende des Analysezeitraums</param>
+    /// <param name="currency">Währung für Kostenberechnung</param>
+    /// <returns>Sortierte Liste empfohlener Maßnahmen (Priorität absteigend, dann chronologisch)</returns>
+    public static IReadOnlyList<CapExMeasure> GenerateForecast(
+        Property property,
+        YearMonth startPeriod,
+        YearMonth endPeriod,
+        string currency = "EUR")
+    {
+        var measures = new List<CapExMeasure>();
+        var currentYear = DateTime.Now.Year;
+        const decimal annualInflation = 0.03m; // 3% p.a. Baukostensteigerung
+
+        // Alle Standard-Bauteilkategorien durchgehen
+        var categories = new[]
+        {
+            CapExCategory.Heating,
+            CapExCategory.Roof,
+            CapExCategory.Facade,
+            CapExCategory.Windows,
+            CapExCategory.Electrical,
+            CapExCategory.Plumbing,
+            CapExCategory.Interior,
+            CapExCategory.Energy
+        };
+
+        foreach (var category in categories)
+        {
+            var cycleData = DefaultComponentCycles.GetCycle(category);
+
+            // Bauteilzustand aus Property-Daten (falls erfasst)
+            var component = property.Components.FirstOrDefault(c => c.Category == category);
+
+            // Letzte Sanierung: explizit > Baujahr
+            var lastRenovationYear = component?.LastRenovationYear ?? property.ConstructionYear;
+
+            // Erwarteter Zyklus: explizit > Default-Mittelwert
+            var cycleYears = component?.ExpectedCycleYears > 0
+                ? component.ExpectedCycleYears
+                : (cycleData.MinYears + cycleData.MaxYears) / 2;
+
+            // Bauteilzustand für Kosteninterpolation
+            var componentCondition = component?.Condition ?? property.OverallCondition;
+
+            // Nächste Erneuerung berechnen
+            var nextRenewalYear = lastRenovationYear + cycleYears;
+
+            // Nur Maßnahmen im Analysezeitraum
+            if (nextRenewalYear > endPeriod.Year)
+                continue;
+
+            // Geplantes Jahr mindestens ab Analysebeginn
+            var plannedYear = Math.Max(nextRenewalYear, startPeriod.Year);
+            var componentAge = plannedYear - lastRenovationYear;
+
+            // Kostenberechnung
+            var costFactor = GetConditionCostFactor(componentCondition);
+            var baseCostPerUnit = cycleData.CostPerSqmMin.Amount +
+                (cycleData.CostPerSqmMax.Amount - cycleData.CostPerSqmMin.Amount) * costFactor;
+
+            // Relevante Fläche/Menge bestimmen
+            var unitCount = GetUnitCount(category, property);
+
+            // Basiskosten
+            var estimatedCost = baseCostPerUnit * unitCount;
+
+            // Inflationsanpassung bis zum geplanten Jahr
+            var yearsUntil = Math.Max(0, plannedYear - currentYear);
+            estimatedCost *= (decimal)Math.Pow(1 + (double)annualInflation, yearsUntil);
+
+            // Auf 100€ runden
+            estimatedCost = Math.Round(estimatedCost / 100) * 100;
+
+            // Priorität ableiten
+            var priority = DerivePriority(componentAge, cycleYears);
+
+            var measureName = GetMeasureName(category);
+
+            measures.Add(new CapExMeasure
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = measureName,
+                Category = category,
+                PlannedPeriod = new YearMonth(plannedYear, 1),
+                EstimatedCost = new Money(estimatedCost, currency),
+                TaxClassification = TaxClassification.MaintenanceExpense,
+                IsNecessary = priority == MeasurePriority.Critical || priority == MeasurePriority.High,
+                Priority = priority,
+                IsValueEnhancing = false,
+                IsExecuted = false
+            });
+        }
+
+        // Sortierung: Priorität (Critical zuerst), dann chronologisch
+        return measures
+            .OrderBy(m => m.Priority)
+            .ThenBy(m => m.PlannedPeriod)
+            .ToList()
+            .AsReadOnly();
+    }
+
+    /// <summary>
+    /// Berechnet den Kostenfaktor basierend auf dem Bauteilzustand.
+    /// 0 = Min-Kosten (gut), 1 = Max-Kosten (schlecht)
+    /// </summary>
+    private static decimal GetConditionCostFactor(Condition condition) => condition switch
+    {
+        Condition.Good => 0.2m,
+        Condition.Medium => 0.5m,
+        Condition.Poor => 1.0m,
+        _ => 0.5m
+    };
+
+    /// <summary>
+    /// Bestimmt die relevante Fläche/Menge für die Kostenberechnung pro Kategorie.
+    /// </summary>
+    private static decimal GetUnitCount(CapExCategory category, Property property) => category switch
+    {
+        // Dach und Fassade beziehen sich auf die Gesamtfläche
+        CapExCategory.Roof => property.TotalArea,
+        CapExCategory.Facade => property.TotalArea,
+
+        // Fenster: Schätzung 1 Fenster pro 8m² Wohnfläche
+        CapExCategory.Windows => Math.Ceiling(property.LivingArea / 8),
+
+        // Energetische Sanierung bezieht sich auf Gesamtfläche
+        CapExCategory.Energy => property.TotalArea,
+
+        // Alle anderen auf Wohnfläche
+        _ => property.LivingArea
+    };
+
+    /// <summary>
+    /// Leitet die Priorität aus Alter und erwartetem Zyklus ab.
+    /// </summary>
+    private static MeasurePriority DerivePriority(int componentAge, int cycleYears)
+    {
+        if (cycleYears <= 0) return MeasurePriority.Medium;
+
+        var ratio = (decimal)componentAge / cycleYears;
+        return ratio switch
+        {
+            >= 1.0m => MeasurePriority.Critical,
+            >= 0.8m => MeasurePriority.High,
+            >= 0.6m => MeasurePriority.Medium,
+            _ => MeasurePriority.Low
+        };
+    }
+
+    /// <summary>
+    /// Standard-Maßnahmenbezeichnung pro Kategorie.
+    /// </summary>
+    private static string GetMeasureName(CapExCategory category) => category switch
+    {
+        CapExCategory.Heating => "Heizungserneuerung",
+        CapExCategory.Roof => "Dachsanierung",
+        CapExCategory.Facade => "Fassadensanierung",
+        CapExCategory.Windows => "Fenstererneuerung",
+        CapExCategory.Electrical => "Elektrikerneuerung",
+        CapExCategory.Plumbing => "Sanitärerneuerung",
+        CapExCategory.Interior => "Innenausbau-Erneuerung",
+        CapExCategory.Energy => "Energetische Sanierung",
+        _ => "Sonstige Sanierung"
+    };
+}

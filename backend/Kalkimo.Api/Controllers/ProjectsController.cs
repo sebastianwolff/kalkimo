@@ -303,27 +303,100 @@ public class ProjectsController : ControllerBase
     }
 
     /// <summary>
+    /// Frontend-Projektdaten speichern (Raw JSON, unabhängig vom Domain-Model)
+    /// </summary>
+    [HttpPut("{id}/data")]
+    public async Task<IActionResult> SaveProjectData(string id, CancellationToken ct)
+    {
+        var userId = GetUserId();
+
+        // Check ownership if project already exists
+        var exists = await _store.ExistsAsync(id, ct) || await _store.IsOwnedByAsync(id, userId, ct);
+        if (exists)
+        {
+            var isOwner = await _store.IsOwnedByAsync(id, userId, ct);
+            if (!isOwner)
+            {
+                _logger.LogWarning("User {UserId} tried to save data for project {ProjectId} they don't own", userId, id);
+                return Forbid();
+            }
+        }
+
+        using var ms = new MemoryStream();
+        await Request.Body.CopyToAsync(ms, ct);
+        var rawJson = ms.ToArray();
+
+        if (rawJson.Length == 0)
+        {
+            return BadRequest(new { error = "Request body is empty" });
+        }
+
+        await _store.SaveProjectDataAsync(id, userId, rawJson, ct);
+
+        _logger.LogInformation("Project data saved: {ProjectId} by {UserId}", id, userId);
+
+        return Ok(new { id });
+    }
+
+    /// <summary>
+    /// Frontend-Projektdaten laden (Raw JSON)
+    /// </summary>
+    [HttpGet("{id}/data")]
+    public async Task<IActionResult> GetProjectData(string id, CancellationToken ct)
+    {
+        var userId = GetUserId();
+
+        // Check ownership via metadata
+        var isOwner = await _store.IsOwnedByAsync(id, userId, ct);
+        if (!isOwner)
+        {
+            return NotFound(new { error = "Project not found" });
+        }
+
+        var rawJson = await _store.LoadProjectDataAsync(id, ct);
+        if (rawJson == null)
+        {
+            return NotFound(new { error = "Project data not found" });
+        }
+
+        return new ContentResult
+        {
+            Content = System.Text.Encoding.UTF8.GetString(rawJson),
+            ContentType = "application/json",
+            StatusCode = 200
+        };
+    }
+
+    /// <summary>
     /// Projekt löschen
     /// </summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProject(string id, CancellationToken ct)
     {
-        try
+        var userId = GetUserId();
+
+        // Check ownership via metadata (works for both domain and frontend-only projects)
+        var isOwner = await _store.IsOwnedByAsync(id, userId, ct);
+        if (!isOwner)
         {
-            var project = await GetAuthorizedProjectAsync(id, ct);
-            if (project == null)
+            // Fallback: check via domain model for legacy projects
+            try
             {
-                return NotFound(new { error = "Project not found" });
+                var project = await GetAuthorizedProjectAsync(id, ct);
+                if (project == null)
+                {
+                    return NotFound(new { error = "Project not found" });
+                }
             }
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
         }
 
         await _store.DeleteProjectAsync(id, ct);
 
-        _logger.LogInformation("Project deleted: {ProjectId} by {UserId}", id, GetUserId());
+        _logger.LogInformation("Project deleted: {ProjectId} by {UserId}", id, userId);
 
         return NoContent();
     }

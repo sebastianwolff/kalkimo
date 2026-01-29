@@ -22,6 +22,26 @@
         </ion-item>
       </ion-list>
 
+      <!-- Admin-Bereich -->
+      <ion-list v-if="isAdmin">
+        <ion-list-header>
+          <ion-label>Admin</ion-label>
+        </ion-list-header>
+
+        <ion-item
+          v-for="item in adminMenuItems"
+          :key="item.path"
+          :router-link="item.path"
+          router-direction="root"
+          lines="none"
+          detail
+          :class="{ 'menu-item-active': isActive(item.path) }"
+        >
+          <ion-icon slot="start" :icon="item.icon" />
+          <ion-label>{{ t(item.labelKey) }}</ion-label>
+        </ion-item>
+      </ion-list>
+
       <ion-list v-if="isAuthenticated">
         <ion-list-header>
           <ion-label>{{ displayName }}</ion-label>
@@ -59,17 +79,21 @@ import {
   addCircleOutline,
   settingsOutline,
   helpCircleOutline,
-  logOutOutline
+  logOutOutline,
+  shieldOutline
 } from 'ionicons/icons';
 import { useAuthStore } from '@/stores/authStore';
+import { useProjectStore } from '@/stores/projectStore';
 import { authApi } from '@/api';
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const projectStore = useProjectStore();
 
 const isAuthenticated = computed(() => authStore.isAuthenticated);
+const isAdmin = computed(() => authStore.isAdmin);
 const displayName = computed(() => authStore.displayName);
 
 const allMenuItems = [
@@ -78,6 +102,10 @@ const allMenuItems = [
   { path: '/wizard', icon: addCircleOutline, labelKey: 'nav.newProject', requiresAuth: false },
   { path: '/settings', icon: settingsOutline, labelKey: 'nav.settings', requiresAuth: false },
   { path: '/help', icon: helpCircleOutline, labelKey: 'nav.help', requiresAuth: false }
+];
+
+const adminMenuItems = [
+  { path: '/admin', icon: shieldOutline, labelKey: 'nav.admin' }
 ];
 
 // Filter menu items based on auth status
@@ -90,6 +118,7 @@ function isActive(path: string): boolean {
 }
 
 async function handleLogout() {
+  projectStore.clearAll();
   await authApi.logout();
   authStore.logout();
   await menuController.close();

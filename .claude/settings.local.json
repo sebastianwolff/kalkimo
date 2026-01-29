@@ -19,7 +19,12 @@
       "Bash(timeout:*)",
       "Bash(ping:*)",
       "Bash(dir:*)",
-      "Bash(npx vue-tsc:*)"
+      "Bash(npx vue-tsc:*)",
+      "Bash(docker compose:*)",
+      "Bash(python:*)",
+      "Bash(printf:*)",
+      "Bash(python3 -c \"import urllib.request,json; req=urllib.request.Request\\(''http://localhost:5000/api/auth/login'',data=json.dumps\\({''email'':''sw@leondo-media.de'',''password'':''Test1234!''}\\).encode\\(\\),headers={''Content-Type'':''application/json''}\\); resp=urllib.request.urlopen\\(req\\); print\\(resp.read\\(\\).decode\\(\\)\\)\")",
+      "Bash(node -e:*)"
     ]
   }
 }

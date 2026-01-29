@@ -93,19 +93,20 @@ public record VacancyEvent
 }
 
 /// <summary>
-/// Mietwirkung einer Investition/Modernisierung
+/// Wirtschaftliche Auswirkung einer Investitionsmaßnahme:
+/// Betriebskostenersparnis (z.B. geringere Heizkosten) und Mietpotenzial.
 /// </summary>
-public record RentImpact
+public record MeasureImpact
 {
-    /// <summary>Mieterhöhung absolut pro Monat</summary>
-    public Money? AbsoluteIncrease { get; init; }
+    /// <summary>Monatliche Betriebskostenersparnis (z.B. Heizkosten nach Dämmung)</summary>
+    public Money? CostSavingsMonthly { get; init; }
+
+    /// <summary>Mieterhöhung absolut pro Monat (z.B. Modernisierungsumlage)</summary>
+    public Money? RentIncreaseMonthly { get; init; }
 
     /// <summary>Mieterhöhung relativ (%)</summary>
-    public decimal? RelativeIncreasePercent { get; init; }
+    public decimal? RentIncreasePercent { get; init; }
 
-    /// <summary>Verzögerung in Monaten (Bauzeit)</summary>
+    /// <summary>Verzögerung in Monaten (Bauzeit, erst danach wirken Einsparungen)</summary>
     public int DelayMonths { get; init; }
-
-    /// <summary>Deckel für Mieterhöhung</summary>
-    public Money? Cap { get; init; }
 }

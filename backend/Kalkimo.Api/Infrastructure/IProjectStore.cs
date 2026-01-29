@@ -45,6 +45,22 @@ public interface IProjectStore
     Task<bool> ExistsAsync(string projectId, CancellationToken ct = default);
 
     /// <summary>
+    /// Speichert Frontend-Projektdaten als verschlüsselten Raw-JSON-Blob
+    /// (unabhängig vom Backend-Domain-Model)
+    /// </summary>
+    Task SaveProjectDataAsync(string projectId, string userId, byte[] rawJson, CancellationToken ct = default);
+
+    /// <summary>
+    /// Lädt Frontend-Projektdaten als Raw-JSON-Blob
+    /// </summary>
+    Task<byte[]?> LoadProjectDataAsync(string projectId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Prüft ob ein Projekt einem Benutzer gehört (via Metadata)
+    /// </summary>
+    Task<bool> IsOwnedByAsync(string projectId, string userId, CancellationToken ct = default);
+
+    /// <summary>
     /// Atomically check version and apply update. Returns (success, currentVersion).
     /// If expectedVersion matches, saves the project and returns (true, newVersion).
     /// If not, returns (false, actualVersion).
@@ -248,8 +264,15 @@ public class FlatfileProjectStore : IProjectStore
 
     public async Task DeleteProjectAsync(string projectId, CancellationToken ct = default)
     {
-        // First, load the project to get the owner ID for metadata cleanup
+        // Try to get owner from domain snapshot first
         var project = await LoadSnapshotAsync(projectId, ct);
+        var ownerId = project?.CreatedBy;
+
+        // If no domain snapshot, try to find owner from metadata files
+        if (string.IsNullOrEmpty(ownerId))
+        {
+            ownerId = await FindOwnerByMetadataAsync(projectId, ct);
+        }
 
         var projectDir = GetProjectDirectory(projectId);
         if (Directory.Exists(projectDir))
@@ -260,17 +283,35 @@ public class FlatfileProjectStore : IProjectStore
         }
 
         // Clean up metadata file
-        if (project != null && !string.IsNullOrEmpty(project.CreatedBy))
+        if (!string.IsNullOrEmpty(ownerId))
         {
-            ValidatePathSegment(project.CreatedBy, "createdBy");
+            ValidatePathSegment(ownerId, "ownerId");
             ValidatePathSegment(projectId, nameof(projectId));
-            var metaPath = Path.Combine(_dataRoot, "users", project.CreatedBy, "projects", $"{projectId}.meta.json");
+            var metaPath = Path.Combine(_dataRoot, "users", ownerId, "projects", $"{projectId}.meta.json");
             ValidatePathWithinRoot(metaPath);
             if (File.Exists(metaPath))
             {
                 File.Delete(metaPath);
             }
         }
+    }
+
+    private Task<string?> FindOwnerByMetadataAsync(string projectId, CancellationToken ct)
+    {
+        var usersDir = Path.Combine(_dataRoot, "users");
+        if (!Directory.Exists(usersDir))
+            return Task.FromResult<string?>(null);
+
+        foreach (var userDir in Directory.GetDirectories(usersDir))
+        {
+            var metaPath = Path.Combine(userDir, "projects", $"{projectId}.meta.json");
+            if (File.Exists(metaPath))
+            {
+                return Task.FromResult<string?>(Path.GetFileName(userDir));
+            }
+        }
+
+        return Task.FromResult<string?>(null);
     }
 
     public Task<bool> ExistsAsync(string projectId, CancellationToken ct = default)
@@ -310,6 +351,61 @@ public class FlatfileProjectStore : IProjectStore
         {
             projectLock.Release();
         }
+    }
+
+    public async Task SaveProjectDataAsync(string projectId, string userId, byte[] rawJson, CancellationToken ct = default)
+    {
+        ValidatePathSegment(projectId, nameof(projectId));
+        ValidatePathSegment(userId, nameof(userId));
+
+        var projectDir = GetProjectDirectory(projectId);
+        Directory.CreateDirectory(projectDir);
+
+        // Save raw frontend JSON encrypted
+        var encrypted = await _encryption.EncryptAsync(rawJson, projectId, ct);
+        var dataPath = Path.Combine(projectDir, "frontend_data.json.enc");
+        await WriteEncryptedFileAsync(dataPath, encrypted, ct);
+
+        // Extract metadata from JSON for listing/ownership
+        using var doc = JsonDocument.Parse(rawJson);
+        var root = doc.RootElement;
+        var name = root.TryGetProperty("name", out var nameProp) ? nameProp.GetString() ?? "Unnamed" : "Unnamed";
+        var description = root.TryGetProperty("description", out var descProp) ? descProp.GetString() : null;
+
+        await SaveMetadataAsync(projectId, new ProjectMetadata
+        {
+            Id = projectId,
+            Name = name,
+            Description = description,
+            Version = 1,
+            OwnerId = userId,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        }, ct);
+    }
+
+    public async Task<byte[]?> LoadProjectDataAsync(string projectId, CancellationToken ct = default)
+    {
+        ValidatePathSegment(projectId, nameof(projectId));
+
+        var projectDir = GetProjectDirectory(projectId);
+        var dataPath = Path.Combine(projectDir, "frontend_data.json.enc");
+
+        if (!File.Exists(dataPath))
+            return null;
+
+        var encrypted = await ReadEncryptedFileAsync(dataPath, ct);
+        return await _encryption.DecryptAsync(encrypted, projectId, ct);
+    }
+
+    public Task<bool> IsOwnedByAsync(string projectId, string userId, CancellationToken ct = default)
+    {
+        ValidatePathSegment(projectId, nameof(projectId));
+        ValidatePathSegment(userId, nameof(userId));
+
+        var metaPath = Path.Combine(_dataRoot, "users", userId, "projects", $"{projectId}.meta.json");
+        ValidatePathWithinRoot(metaPath);
+        return Task.FromResult(File.Exists(metaPath));
     }
 
     private string GetProjectDirectory(string projectId)

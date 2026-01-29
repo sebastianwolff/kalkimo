@@ -73,12 +73,14 @@ import {
 import { logOutOutline } from 'ionicons/icons';
 import { AppHeader, KalkCard } from '@/components';
 import { useAuthStore } from '@/stores/authStore';
+import { useProjectStore } from '@/stores/projectStore';
 import { setLocale, getLocale } from '@/i18n';
 import { authApi } from '@/api';
 
 const { t } = useI18n();
 const router = useRouter();
 const authStore = useAuthStore();
+const projectStore = useProjectStore();
 
 const selectedLocale = ref(getLocale());
 const isAuthenticated = computed(() => authStore.isAuthenticated);
@@ -89,6 +91,7 @@ function changeLocale(event: CustomEvent) {
 }
 
 async function handleLogout() {
+  projectStore.clearAll();
   await authApi.logout();
   authStore.logout();
   router.push('/login');

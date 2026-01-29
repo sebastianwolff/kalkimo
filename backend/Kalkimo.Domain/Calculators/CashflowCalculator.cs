@@ -523,6 +523,60 @@ public static class CashflowCalculator
     }
 
     /// <summary>
+    /// Berechnet Mietanpassungen und Betriebskostenersparnisse aus Maßnahmen-Impacts.
+    /// Für jede ausgeführte Maßnahme mit Impact werden ab PlannedPeriod + DelayMonths
+    /// die monatlichen Einsparungen/Mieterhöhungen als Zeitreihe zurückgegeben.
+    /// </summary>
+    public static (MoneyTimeSeries rentAdjustment, MoneyTimeSeries costSavings) CalculateMeasureImpacts(
+        CapExConfiguration? capExConfig,
+        MoneyTimeSeries grossRent,
+        YearMonth startPeriod,
+        YearMonth endPeriod)
+    {
+        var rentAdj = new MoneyTimeSeries(startPeriod, endPeriod);
+        var costSav = new MoneyTimeSeries(startPeriod, endPeriod);
+
+        if (capExConfig == null)
+            return (rentAdj, costSav);
+
+        foreach (var measure in capExConfig.Measures)
+        {
+            if (!measure.IsExecuted || measure.Impact == null)
+                continue;
+
+            var impact = measure.Impact;
+            var effectiveStart = measure.PlannedPeriod.AddMonths(impact.DelayMonths);
+
+            foreach (var period in rentAdj.Periods)
+            {
+                if (period < effectiveStart)
+                    continue;
+
+                // Betriebskostenersparnis
+                if (impact.CostSavingsMonthly.HasValue)
+                {
+                    costSav[period] += impact.CostSavingsMonthly.Value;
+                }
+
+                // Mieterhöhung absolut
+                if (impact.RentIncreaseMonthly.HasValue)
+                {
+                    rentAdj[period] += impact.RentIncreaseMonthly.Value;
+                }
+
+                // Mieterhöhung relativ (auf Basis-Bruttomiete des Monats)
+                if (impact.RentIncreasePercent.HasValue && impact.RentIncreasePercent.Value != 0)
+                {
+                    var baseRent = grossRent[period];
+                    rentAdj[period] += baseRent * (impact.RentIncreasePercent.Value / 100);
+                }
+            }
+        }
+
+        return (rentAdj, costSav);
+    }
+
+    /// <summary>
     /// Berechnet den Objektwert über die Zeit
     /// </summary>
     public static MoneyTimeSeries CalculatePropertyValue(

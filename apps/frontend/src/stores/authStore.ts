@@ -28,6 +28,7 @@ export const useAuthStore = defineStore('auth', () => {
   // Getters
   const isAuthenticated = computed(() => !!tokens.value && Date.now() < tokens.value.expiresAt);
   const isOwner = computed(() => user.value?.roles?.includes('Owner') ?? false);
+  const isAdmin = computed(() => user.value?.roles?.includes('Admin') ?? false);
   const displayName = computed(() => user.value?.name ?? user.value?.email ?? '');
 
   // Initialize from storage
@@ -112,6 +113,7 @@ export const useAuthStore = defineStore('auth', () => {
     // Getters
     isAuthenticated,
     isOwner,
+    isAdmin,
     displayName,
 
     // Actions

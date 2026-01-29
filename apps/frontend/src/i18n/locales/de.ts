@@ -56,7 +56,8 @@ export default {
     newProject: 'Neues Projekt',
     settings: 'Einstellungen',
     help: 'Hilfe',
-    about: 'Über'
+    about: 'Über',
+    admin: 'Administration'
   },
 
   wizard: {
@@ -122,6 +123,23 @@ export default {
       totalMea: 'Gesamt-MEA',
       sharePercent: 'Anteil in %',
       reserveBalance: 'Rücklagenstand'
+    },
+    components: {
+      title: 'Gebäudebestandteile',
+      hint: 'Optional. Ohne Angabe wird das Baujahr des Gebäudes verwendet.',
+      lastRenovation: 'Letzte Sanierung',
+      expectedCycle: 'Erw. Zyklus (Jahre)',
+      condition: 'Zustand',
+      categories: {
+        Heating: 'Heizung',
+        Roof: 'Dach',
+        Facade: 'Fassade',
+        Windows: 'Fenster',
+        Electrical: 'Elektrik',
+        Plumbing: 'Sanitär',
+        Interior: 'Innenausbau',
+        Energy: 'Energetische Sanierung'
+      }
     }
   },
 
@@ -238,7 +256,15 @@ export default {
       category: 'Kategorie',
       amount: 'Betrag',
       scheduledDate: 'Geplant für',
-      taxClassification: 'Steuerliche Behandlung'
+      taxClassification: 'Steuerliche Behandlung',
+      impact: 'Wirtschaftliche Auswirkung',
+      costSavings: 'Betriebskostenersparnis/Monat',
+      costSavingsHint: 'Z.B. niedrigere Heizkosten nach energetischer Sanierung',
+      rentIncrease: 'Mieterhöhung/Monat',
+      rentIncreaseHint: 'Z.B. Modernisierungsumlage oder höhere Miete bei Neuvermietung',
+      rentIncreasePercent: 'Mieterhöhung (%)',
+      delayMonths: 'Bauzeit (Monate)',
+      delayMonthsHint: 'Erst nach Abschluss wirken Einsparungen und Mieterhöhung'
     },
     categories: {
       Roof: 'Dach',
@@ -257,7 +283,25 @@ export default {
       ImprovementCost: 'Herstellungskosten (AfA)',
       NotDeductible: 'Nicht absetzbar'
     },
-    totalCapex: 'Gesamtinvestitionen'
+    totalCapex: 'Gesamtinvestitionen',
+    suggestMeasures: 'Maßnahmen vorschlagen',
+    suggestions: {
+      title: 'Vorgeschlagene Maßnahmen',
+      accept: 'Übernehmen',
+      dismiss: 'Ablehnen',
+      acceptAll: 'Alle übernehmen',
+      reasoning: 'Begründung',
+      age: 'Alter',
+      cycle: 'Zyklus',
+      priority: 'Priorität',
+      priorities: {
+        Critical: 'Kritisch',
+        High: 'Hoch',
+        Medium: 'Mittel',
+        Low: 'Niedrig'
+      },
+      empty: 'Keine Maßnahmen im Analysezeitraum empfohlen'
+    }
   },
 
   summary: {
@@ -267,8 +311,13 @@ export default {
     calculate: 'Berechnen',
     recalculate: 'Neu berechnen',
     export: 'Exportieren',
+    cashflowChart: 'Cashflow-Verlauf',
     cashflowTable: 'Cashflow-Übersicht',
+    financingChart: 'Finanzierungsverlauf',
+    taxBridge: 'Steuer-Bridge',
     taxSummary: 'Steuerliche Zusammenfassung',
+    capexTimeline: 'Maßnahmen-Timeline',
+    riskIndicators: 'Risikoindikatoren',
     warnings: 'Hinweise & Warnungen',
     returnMetrics: 'Renditekennzahlen',
     bankMetrics: 'Bankkennzahlen',
@@ -282,6 +331,7 @@ export default {
       roi: 'Eigenkapitalrendite p.a.',
       dscrMin: 'DSCR (Minimum)',
       dscrAvg: 'DSCR (Durchschnitt)',
+      icrMin: 'ICR (Minimum)',
       ltvInitial: 'LTV initial',
       ltvFinal: 'LTV final',
       breakEvenRent: 'Break-Even Miete'
@@ -294,12 +344,16 @@ export default {
       operatingCosts: 'Betriebskosten',
       noi: 'NOI',
       debtService: 'Schuldendienst',
+      interest: 'Zinsen',
+      principal: 'Tilgung',
       capex: 'Investitionen',
       beforeTax: 'CF vor Steuern',
       tax: 'Steuern',
       afterTax: 'CF nach Steuern',
       cumulative: 'Kumuliert',
-      debt: 'Restschuld'
+      debt: 'Restschuld',
+      ltv: 'LTV',
+      dscr: 'DSCR'
     },
     tax: {
       depreciationRate: 'AfA-Satz',
@@ -308,11 +362,31 @@ export default {
       totalDepreciation: 'Gesamte AfA',
       totalInterest: 'Gesamte Schuldzinsen',
       totalMaintenance: 'Gesamter Erhaltungsaufwand',
+      totalOperating: 'Gesamte Betriebskosten',
       totalTax: 'Gesamte Steuerlast',
+      totalSavings: 'Steuerersparnis durch Abzüge',
+      effectiveRate: 'Effektiver Steuersatz',
       rule15: '15%-Regel',
       rule15Triggered: '15%-Regel ausgelöst',
       rule15NotTriggered: '15%-Regel nicht ausgelöst',
-      rule15Amount: 'Erhaltungsaufwand in 3 Jahren'
+      rule15Amount: 'Erhaltungsaufwand in 3 Jahren',
+      bridge: {
+        income: 'Mieteinnahmen',
+        depreciation: 'AfA',
+        interest: 'Schuldzinsen',
+        maintenance: 'Erhaltungsaufwand',
+        operating: 'Betriebskosten',
+        taxableIncome: 'Zu verst. Einkommen',
+        taxPayment: 'Steuerzahlung'
+      }
+    },
+    risk: {
+      maintenance: 'Sanierungsrisiko',
+      liquidity: 'Liquiditätsrisiko',
+      low: 'Niedrig',
+      medium: 'Mittel',
+      high: 'Hoch',
+      critical: 'Kritisch'
     },
     totals: {
       totalEquity: 'Eingesetztes Eigenkapital',
@@ -338,6 +412,20 @@ export default {
     glossary: 'Glossar',
     faq: 'Häufige Fragen',
     contact: 'Kontakt'
+  },
+
+  admin: {
+    title: 'Administration',
+    users: 'Benutzer',
+    userCount: 'Registrierte Benutzer',
+    projectCount: 'Projekte gesamt',
+    userDetail: 'Benutzer-Details',
+    userInfo: 'Benutzer-Informationen',
+    roles: 'Rollen',
+    registeredAt: 'Registriert am',
+    projects: 'Projekte',
+    noProjects: 'Keine Projekte vorhanden',
+    backToUsers: 'Zurück zur Übersicht'
   },
 
   errors: {

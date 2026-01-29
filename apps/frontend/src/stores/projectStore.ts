@@ -1,10 +1,27 @@
 import { defineStore } from 'pinia';
 import { ref, computed, watch } from 'vue';
-import type { Project, CalculationResult, YearMonth, Money } from './types';
+import type { Project, CalculationResult, YearMonth, Money, ComponentCondition, CapExCategory } from './types';
+import { getDefaultCycleYears } from '@/services/renovationForecastService';
+import { projectsApi } from '@/api/projects';
+import type { ProjectSummary } from '@/api/projects';
+import { useAuthStore } from './authStore';
 
-// LocalStorage keys
+// LocalStorage key prefixes (suffixed with userId for authenticated users)
 const LOCAL_PROJECT_KEY = 'kalkimo_local_project';
 const LOCAL_PROJECTS_KEY = 'kalkimo_local_projects';
+
+function getStorageKey(base: string): string {
+  // Scope localStorage by userId when authenticated
+  try {
+    const authStore = useAuthStore();
+    if (authStore.user?.id) {
+      return `${base}_${authStore.user.id}`;
+    }
+  } catch {
+    // authStore might not be available yet
+  }
+  return base;
+}
 
 // Command for undo/redo
 interface Command {
@@ -19,6 +36,7 @@ export const useProjectStore = defineStore('project', () => {
   // State
   const currentProject = ref<Project | null>(null);
   const projects = ref<Project[]>([]);
+  const projectSummaries = ref<ProjectSummary[]>([]);
   const calculationResult = ref<CalculationResult | null>(null);
   const isLoading = ref(false);
   const error = ref<string | null>(null);
@@ -94,7 +112,7 @@ export const useProjectStore = defineStore('project', () => {
   function saveToLocalStorage() {
     try {
       if (currentProject.value) {
-        localStorage.setItem(LOCAL_PROJECT_KEY, JSON.stringify(currentProject.value));
+        localStorage.setItem(getStorageKey(LOCAL_PROJECT_KEY), JSON.stringify(currentProject.value));
       }
     } catch (e) {
       console.warn('Failed to save project to localStorage:', e);
@@ -103,7 +121,7 @@ export const useProjectStore = defineStore('project', () => {
 
   function saveProjectsToLocalStorage() {
     try {
-      localStorage.setItem(LOCAL_PROJECTS_KEY, JSON.stringify(projects.value));
+      localStorage.setItem(getStorageKey(LOCAL_PROJECTS_KEY), JSON.stringify(projects.value));
     } catch (e) {
       console.warn('Failed to save projects to localStorage:', e);
     }
@@ -112,14 +130,14 @@ export const useProjectStore = defineStore('project', () => {
   function initFromStorage() {
     try {
       // Load current project
-      const stored = localStorage.getItem(LOCAL_PROJECT_KEY);
+      const stored = localStorage.getItem(getStorageKey(LOCAL_PROJECT_KEY));
       if (stored) {
         currentProject.value = JSON.parse(stored) as Project;
         isSavedToCloud.value = false;
       }
 
       // Load projects list
-      const storedProjects = localStorage.getItem(LOCAL_PROJECTS_KEY);
+      const storedProjects = localStorage.getItem(getStorageKey(LOCAL_PROJECTS_KEY));
       if (storedProjects) {
         projects.value = JSON.parse(storedProjects) as Project[];
       }
@@ -129,7 +147,96 @@ export const useProjectStore = defineStore('project', () => {
   }
 
   function clearLocalStorage() {
+    localStorage.removeItem(getStorageKey(LOCAL_PROJECT_KEY));
+  }
+
+  // === Server sync methods (for authenticated users) ===
+
+  async function syncProjectToServer(): Promise<boolean> {
+    if (!currentProject.value) return false;
+
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return false;
+
+    try {
+      isLoading.value = true;
+      await projectsApi.saveData(currentProject.value.id, currentProject.value);
+      isSavedToCloud.value = true;
+      return true;
+    } catch (e) {
+      console.error('Failed to sync project to server:', e);
+      error.value = e instanceof Error ? e.message : 'Sync failed';
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  async function loadProjectFromServer(projectId: string): Promise<Project | null> {
+    try {
+      isLoading.value = true;
+      const project = await projectsApi.getData(projectId);
+      return project;
+    } catch (e) {
+      console.error('Failed to load project from server:', e);
+      error.value = e instanceof Error ? e.message : 'Load failed';
+      return null;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  async function loadProjectListFromServer(): Promise<ProjectSummary[]> {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return [];
+
+    try {
+      isLoading.value = true;
+      const summaries = await projectsApi.list();
+      projectSummaries.value = summaries;
+      return summaries;
+    } catch (e) {
+      console.error('Failed to load project list from server:', e);
+      error.value = e instanceof Error ? e.message : 'Load failed';
+      return [];
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  async function deleteProjectFromServer(projectId: string): Promise<boolean> {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return false;
+
+    try {
+      await projectsApi.delete(projectId);
+      return true;
+    } catch (e) {
+      console.error('Failed to delete project from server:', e);
+      error.value = e instanceof Error ? e.message : 'Delete failed';
+      return false;
+    }
+  }
+
+  // === Clear all project data (called on logout) ===
+
+  function clearAll() {
+    currentProject.value = null;
+    projects.value = [];
+    projectSummaries.value = [];
+    calculationResult.value = null;
+    isSavedToCloud.value = false;
+    undoStack.value = [];
+    redoStack.value = [];
+    error.value = null;
+
+    // Clear user-scoped localStorage
+    localStorage.removeItem(getStorageKey(LOCAL_PROJECT_KEY));
+    localStorage.removeItem(getStorageKey(LOCAL_PROJECTS_KEY));
+
+    // Also clear non-scoped keys (legacy cleanup)
     localStorage.removeItem(LOCAL_PROJECT_KEY);
+    localStorage.removeItem(LOCAL_PROJECTS_KEY);
   }
 
   // Actions
@@ -263,6 +370,18 @@ export const useProjectStore = defineStore('project', () => {
       month: endMonth
     };
 
+    // Initialize standard building components with default cycle years
+    const defaultCondition = 'Good';
+    const standardCategories: CapExCategory[] = [
+      'Heating', 'Roof', 'Facade', 'Windows',
+      'Electrical', 'Plumbing', 'Interior', 'Exterior'
+    ];
+    const defaultComponents: ComponentCondition[] = standardCategories.map(category => ({
+      category,
+      condition: defaultCondition,
+      expectedCycleYears: getDefaultCycleYears(category),
+    }));
+
     return {
       id: crypto.randomUUID(),
       name,
@@ -278,7 +397,7 @@ export const useProjectStore = defineStore('project', () => {
         livingArea: 120,
         unitCount: 1,
         units: [],
-        components: []
+        components: defaultComponents
       },
       purchase: {
         purchasePrice: { amount: 300000, currency },
@@ -314,6 +433,7 @@ export const useProjectStore = defineStore('project', () => {
     // State
     currentProject,
     projects,
+    projectSummaries,
     calculationResult,
     isLoading,
     error,
@@ -344,6 +464,13 @@ export const useProjectStore = defineStore('project', () => {
     createNewProject,
     saveProjectLocally,
     markAsSavedToCloud,
-    clearLocalStorage
+    clearLocalStorage,
+
+    // Server sync
+    syncProjectToServer,
+    loadProjectFromServer,
+    loadProjectListFromServer,
+    deleteProjectFromServer,
+    clearAll
   };
 });

@@ -9,6 +9,63 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
+// ===========================================
+// Admin Seed CLI (kein Webserver, direkter Zugriff auf AuthStore)
+// Nutzung: dotnet run -- --seed-admin admin@kalkimo.de
+// ===========================================
+var seedAdminIdx = Array.IndexOf(args, "--seed-admin");
+if (seedAdminIdx >= 0)
+{
+    if (seedAdminIdx + 1 >= args.Length)
+    {
+        Console.Error.WriteLine("Fehler: E-Mail-Adresse fehlt. Nutzung: dotnet run -- --seed-admin admin@example.com");
+        return;
+    }
+
+    var seedEmail = args[seedAdminIdx + 1].ToLowerInvariant();
+
+    // Konfiguration laden (ohne Webhost)
+    var seedConfig = new ConfigurationBuilder()
+        .SetBasePath(Directory.GetCurrentDirectory())
+        .AddJsonFile("appsettings.json", optional: false)
+        .AddJsonFile("appsettings.Development.json", optional: true)
+        .AddEnvironmentVariables()
+        .Build();
+
+    var seedDataRoot = seedConfig["DataRoot"] ?? Path.Combine(Directory.GetCurrentDirectory(), "data");
+    Directory.CreateDirectory(seedDataRoot);
+
+    // Services direkt instanziieren (kein DI-Container, kein Webhost, kein Port-Binding)
+    var seedEncryption = new LocalDevEncryptionService();
+    var seedAuthStore = new FlatfileAuthStore(seedDataRoot, seedEncryption);
+
+    var existingUser = await seedAuthStore.GetUserByEmailAsync(seedEmail);
+    if (existingUser == null)
+    {
+        Console.Error.WriteLine($"Fehler: Benutzer '{seedEmail}' nicht gefunden. Bitte zuerst über die App registrieren.");
+        return;
+    }
+
+    if (existingUser.Roles.Contains("Admin"))
+    {
+        Console.WriteLine($"Benutzer '{seedEmail}' ist bereits Admin.");
+        return;
+    }
+
+    var newRoles = existingUser.Roles.Append("Admin").ToArray();
+    var updated = await seedAuthStore.UpdateUserRolesAsync(existingUser.Id, newRoles);
+    if (updated)
+    {
+        Console.WriteLine($"Admin-Rolle erfolgreich an '{seedEmail}' vergeben.");
+    }
+    else
+    {
+        Console.Error.WriteLine($"Fehler: Rollen-Update für '{seedEmail}' fehlgeschlagen.");
+    }
+
+    return;
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // ===========================================

@@ -37,6 +37,16 @@ public interface IAuthStore
     /// Entfernt alle Refresh-Tokens eines Benutzers
     /// </summary>
     Task RemoveAllRefreshTokensForUserAsync(string userId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Gibt alle registrierten Benutzer zurück (für Admin-Übersicht)
+    /// </summary>
+    Task<IReadOnlyList<UserRecord>> GetAllUsersAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Aktualisiert die Rollen eines Benutzers (für Admin-Seed und Admin-Verwaltung)
+    /// </summary>
+    Task<bool> UpdateUserRolesAsync(string userId, string[] roles, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -229,6 +239,31 @@ public class FlatfileAuthStore : IAuthStore
         }
     }
 
+    public async Task<IReadOnlyList<UserRecord>> GetAllUsersAsync(CancellationToken ct = default)
+    {
+        await EnsureCacheInitializedAsync(ct);
+        return _usersCache.Values.ToList();
+    }
+
+    public async Task<bool> UpdateUserRolesAsync(string userId, string[] roles, CancellationToken ct = default)
+    {
+        await EnsureCacheInitializedAsync(ct);
+
+        // Find the user entry by ID
+        var entry = _usersCache.FirstOrDefault(kv => kv.Value.Id == userId);
+        if (entry.Key == null)
+        {
+            return false;
+        }
+
+        // Create updated record with new roles (records are immutable)
+        var updatedUser = entry.Value with { Roles = roles };
+        _usersCache[entry.Key] = updatedUser;
+
+        await PersistUsersAsync(ct);
+        return true;
+    }
+
     private async Task PersistUsersAsync(CancellationToken ct)
     {
         await _usersLock.WaitAsync(ct);
@@ -393,5 +428,23 @@ public class InMemoryAuthStore : IAuthStore
         }
 
         return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<UserRecord>> GetAllUsersAsync(CancellationToken ct = default)
+    {
+        return Task.FromResult<IReadOnlyList<UserRecord>>(_users.Values.ToList());
+    }
+
+    public Task<bool> UpdateUserRolesAsync(string userId, string[] roles, CancellationToken ct = default)
+    {
+        var entry = _users.FirstOrDefault(kv => kv.Value.Id == userId);
+        if (entry.Key == null)
+        {
+            return Task.FromResult(false);
+        }
+
+        var updatedUser = entry.Value with { Roles = roles };
+        _users[entry.Key] = updatedUser;
+        return Task.FromResult(true);
     }
 }

@@ -33,7 +33,13 @@
           </ion-button>
         </div>
 
-        <div v-if="projects.length === 0" class="empty-state">
+        <!-- Loading state -->
+        <div v-if="loadingProjects" class="loading-state">
+          <ion-spinner name="crescent" />
+          <p>Projekte werden geladen...</p>
+        </div>
+
+        <div v-else-if="projects.length === 0" class="empty-state">
           <ion-icon :icon="folderOpenOutline" class="empty-icon" />
           <h3>Keine Projekte vorhanden</h3>
           <p>Erstellen Sie Ihr erstes Investitionsprojekt</p>
@@ -54,7 +60,6 @@
               <h2>{{ project.name }}</h2>
               <p>{{ project.description || 'Keine Beschreibung' }}</p>
               <p class="meta">
-                {{ t(`property.types.${project.propertyType}`) }} |
                 Aktualisiert: {{ formatDate(project.updatedAt) }}
               </p>
             </ion-label>
@@ -74,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import {
@@ -85,6 +90,7 @@ import {
   IonList,
   IonItem,
   IonLabel,
+  IonSpinner,
   alertController
 } from '@ionic/vue';
 import {
@@ -100,15 +106,12 @@ import { useAuthStore } from '@/stores/authStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUiStore } from '@/stores/uiStore';
 
-interface LocalProjectSummary {
+interface DisplayProject {
   id: string;
   name: string;
   description?: string;
-  propertyType: string;
-  currency: string;
   createdAt: string;
   updatedAt: string;
-  isLocal?: boolean;
 }
 
 const { t, locale } = useI18n();
@@ -118,20 +121,36 @@ const projectStore = useProjectStore();
 const uiStore = useUiStore();
 
 const isAuthenticated = computed(() => authStore.isAuthenticated);
+const loadingProjects = ref(false);
 
-// Reactive project list - automatically updates when store changes
-const projects = computed<LocalProjectSummary[]>(() =>
-  projectStore.projects.map(p => ({
+// Reactive project list - from server summaries when authenticated, local otherwise
+const projects = computed<DisplayProject[]>(() => {
+  if (isAuthenticated.value && projectStore.projectSummaries.length > 0) {
+    return projectStore.projectSummaries.map(s => ({
+      id: s.id,
+      name: s.name,
+      description: s.description,
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt
+    }));
+  }
+  // Fallback to local projects
+  return projectStore.projects.map(p => ({
     id: p.id,
     name: p.name,
     description: p.description,
-    propertyType: p.property?.type || 'SingleFamily',
-    currency: p.currency,
     createdAt: p.createdAt,
-    updatedAt: p.updatedAt,
-    isLocal: true
-  }))
-);
+    updatedAt: p.updatedAt
+  }));
+});
+
+onMounted(async () => {
+  if (isAuthenticated.value) {
+    loadingProjects.value = true;
+    await projectStore.loadProjectListFromServer();
+    loadingProjects.value = false;
+  }
+});
 
 function formatDate(dateStr: string): string {
   return new Intl.DateTimeFormat(locale.value, {
@@ -155,17 +174,29 @@ function startNewProject() {
   router.push('/wizard');
 }
 
-function openProject(id: string) {
-  // Load project from local storage
-  const project = projectStore.projects.find(p => p.id === id);
-  if (project) {
-    projectStore.setProject(project);
-    uiStore.resetWizard();
-    router.push('/wizard');
+async function openProject(id: string) {
+  if (isAuthenticated.value) {
+    // Load from server for authenticated users
+    const project = await projectStore.loadProjectFromServer(id);
+    if (project) {
+      projectStore.setProject(project, true);
+      uiStore.resetWizard();
+      router.push('/wizard');
+    } else {
+      uiStore.showToast('Projekt konnte nicht geladen werden', 'error');
+    }
+  } else {
+    // Load from local storage for guests
+    const project = projectStore.projects.find(p => p.id === id);
+    if (project) {
+      projectStore.setProject(project);
+      uiStore.resetWizard();
+      router.push('/wizard');
+    }
   }
 }
 
-async function confirmDelete(project: LocalProjectSummary) {
+async function confirmDelete(project: DisplayProject) {
   const alert = await alertController.create({
     header: 'Projekt löschen',
     message: `Möchten Sie "${project.name}" wirklich löschen?`,
@@ -182,11 +213,23 @@ async function confirmDelete(project: LocalProjectSummary) {
   await alert.present();
 }
 
-function deleteProject(id: string) {
-  // Remove from store (computed projects list will auto-update)
-  const updatedProjects = projectStore.projects.filter(p => p.id !== id);
-  projectStore.setProjects(updatedProjects);
-  uiStore.showToast('Projekt gelöscht', 'success');
+async function deleteProject(id: string) {
+  if (isAuthenticated.value) {
+    // Delete from server
+    const deleted = await projectStore.deleteProjectFromServer(id);
+    if (deleted) {
+      // Refresh list from server
+      await projectStore.loadProjectListFromServer();
+      uiStore.showToast('Projekt gelöscht', 'success');
+    } else {
+      uiStore.showToast('Löschen fehlgeschlagen', 'error');
+    }
+  } else {
+    // Delete locally
+    const updatedProjects = projectStore.projects.filter(p => p.id !== id);
+    projectStore.setProjects(updatedProjects);
+    uiStore.showToast('Projekt gelöscht', 'success');
+  }
 }
 </script>
 
@@ -200,6 +243,19 @@ function deleteProject(id: string) {
   display: flex;
   justify-content: flex-end;
   margin-bottom: var(--kalk-space-6);
+}
+
+.loading-state {
+  text-align: center;
+  padding: var(--kalk-space-12);
+}
+
+.loading-state ion-spinner {
+  margin-bottom: var(--kalk-space-4);
+}
+
+.loading-state p {
+  color: var(--kalk-gray-500);
 }
 
 .empty-state {

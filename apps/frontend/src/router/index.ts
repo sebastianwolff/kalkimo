@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
+import { useAuthStore } from '@/stores/authStore';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -35,12 +36,34 @@ const routes: Array<RouteRecordRaw> = [
     path: '/help',
     name: 'Help',
     component: () => import('@/views/HelpPage.vue')
+  },
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: () => import('@/views/admin/AdminDashboardPage.vue'),
+    meta: { requiresAdmin: true }
+  },
+  {
+    path: '/admin/users/:userId',
+    name: 'AdminUserDetail',
+    component: () => import('@/views/admin/AdminUserDetailPage.vue'),
+    meta: { requiresAdmin: true }
   }
 ];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
+});
+
+// Navigation Guard: Admin-Routen nur für Admins zugänglich
+router.beforeEach((to) => {
+  if (to.meta.requiresAdmin) {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated || !authStore.isAdmin) {
+      return { name: 'Home' };
+    }
+  }
 });
 
 export default router;

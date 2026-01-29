@@ -119,13 +119,14 @@ const localProjectName = computed(() => {
   return 'Unbenanntes Projekt';
 });
 
-onMounted(() => {
-  // Load recent projects from store (for authenticated users)
+onMounted(async () => {
+  // Load recent projects from server (for authenticated users)
   if (isAuthenticated.value) {
-    recentProjects.value = projectStore.projects.slice(0, 5).map(p => ({
-      id: p.id,
-      name: p.name,
-      updatedAt: p.updatedAt
+    const summaries = await projectStore.loadProjectListFromServer();
+    recentProjects.value = summaries.slice(0, 5).map(s => ({
+      id: s.id,
+      name: s.name,
+      updatedAt: s.updatedAt
     }));
   }
 });
@@ -188,7 +189,17 @@ function continueProject() {
   router.push('/wizard');
 }
 
-function openProject(id: string) {
+async function openProject(id: string) {
+  if (isAuthenticated.value) {
+    const project = await projectStore.loadProjectFromServer(id);
+    if (project) {
+      projectStore.setProject(project, true);
+      uiStore.resetWizard();
+      router.push('/wizard');
+      return;
+    }
+  }
+  // Fallback: local storage
   const project = projectStore.projects.find(p => p.id === id);
   if (project) {
     projectStore.setProject(project);
