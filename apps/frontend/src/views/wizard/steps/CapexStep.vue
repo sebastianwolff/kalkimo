@@ -1,9 +1,33 @@
 <template>
   <KalkCard :title="t('capex.title')">
+    <!-- Initial prompt overlay when entering with no measures -->
+    <div v-if="showInitialPrompt" class="initial-prompt">
+      <div class="initial-prompt-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+        </svg>
+      </div>
+      <h4 class="initial-prompt-title">{{ t('capex.initialPrompt.title') }}</h4>
+      <p class="initial-prompt-desc">{{ t('capex.initialPrompt.description') }}</p>
+      <div class="initial-prompt-actions">
+        <button type="button" class="btn btn-accent btn-md" @click="handleShowSuggestions">
+          <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM4 11a1 1 0 100-2H3a1 1 0 000 2h1zM10 18a1 1 0 001-1v-1a1 1 0 10-2 0v1a1 1 0 001 1z" />
+            <path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 2a6 6 0 100 12 6 6 0 000-12z" clip-rule="evenodd" />
+          </svg>
+          {{ t('capex.initialPrompt.showSuggestions') }}
+        </button>
+        <button type="button" class="btn btn-outline btn-md" @click="showInitialPrompt = false">
+          {{ t('capex.initialPrompt.manualOnly') }}
+        </button>
+      </div>
+    </div>
+
+    <template v-else>
     <div class="section-header">
       <h4 class="section-label">{{ t('capex.measures') }}</h4>
       <div class="header-actions">
-        <button type="button" class="btn btn-accent btn-sm" @click="runForecast">
+        <button type="button" class="btn btn-outline btn-sm" @click="runForecast">
           <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
             <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM4 11a1 1 0 100-2H3a1 1 0 000 2h1zM10 18a1 1 0 001-1v-1a1 1 0 10-2 0v1a1 1 0 001 1z" />
             <path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 2a6 6 0 100 12 6 6 0 000-12z" clip-rule="evenodd" />
@@ -178,6 +202,7 @@
       <span>{{ t('capex.totalCapex') }}:</span>
       <strong>{{ formatCurrency(totalCapex) }}</strong>
     </div>
+    </template>
   </KalkCard>
 </template>
 
@@ -216,6 +241,7 @@ const projectStore = useProjectStore();
 
 const measures = ref<MeasureItem[]>([]);
 const suggestions = ref<ForecastedMeasure[]>([]);
+const showInitialPrompt = ref(false);
 
 const currency = computed(() => projectStore.currentProject?.currency || 'EUR');
 const startYear = computed(() => projectStore.currentProject?.startPeriod.year || 2024);
@@ -277,6 +303,11 @@ function removeMeasure(id: string) {
   if (index !== -1) {
     measures.value.splice(index, 1);
   }
+}
+
+function handleShowSuggestions() {
+  showInitialPrompt.value = false;
+  runForecast();
 }
 
 function runForecast() {
@@ -345,7 +376,7 @@ function acceptAllSuggestions() {
 
 onMounted(() => {
   const capex = projectStore.currentProject?.capex;
-  if (capex) {
+  if (capex && capex.length > 0) {
     measures.value = capex.map(m => ({
       id: m.id,
       name: m.name,
@@ -361,6 +392,9 @@ onMounted(() => {
         delayMonths: m.impact?.delayMonths ?? 0,
       }
     }));
+  } else {
+    // No existing measures → show the initial prompt
+    showInitialPrompt.value = true;
   }
 });
 
@@ -438,6 +472,12 @@ watch(
   transition: all 0.15s;
 }
 
+.btn-md {
+  height: 44px;
+  padding: 0 var(--kalk-space-6);
+  font-size: var(--kalk-text-sm);
+}
+
 .btn-sm {
   height: 36px;
   padding: 0 var(--kalk-space-4);
@@ -497,6 +537,61 @@ watch(
 .btn-icon {
   width: 16px;
   height: 16px;
+}
+
+/* Initial prompt */
+.initial-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--kalk-space-10) var(--kalk-space-6);
+  background: linear-gradient(135deg, var(--kalk-accent-50, #eff6ff) 0%, #f0f9ff 100%);
+  border: 2px solid var(--kalk-accent-200, #bfdbfe);
+  border-radius: var(--kalk-radius-lg, 12px);
+}
+
+.initial-prompt-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--kalk-accent-500, #3b82f6);
+  margin-bottom: var(--kalk-space-4);
+}
+
+.initial-prompt-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.initial-prompt-title {
+  font-size: var(--kalk-text-lg);
+  font-weight: 700;
+  color: var(--kalk-gray-900);
+  margin: 0 0 var(--kalk-space-2) 0;
+}
+
+.initial-prompt-desc {
+  font-size: var(--kalk-text-sm);
+  color: var(--kalk-gray-600);
+  max-width: 480px;
+  line-height: 1.5;
+  margin: 0 0 var(--kalk-space-6) 0;
+}
+
+.initial-prompt-actions {
+  display: flex;
+  gap: var(--kalk-space-3);
+}
+
+@media (max-width: 768px) {
+  .initial-prompt-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .initial-prompt-actions .btn {
+    width: 100%;
+  }
 }
 
 /* Suggestions */

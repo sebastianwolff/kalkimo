@@ -193,8 +193,8 @@ export function generateForecast(
     // Clamp the planned year to at least the start of the analysis
     const plannedYear = Math.max(nextRenewalYear, startYear);
 
-    // Calculate component age at the planned year
-    const componentAge = plannedYear - lastRenovationYear;
+    // Current component age (not age at planned year)
+    const componentAge = currentYear - lastRenovationYear;
 
     // Calculate cost
     const costFactor = conditionCostFactor(componentCondition);

@@ -67,7 +67,8 @@ public static class RenovationForecastGenerator
 
             // Geplantes Jahr mindestens ab Analysebeginn
             var plannedYear = Math.Max(nextRenewalYear, startPeriod.Year);
-            var componentAge = plannedYear - lastRenovationYear;
+            // Aktuelles Alter des Bauteils (nicht Alter zum geplanten Jahr)
+            var componentAge = currentYear - lastRenovationYear;
 
             // Kostenberechnung
             var costFactor = GetConditionCostFactor(componentCondition);

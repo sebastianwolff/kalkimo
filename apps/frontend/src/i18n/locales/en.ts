@@ -285,6 +285,12 @@ export default {
     },
     totalCapex: 'Total Capital Expenditure',
     suggestMeasures: 'Suggest Measures',
+    initialPrompt: {
+      title: 'Identify Renovation Measures',
+      description: 'Based on the recorded building components and their age, we can automatically generate renovation suggestions with cost estimates.',
+      showSuggestions: 'Show Suggestions',
+      manualOnly: 'Manual Entry Only'
+    },
     suggestions: {
       title: 'Suggested Measures',
       accept: 'Accept',

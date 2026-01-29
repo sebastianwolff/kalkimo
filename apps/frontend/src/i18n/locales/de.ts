@@ -285,6 +285,12 @@ export default {
     },
     totalCapex: 'Gesamtinvestitionen',
     suggestMeasures: 'Maßnahmen vorschlagen',
+    initialPrompt: {
+      title: 'Sanierungsmaßnahmen ermitteln',
+      description: 'Basierend auf den erfassten Gebäudebestandteilen und deren Alter können wir automatisch Sanierungsvorschläge mit Kostenprognose erstellen.',
+      showSuggestions: 'Vorschläge anzeigen',
+      manualOnly: 'Nur manuell erfassen'
+    },
     suggestions: {
       title: 'Vorgeschlagene Maßnahmen',
       accept: 'Übernehmen',
