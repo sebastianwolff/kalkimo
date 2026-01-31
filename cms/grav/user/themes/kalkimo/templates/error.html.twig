@@ -1,0 +1,23 @@
+{# Error / 404 Page #}
+{% extends 'partials/base.html.twig' %}
+{% set lang = grav.language.getActive|default('de') %}
+
+{% block content %}
+<section class="km-section">
+  <div class="container">
+    <div class="km-error-page">
+      <img src="{{ url('theme://images/kalkimo.png') }}" alt="" class="km-error-mascot" loading="lazy">
+
+      <h1>{{ page.header.http_response_code|default('404') }}</h1>
+      <p class="lead">
+        {{ lang == 'de'
+          ? 'Die Seite wurde leider nicht gefunden.'
+          : 'Sorry, the page could not be found.' }}
+      </p>
+      <a href="/{{ lang }}" class="btn-primary">
+        {{ lang == 'de' ? 'Zur Startseite' : 'Go to homepage' }} &rarr;
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

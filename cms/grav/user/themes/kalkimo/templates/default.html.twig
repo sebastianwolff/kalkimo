@@ -1,0 +1,14 @@
+{% extends 'partials/base.html.twig' %}
+
+{% block content %}
+<div class="container">
+  <div class="km-content-page">
+    {% if page.header.mascot_image %}
+    <img src="{{ page.media[page.header.mascot_image].url|default(url('theme://images/' ~ page.header.mascot_image)) }}"
+         alt="" class="km-content-mascot" loading="lazy">
+    {% endif %}
+
+    {{ page.content|raw }}
+  </div>
+</div>
+{% endblock %}

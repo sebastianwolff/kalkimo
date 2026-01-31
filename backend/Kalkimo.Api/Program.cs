@@ -72,8 +72,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Services konfigurieren
 // ===========================================
 
-// Controller
-builder.Services.AddControllers();
+// Controller with camelCase JSON serialization (matching frontend conventions)
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    });
 
 // Rate Limiting for auth endpoints (brute force protection)
 builder.Services.AddRateLimiter(options =>
@@ -102,6 +107,18 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                 QueueLimit = 2
+            }));
+
+    // Rate limiter for anonymous calculation endpoint
+    options.AddPolicy("calculation", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 5
             }));
 });
 

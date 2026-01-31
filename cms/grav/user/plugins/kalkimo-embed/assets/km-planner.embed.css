@@ -1,0 +1,52 @@
+/* Kalkimo Embed Placeholder Styles */
+
+km-planner {
+  display: block;
+  width: 100%;
+  margin: 2rem 0;
+}
+
+.km-embed-placeholder {
+  border: 2px dashed #D8DEE6;
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: #F7F9FB;
+}
+
+.km-embed-placeholder-inner {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.km-embed-placeholder-icon {
+  color: #2BAAAD;
+  margin-bottom: 1rem;
+}
+
+.km-embed-placeholder h3 {
+  font-size: 1.25rem;
+  color: #1E3A5F;
+  margin-bottom: 0.5rem;
+}
+
+.km-embed-placeholder p {
+  font-size: 0.9rem;
+  color: #4A5568;
+  line-height: 1.5;
+}
+
+.km-embed-placeholder-hint {
+  font-size: 0.8rem;
+  color: #8896A6;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #D8DEE6;
+}
+
+.km-embed-placeholder-hint code {
+  background: #EEF1F5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}

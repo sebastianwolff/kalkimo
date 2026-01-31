@@ -44,6 +44,22 @@ public record CalculationResult
 
     // === Investor-Ergebnisse ===
     public IReadOnlyList<InvestorResult> InvestorResults { get; init; } = [];
+
+    // === Jahresaggregate (für Frontend-Display) ===
+    public IReadOnlyList<YearlyCashflowRow> YearlyCashflows { get; init; } = [];
+    public IReadOnlyList<TaxBridgeRow> TaxBridge { get; init; } = [];
+    public IReadOnlyList<CapExTimelineItem> CapExTimeline { get; init; } = [];
+
+    // === Immobilienwert-Prognose (Multi-Szenario) ===
+    public PropertyValueForecastResult? PropertyValueForecast { get; init; }
+
+    // === Exit-Analyse ===
+    public ExitAnalysisResult? ExitAnalysis { get; init; }
+
+    // === Gesamtsummen ===
+    public decimal TotalEquityInvested { get; init; }
+    public decimal TotalCashflowBeforeTax { get; init; }
+    public decimal TotalCashflowAfterTax { get; init; }
 }
 
 /// <summary>
@@ -117,6 +133,9 @@ public record TaxSummary
     /// <summary>Gesamter Erhaltungsaufwand</summary>
     public Money TotalMaintenanceDeduction { get; init; }
 
+    /// <summary>Gesamte Betriebskosten-Abzüge</summary>
+    public Money TotalOperatingDeduction { get; init; }
+
     /// <summary>15%-Regel ausgelöst?</summary>
     public bool AcquisitionRelatedCostsTriggered { get; init; }
 
@@ -137,6 +156,21 @@ public record TaxSummary
 
     /// <summary>Steuerliche Effekte als Zeitreihe nach Jahr</summary>
     public Dictionary<int, TaxYearSummary> YearlyTax { get; init; } = new();
+
+    /// <summary>AfA-Bemessungsgrundlage (Gebäudewert + aktivierbare Kosten)</summary>
+    public Money DepreciationBasis { get; init; }
+
+    /// <summary>Jährliche AfA</summary>
+    public Money AnnualDepreciation { get; init; }
+
+    /// <summary>AfA-Satz (%)</summary>
+    public decimal DepreciationRatePercent { get; init; }
+
+    /// <summary>Effektiver Steuersatz inkl. Soli/Kirchensteuer (%)</summary>
+    public decimal EffectiveTaxRatePercent { get; init; }
+
+    /// <summary>Gesamte Steuerersparnis (Abzüge × effektiver Steuersatz)</summary>
+    public Money TotalTaxSavings { get; init; }
 }
 
 /// <summary>

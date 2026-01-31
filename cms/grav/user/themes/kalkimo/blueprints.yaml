@@ -1,0 +1,33 @@
+name: Kalkimo
+slug: kalkimo
+type: theme
+version: 0.1.0
+description: "Custom theme for Kalkimo Planner - real estate investment calculator"
+icon: building
+author:
+  name: Kalkimo Team
+  email: info@kalkimo.de
+homepage: https://kalkimo.de
+bugs: https://github.com/kalkimo/kalkimo/issues
+license: proprietary
+
+dependencies:
+  - { name: grav, version: '>=1.7.0' }
+
+form:
+  validation: loose
+  fields:
+    brand.name:
+      type: text
+      label: Brand Name
+      default: Kalkimo Planner
+
+    brand.tagline.de:
+      type: text
+      label: Tagline (DE)
+      default: "Immobilien-Investment. Professionell kalkuliert."
+
+    brand.tagline.en:
+      type: text
+      label: Tagline (EN)
+      default: "Real Estate Investment. Professionally Calculated."

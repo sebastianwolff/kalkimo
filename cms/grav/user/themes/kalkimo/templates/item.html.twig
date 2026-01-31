@@ -1,0 +1,45 @@
+{# Blog Single Article #}
+{% extends 'partials/base.html.twig' %}
+{% set lang = grav.language.getActive|default('de') %}
+
+{% block content %}
+<article class="km-section">
+  <div class="container">
+    <div class="km-content-page">
+
+      {# Article Header #}
+      <header class="km-article-header">
+        <h1>{{ page.title }}</h1>
+        {% if page.header.reading_time %}
+        <span class="reading-time">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          {{ page.header.reading_time }} {{ lang == 'de' ? 'lesen' : 'read' }}
+        </span>
+        {% endif %}
+      </header>
+
+      {# Optional Mascot #}
+      {% if page.header.mascot_image %}
+      <img src="{{ page.media[page.header.mascot_image].url|default(url('theme://images/' ~ page.header.mascot_image)) }}"
+           alt="" class="km-article-mascot" loading="lazy">
+      {% endif %}
+
+      {# Article Content #}
+      <div class="km-article-body">
+        {{ page.content|raw }}
+      </div>
+
+      {# Back Link #}
+      <div class="km-article-back">
+        <a href="{{ page.parent.url }}" class="link-arrow" style="flex-direction: row-reverse;">
+          {{ lang == 'de' ? 'Zurück zur Übersicht' : 'Back to overview' }}
+        </a>
+      </div>
+
+    </div>
+  </div>
+</article>
+{% endblock %}

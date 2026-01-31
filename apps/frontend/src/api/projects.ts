@@ -86,7 +86,7 @@ export const projectsApi = {
 
   async calculate(id: string): Promise<CalculationResult> {
     try {
-      const response = await apiClient.get<CalculationResult>(`/projects/${id}/calculate`);
+      const response = await apiClient.post<CalculationResult>(`/projects/${id}/calculate`);
       return response.data;
     } catch (error) {
       throw new Error(getErrorMessage(error));

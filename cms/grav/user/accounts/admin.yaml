@@ -1,0 +1,11 @@
+state: enabled
+email: sw@leondo-media.de
+fullname: 'Sebastian Wolff'
+title: Administrator
+access:
+  admin:
+    login: true
+    super: true
+  site:
+    login: true
+hashed_password: $2y$10$P0lR8SUGGMNuJ6rGULxojezVotjFWmInOUBJ4XWFeWNatk7spZHJa

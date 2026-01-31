@@ -1,0 +1,67 @@
+{# Fixed Header with Logo, Nav, Language Switch, Login, Hamburger #}
+{% set lang = grav.language.getActive|default('de') %}
+
+<header class="km-header" role="banner">
+  <div class="km-header-inner">
+
+    {# Logo #}
+    <a href="/{{ lang }}" class="km-header-logo" aria-label="Kalkimo – {{ lang == 'de' ? 'Startseite' : 'Home' }}">
+      <img src="{{ url('theme://images/logo.png') }}" alt="Kalkimo" width="140" height="36">
+    </a>
+
+    {# Desktop Navigation #}
+    <nav class="km-nav-desktop" aria-label="{{ lang == 'de' ? 'Hauptnavigation' : 'Main navigation' }}">
+      {% include 'partials/navigation.html.twig' with {nav_class: 'km-nav-link'} %}
+    </nav>
+
+    {# Right Side: Lang Switch + Login + Hamburger #}
+    <div class="km-header-right">
+
+      {# Language Switcher #}
+      <div class="km-lang-switch" aria-label="{{ lang == 'de' ? 'Sprache wählen' : 'Select language' }}">
+        <a href="/de{{ page.route }}" class="{{ lang == 'de' ? 'active' : '' }}" hreflang="de">DE</a>
+        <span class="km-lang-switch-divider">|</span>
+        <a href="/en{{ page.route }}" class="{{ lang == 'en' ? 'active' : '' }}" hreflang="en">EN</a>
+      </div>
+
+      {# Login Button (Desktop) #}
+      <a href="/{{ lang }}/rechner" class="btn-outline km-header-login">Login</a>
+
+      {# Hamburger (Mobile) #}
+      <button class="km-hamburger" aria-label="Menü" aria-expanded="false" aria-controls="mobile-menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+{# Mobile Menu Overlay #}
+<div class="km-overlay" aria-hidden="true"></div>
+
+{# Mobile Off-Canvas Menu #}
+<nav class="km-mobile-menu" id="mobile-menu" aria-label="{{ lang == 'de' ? 'Mobile Navigation' : 'Mobile navigation' }}">
+  <button class="km-mobile-menu-close" aria-label="{{ lang == 'de' ? 'Menü schließen' : 'Close menu' }}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  </button>
+
+  {% include 'partials/navigation.html.twig' with {nav_class: 'km-mobile-nav-link'} %}
+
+  <div class="km-mobile-menu-footer">
+    {# Language Switcher (Mobile) #}
+    <div class="km-lang-switch">
+      <a href="/de{{ page.route }}" class="{{ lang == 'de' ? 'active' : '' }}">DE</a>
+      <span class="km-lang-switch-divider">|</span>
+      <a href="/en{{ page.route }}" class="{{ lang == 'en' ? 'active' : '' }}">EN</a>
+    </div>
+
+    {# Login Button (Mobile) #}
+    <a href="/{{ lang }}/rechner" class="btn-outline" style="text-align:center;">Login</a>
+  </div>
+</nav>

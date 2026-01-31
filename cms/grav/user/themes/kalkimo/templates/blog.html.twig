@@ -1,0 +1,65 @@
+{# Blog/Wissen Listing Page – Search, Top Topics, Accordion #}
+{% extends 'partials/base.html.twig' %}
+{% set lang = grav.language.getActive|default('de') %}
+
+{% block content %}
+<section class="km-section">
+  <div class="container">
+
+    {# Page Title #}
+    <div class="km-blog-header">
+      <h1>{{ page.title }}</h1>
+      {% if page.content|trim %}
+      <p class="lead">{{ page.content|raw }}</p>
+      {% endif %}
+    </div>
+
+    {# Search Bar #}
+    <div class="km-search-wrapper">
+      <div class="search-bar">
+        <input type="text"
+               class="search-input"
+               placeholder="{{ lang == 'de' ? 'z.B. Anfangszahlung, Steuererklärung...' : 'e.g. down payment, tax return...' }}"
+               aria-label="{{ lang == 'de' ? 'Artikel suchen' : 'Search articles' }}">
+        <button class="search-button" aria-label="{{ lang == 'de' ? 'Suchen' : 'Search' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    {# Top Topics Box #}
+    {% if page.header.top_topics %}
+    <div class="km-topics-box">
+      <h3 class="km-topics-box-title">Top-Themen</h3>
+      <div class="km-topics-box-links">
+        {% for topic in page.header.top_topics %}
+        <a href="{{ topic.link }}" class="link-arrow">{{ topic.label }}</a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# Mascot #}
+    <div class="km-blog-mascot">
+      <img src="{{ url('theme://images/kalkimo.png') }}" alt="" loading="lazy">
+    </div>
+
+    {# Article Accordion List #}
+    <div class="km-article-list">
+      <h2>Top-Themen</h2>
+      {% for item in page.collection() %}
+      <a href="{{ item.url }}" class="topic-item">
+        <span class="topic-item-title">{{ item.title }}</span>
+        <svg class="topic-item-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </a>
+      {% endfor %}
+    </div>
+
+  </div>
+</section>
+{% endblock %}

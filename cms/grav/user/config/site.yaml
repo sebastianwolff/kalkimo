@@ -1,0 +1,18 @@
+title: Kalkimo Planner
+
+author:
+  name: Kalkimo Team
+  email: info@kalkimo.de
+
+metadata:
+  description:
+    de: "Kalkimo - Der professionelle Immobilien-Investitionsrechner. Berechnen Sie Rendite, Cashflow und Steuervorteile."
+    en: "Kalkimo - The professional real estate investment calculator. Calculate returns, cashflow and tax benefits."
+  keywords:
+    de: "Immobilien Rechner, Investitionsrechner, Rendite berechnen, Cashflow, AfA"
+    en: "real estate calculator, investment calculator, ROI, cashflow, depreciation"
+  robots: "index, follow"
+
+taxonomies:
+  - category
+  - tag

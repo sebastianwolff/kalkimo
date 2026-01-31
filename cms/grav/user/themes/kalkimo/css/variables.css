@@ -1,0 +1,129 @@
+/* ==========================================================================
+   Kalkimo Design Tokens
+   Alle --km-* Custom Properties für das gesamte Theme.
+   Quelle: docs/KALKIMO_THEME_SPEC.md
+   ========================================================================== */
+
+/* ---------- Font Face: Inter (self-hosted, DSGVO) ---------- */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/inter-v13-latin-regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../fonts/inter-v13-latin-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../fonts/inter-v13-latin-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../fonts/inter-v13-latin-700.woff2') format('woff2');
+}
+
+/* ---------- Root Variables ---------- */
+:root {
+  /* --- Colors: Navy (Primary) --- */
+  --km-navy: #1E3A5F;
+  --km-navy-medium: #2C4A6E;
+  --km-navy-light: #3D5A80;
+
+  /* --- Colors: Teal (Accent) --- */
+  --km-teal: #2BAAAD;
+  --km-teal-hover: #239192;
+  --km-teal-light: #E0F5F5;
+
+  /* --- Colors: Neutrals --- */
+  --km-white: #FFFFFF;
+  --km-gray-50: #F7F9FB;
+  --km-gray-100: #EEF1F5;
+  --km-gray-200: #D8DEE6;
+  --km-gray-400: #8896A6;
+  --km-gray-600: #4A5568;
+  --km-gray-900: #1A202C;
+
+  /* --- Colors: Status --- */
+  --km-success: #16A34A;
+  --km-warning: #D97706;
+  --km-error: #DC2626;
+  --km-info: #3B82F6;
+
+  /* --- Typography --- */
+  --km-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Mobile-first sizes */
+  --km-h1: 28px;
+  --km-h2: 24px;
+  --km-h3: 18px;
+  --km-h4: 16px;
+  --km-body: 16px;
+  --km-body-lg: 17px;
+  --km-small: 14px;
+  --km-caption: 12px;
+
+  /* --- Spacing --- */
+  --km-space-xs: 4px;
+  --km-space-sm: 8px;
+  --km-space-md: 16px;
+  --km-space-lg: 24px;
+  --km-space-xl: 32px;
+  --km-space-2xl: 48px;
+  --km-space-3xl: 64px;
+  --km-space-4xl: 96px;
+
+  /* --- Border Radius --- */
+  --km-radius-sm: 4px;
+  --km-radius-md: 8px;
+  --km-radius-lg: 12px;
+  --km-radius-xl: 16px;
+  --km-radius-full: 9999px;
+
+  /* --- Shadows --- */
+  --km-shadow-sm: 0 1px 3px rgba(30, 58, 95, 0.06);
+  --km-shadow-md: 0 4px 12px rgba(30, 58, 95, 0.08);
+  --km-shadow-lg: 0 12px 24px rgba(30, 58, 95, 0.1);
+
+  /* --- Transitions --- */
+  --km-transition-fast: 0.15s ease;
+  --km-transition-base: 0.2s ease;
+  --km-transition-slow: 0.3s ease;
+
+  /* --- Layout --- */
+  --km-max-width: 1200px;
+  --km-header-height: 64px;
+}
+
+/* ---------- Responsive Typography Scaling ---------- */
+@media (min-width: 768px) {
+  :root {
+    --km-h1: 36px;
+    --km-h2: 28px;
+    --km-h3: 20px;
+    --km-h4: 18px;
+    --km-body-lg: 18px;
+    --km-header-height: 72px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --km-h1: 48px;
+    --km-h2: 32px;
+    --km-h3: 22px;
+    --km-body-lg: 20px;
+    --km-caption: 13px;
+  }
+}

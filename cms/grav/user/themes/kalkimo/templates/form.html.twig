@@ -1,0 +1,23 @@
+{# Contact Form Page #}
+{% extends 'partials/base.html.twig' %}
+
+{% block content %}
+<section class="km-section">
+  <div class="container">
+    <div class="km-form-page">
+
+      {{ page.content|raw }}
+
+      {% if config.plugins.form.enabled %}
+        {% include "forms/form.html.twig" %}
+      {% else %}
+        <p>{{ grav.language.getActive == 'de'
+          ? 'Das Kontaktformular ist derzeit nicht verfügbar. Bitte versuchen Sie es später erneut.'
+          : 'The contact form is currently unavailable. Please try again later.' }}
+        </p>
+      {% endif %}
+
+    </div>
+  </div>
+</section>
+{% endblock %}

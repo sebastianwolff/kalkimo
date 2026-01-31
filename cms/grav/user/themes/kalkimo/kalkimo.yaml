@@ -1,0 +1,48 @@
+enabled: true
+
+streams:
+  schemes:
+    theme:
+      type: ReadOnlyStream
+      prefixes:
+        '': [user/themes/kalkimo]
+
+brand:
+  name: Kalkimo Planner
+  tagline:
+    de: "Immobilien-Investment. Professionell kalkuliert."
+    en: "Real Estate Investment. Professionally Calculated."
+
+nav:
+  items:
+    - label_de: Features
+      label_en: Features
+      route: /funktionen
+    - label_de: Immobilienrechner
+      label_en: Calculator
+      route: /rechner
+    - label_de: Preise
+      label_en: Pricing
+      route: /preise
+
+footer:
+  copyright: Kalkimo
+  nav:
+    - label_de: Features
+      label_en: Features
+      route: /funktionen
+    - label_de: Immobilienrechner
+      label_en: Calculator
+      route: /rechner
+    - label_de: Preise
+      label_en: Pricing
+      route: /preise
+    - label_de: Blog
+      label_en: Blog
+      route: /wissen
+    - label_de: FAQs
+      label_en: FAQs
+      route: /wissen
+
+seo:
+  og_image: theme://images/og-default.jpg

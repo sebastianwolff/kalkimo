@@ -1,0 +1,33 @@
+{# Footer – Navy Background #}
+{% set lang = grav.language.getActive|default('de') %}
+
+<footer class="km-footer" role="contentinfo">
+  <div class="km-footer-inner">
+
+    {# Top: Logo + Nav Links #}
+    <div class="km-footer-top">
+      <a href="/{{ lang }}" class="km-footer-logo" aria-label="Kalkimo">
+        <img src="{{ url('theme://images/logo.png') }}" alt="Kalkimo" width="140" height="32">
+      </a>
+
+      <div class="km-footer-nav">
+        {% for item in config.theme.footer.nav %}
+          {% set label = attribute(item, 'label_' ~ lang)|default(item.label_de) %}
+          {% set target_page = pages.find(item.route) %}
+          {% set url = target_page ? target_page.url : ('/' ~ lang ~ item.route) %}
+          <a href="{{ url }}">{{ label }}</a>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# Bottom: Copyright + Legal #}
+    <div class="km-footer-bottom">
+      <span>&copy; {{ 'now'|date('Y') }} {{ config.theme.footer.copyright|default('Kalkimo') }}</span>
+
+      <div class="km-footer-legal">
+        <a href="/{{ lang }}/impressum">{{ lang == 'de' ? 'Impressum' : 'Imprint' }}</a>
+        <a href="/{{ lang }}/datenschutz">{{ lang == 'de' ? 'Datenschutz' : 'Privacy' }}</a>
+      </div>
+    </div>
+  </div>
+</footer>

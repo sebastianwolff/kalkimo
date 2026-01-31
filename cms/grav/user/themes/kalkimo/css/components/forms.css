@@ -1,0 +1,220 @@
+/* ==========================================================================
+   Forms – Inputs, Textareas, Selects, Checkboxes, Contact Form
+   ========================================================================== */
+
+.km-form-page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: var(--km-space-2xl) 0;
+}
+
+/* ---------- Form Groups ---------- */
+.form-group {
+  margin-bottom: var(--km-space-lg);
+}
+
+/* ---------- Labels ---------- */
+.form-label,
+label {
+  display: block;
+  font-size: var(--km-small);
+  font-weight: 500;
+  color: var(--km-navy);
+  margin-bottom: var(--km-space-sm);
+}
+
+/* ---------- Text Input ---------- */
+.form-input,
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="url"],
+input[type="number"] {
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--km-space-md);
+  font-family: var(--km-font-family);
+  font-size: var(--km-body);
+  color: var(--km-navy);
+  background-color: var(--km-white);
+  border: 1px solid var(--km-gray-200);
+  border-radius: var(--km-radius-md);
+  outline: none;
+  transition: border-color var(--km-transition-base), box-shadow var(--km-transition-base);
+}
+
+.form-input:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus {
+  border-color: var(--km-teal);
+  box-shadow: 0 0 0 3px rgba(43, 170, 173, 0.1);
+}
+
+.form-input::placeholder,
+input::placeholder {
+  color: var(--km-gray-400);
+}
+
+/* ---------- Textarea ---------- */
+.form-textarea,
+textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: var(--km-space-sm) var(--km-space-md);
+  font-family: var(--km-font-family);
+  font-size: var(--km-body);
+  color: var(--km-navy);
+  background-color: var(--km-white);
+  border: 1px solid var(--km-gray-200);
+  border-radius: var(--km-radius-md);
+  resize: vertical;
+  outline: none;
+  transition: border-color var(--km-transition-base), box-shadow var(--km-transition-base);
+}
+
+textarea:focus {
+  border-color: var(--km-teal);
+  box-shadow: 0 0 0 3px rgba(43, 170, 173, 0.1);
+}
+
+/* ---------- Select ---------- */
+select {
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--km-space-md);
+  font-family: var(--km-font-family);
+  font-size: var(--km-body);
+  color: var(--km-navy);
+  background-color: var(--km-white);
+  border: 1px solid var(--km-gray-200);
+  border-radius: var(--km-radius-md);
+  cursor: pointer;
+  appearance: none;
+  outline: none;
+}
+
+select:focus {
+  border-color: var(--km-teal);
+  box-shadow: 0 0 0 3px rgba(43, 170, 173, 0.1);
+}
+
+/* ---------- Checkbox ---------- */
+.form-checkbox,
+input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--km-teal);
+  cursor: pointer;
+  vertical-align: middle;
+  margin-right: var(--km-space-sm);
+}
+
+/* ---------- Validation ---------- */
+.form-input.invalid,
+input.invalid,
+textarea.invalid {
+  border-color: var(--km-error);
+}
+
+.form-error {
+  font-size: var(--km-caption);
+  color: var(--km-error);
+  margin-top: var(--km-space-xs);
+}
+
+/* ---------- GRAV Form Plugin Overrides ---------- */
+.form-data {
+  margin-bottom: var(--km-space-md);
+}
+
+.form-field {
+  margin-bottom: var(--km-space-lg);
+}
+
+.form-field label {
+  display: block;
+  font-size: var(--km-small);
+  font-weight: 500;
+  color: var(--km-navy);
+  margin-bottom: var(--km-space-sm);
+}
+
+.form-btn {
+  margin-top: var(--km-space-lg);
+}
+
+/* ---------- Error Page ---------- */
+.km-error-page {
+  text-align: center;
+  padding: var(--km-space-4xl) 0;
+}
+
+.km-error-mascot {
+  max-height: 200px;
+  margin: 0 auto var(--km-space-xl);
+}
+
+.km-error-page h1 {
+  font-size: 72px;
+  color: var(--km-gray-200);
+  margin-bottom: var(--km-space-sm);
+}
+
+.km-error-page .lead {
+  margin-bottom: var(--km-space-xl);
+}
+
+/* ---------- Article Styling ---------- */
+.km-article-header {
+  margin-bottom: var(--km-space-xl);
+}
+
+.km-article-header h1 {
+  margin-bottom: var(--km-space-sm);
+}
+
+.km-article-mascot {
+  float: right;
+  max-width: 150px;
+  margin: 0 0 var(--km-space-md) var(--km-space-lg);
+}
+
+@media (max-width: 767px) {
+  .km-article-mascot {
+    float: none;
+    display: block;
+    margin: var(--km-space-md) auto;
+    max-width: 120px;
+  }
+}
+
+.km-article-body {
+  clear: none;
+}
+
+.km-article-body h2 {
+  margin-top: var(--km-space-2xl);
+}
+
+.km-article-back {
+  margin-top: var(--km-space-2xl);
+  padding-top: var(--km-space-lg);
+  border-top: 1px solid var(--km-gray-200);
+}
+
+/* ---------- Content Mascot (default template) ---------- */
+.km-content-mascot {
+  float: right;
+  max-width: 180px;
+  margin: 0 0 var(--km-space-md) var(--km-space-lg);
+}
+
+@media (max-width: 767px) {
+  .km-content-mascot {
+    float: none;
+    display: block;
+    margin: var(--km-space-md) auto var(--km-space-xl);
+    max-width: 140px;
+  }
+}

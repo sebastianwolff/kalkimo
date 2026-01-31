@@ -13,14 +13,15 @@ public static class CashflowCalculator
     public static MoneyTimeSeries CalculateGrossRent(
         RentConfiguration rentConfig,
         YearMonth startPeriod,
-        YearMonth endPeriod)
+        YearMonth endPeriod,
+        string currency = "EUR")
     {
-        var result = new MoneyTimeSeries(startPeriod, endPeriod);
+        var result = new MoneyTimeSeries(startPeriod, endPeriod, currency);
 
         foreach (var period in result.Periods)
         {
             var periodDate = period.ToFirstDayOfMonth();
-            var totalRent = Money.Zero();
+            var totalRent = Money.Zero(currency);
 
             foreach (var tenancy in rentConfig.Tenancies)
             {
@@ -101,9 +102,10 @@ public static class CashflowCalculator
         MoneyTimeSeries grossRent,
         RentConfiguration rentConfig,
         YearMonth startPeriod,
-        YearMonth endPeriod)
+        YearMonth endPeriod,
+        string currency = "EUR")
     {
-        var result = new MoneyTimeSeries(startPeriod, endPeriod);
+        var result = new MoneyTimeSeries(startPeriod, endPeriod, currency);
 
         // Erstelle Lookup für Vacancy Events: period -> affected UnitIds (null means all units)
         var vacancyLookup = new Dictionary<YearMonth, HashSet<string?>>();
@@ -125,7 +127,7 @@ public static class CashflowCalculator
         foreach (var period in result.Periods)
         {
             var periodDate = period.ToFirstDayOfMonth();
-            var totalEffectiveRent = Money.Zero();
+            var totalEffectiveRent = Money.Zero(currency);
 
             // Check if this period has vacancy events
             vacancyLookup.TryGetValue(period, out var vacantUnits);
@@ -211,15 +213,18 @@ public static class CashflowCalculator
     /// </summary>
     public static MoneyTimeSeries CalculateNoi(
         MoneyTimeSeries effectiveRent,
+        MoneyTimeSeries serviceChargeIncome,
         MoneyTimeSeries operatingCosts,
         YearMonth startPeriod,
-        YearMonth endPeriod)
+        YearMonth endPeriod,
+        string currency = "EUR")
     {
-        var result = new MoneyTimeSeries(startPeriod, endPeriod);
+        var result = new MoneyTimeSeries(startPeriod, endPeriod, currency);
 
         foreach (var period in result.Periods)
         {
-            result[period] = effectiveRent[period] - operatingCosts[period];
+            // NOI = Effective Rent + Service Charge Income - Operating Costs
+            result[period] = effectiveRent[period] + serviceChargeIncome[period] - operatingCosts[period];
         }
 
         return result;
@@ -233,9 +238,10 @@ public static class CashflowCalculator
         MoneyTimeSeries debtService,
         MoneyTimeSeries capExPayments,
         YearMonth startPeriod,
-        YearMonth endPeriod)
+        YearMonth endPeriod,
+        string currency = "EUR")
     {
-        var result = new MoneyTimeSeries(startPeriod, endPeriod);
+        var result = new MoneyTimeSeries(startPeriod, endPeriod, currency);
 
         foreach (var period in result.Periods)
         {
@@ -252,9 +258,10 @@ public static class CashflowCalculator
         MoneyTimeSeries cashflowBeforeTax,
         MoneyTimeSeries taxPayment,
         YearMonth startPeriod,
-        YearMonth endPeriod)
+        YearMonth endPeriod,
+        string currency = "EUR")
     {
-        var result = new MoneyTimeSeries(startPeriod, endPeriod);
+        var result = new MoneyTimeSeries(startPeriod, endPeriod, currency);
 
         foreach (var period in result.Periods)
         {
@@ -355,10 +362,30 @@ public static class CashflowCalculator
     {
         var result = new MoneyTimeSeries(startPeriod, endPeriod, currency);
 
+        // Build vacancy event lookup (same logic as CalculateEffectiveRent)
+        var vacancyLookup = new Dictionary<YearMonth, HashSet<string?>>();
+        foreach (var evt in rentConfig.VacancyEvents)
+        {
+            var current = evt.StartPeriod;
+            for (int i = 0; i < evt.DurationMonths; i++)
+            {
+                if (!vacancyLookup.TryGetValue(current, out var unitIds))
+                {
+                    unitIds = new HashSet<string?>();
+                    vacancyLookup[current] = unitIds;
+                }
+                unitIds.Add(evt.UnitId);
+                current = current.AddMonths(1);
+            }
+        }
+
         foreach (var period in result.Periods)
         {
             var periodDate = period.ToFirstDayOfMonth();
             var totalServiceCharge = Money.Zero(currency);
+
+            // Check if this period has vacancy events
+            vacancyLookup.TryGetValue(period, out var vacantUnits);
 
             foreach (var tenancy in rentConfig.Tenancies)
             {
@@ -368,9 +395,17 @@ public static class CashflowCalculator
                 if (tenancy.EndDate.HasValue && periodDate > tenancy.EndDate.Value)
                     continue;
 
-                // Service charge advances typically don't increase annually
-                // (they're adjusted via annual reconciliation)
-                totalServiceCharge += tenancy.ServiceChargeAdvance;
+                // Check if this tenancy's unit is affected by vacancy
+                if (vacantUnits != null)
+                {
+                    // null in vacantUnits means ALL units affected
+                    if (vacantUnits.Contains(null) || vacantUnits.Contains(tenancy.UnitId))
+                        continue; // Vacant unit - no service charge income
+                }
+
+                // Apply general vacancy rate (matching CalculateEffectiveRent logic)
+                var serviceCharge = tenancy.ServiceChargeAdvance * (1 - rentConfig.VacancyRatePercent / 100);
+                totalServiceCharge += serviceCharge;
             }
 
             result[period] = totalServiceCharge;
@@ -531,10 +566,11 @@ public static class CashflowCalculator
         CapExConfiguration? capExConfig,
         MoneyTimeSeries grossRent,
         YearMonth startPeriod,
-        YearMonth endPeriod)
+        YearMonth endPeriod,
+        string currency = "EUR")
     {
-        var rentAdj = new MoneyTimeSeries(startPeriod, endPeriod);
-        var costSav = new MoneyTimeSeries(startPeriod, endPeriod);
+        var rentAdj = new MoneyTimeSeries(startPeriod, endPeriod, currency);
+        var costSav = new MoneyTimeSeries(startPeriod, endPeriod, currency);
 
         if (capExConfig == null)
             return (rentAdj, costSav);

@@ -1,0 +1,10 @@
+{# Twig partial for embedding the Kalkimo calculator.
+   Usage in templates:
+   {% include 'partials/kalkimo-embed.html.twig' %}
+   {% include 'partials/kalkimo-embed.html.twig' with {mode: 'demo'} %}
+#}
+<km-planner
+  lang="{{ grav.language.getActive|default('de') }}"
+  api-url="{{ config.plugins['kalkimo-embed'].api_url|default('http://localhost:5000/api') }}"
+  mode="{{ mode|default('full') }}"
+></km-planner>

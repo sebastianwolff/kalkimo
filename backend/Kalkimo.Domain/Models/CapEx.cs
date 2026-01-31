@@ -59,6 +59,27 @@ public record CapExMeasure
 
     /// <summary>Priorität</summary>
     public MeasurePriority Priority { get; init; } = MeasurePriority.Medium;
+
+    /// <summary>Wiederkehrende Maßnahme?</summary>
+    public bool IsRecurring { get; init; }
+
+    /// <summary>Konfiguration für wiederkehrende Maßnahmen</summary>
+    public RecurringMeasureConfig? RecurringConfig { get; init; }
+}
+
+/// <summary>
+/// Konfiguration für wiederkehrende Wartungsmaßnahmen
+/// </summary>
+public record RecurringMeasureConfig
+{
+    /// <summary>Intervall als % des Bauteilzyklus (z.B. 25% → alle 5 Jahre bei 20-Jahres-Zyklus)</summary>
+    public decimal IntervalPercent { get; init; }
+
+    /// <summary>Kosten als % der Erneuerungskosten pro Durchführung</summary>
+    public decimal CostPercent { get; init; }
+
+    /// <summary>Verlängerung des Bauteilzyklus durch Wartung (%)</summary>
+    public decimal CycleExtensionPercent { get; init; }
 }
 
 public enum MeasurePriority

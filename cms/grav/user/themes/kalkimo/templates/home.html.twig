@@ -1,0 +1,66 @@
+{# Fallback Homepage Template (non-modular) #}
+{% extends 'partials/base.html.twig' %}
+
+{% block content %}
+{# Hero Section #}
+<section class="km-hero">
+  <div class="km-hero-inner">
+    <div class="km-hero-text">
+      <h1 class="km-hero-title">{{ page.header.hero_title|default(page.title) }}</h1>
+      {% if page.header.hero_subtitle %}
+      <p class="km-hero-subtitle">{{ page.header.hero_subtitle }}</p>
+      {% endif %}
+      {% if page.header.cta_text %}
+      <div class="km-hero-cta">
+        <a href="{{ page.header.cta_link|default('/rechner') }}" class="btn-primary">
+          {{ page.header.cta_text }} &rarr;
+        </a>
+      </div>
+      {% endif %}
+    </div>
+    <div class="km-hero-illustration">
+      {% set hero_img = page.header.hero_image|default('kalkimo.png') %}
+      <img src="{{ page.media[hero_img].url|default(url('theme://images/' ~ hero_img)) }}"
+           alt="Kalkimo Planner" class="km-hero-mascot" loading="eager">
+    </div>
+  </div>
+</section>
+
+{# Features Strip #}
+{% if page.header.features %}
+<section class="km-features-strip">
+  <div class="km-features-grid">
+    {% for feature in page.header.features %}
+    <div class="feature-card">
+      <div class="feature-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+          {% if feature.icon == 'chart-line' %}
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          {% elseif feature.icon == 'file-text' %}
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line>
+          {% elseif feature.icon == 'percent' %}
+          <line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle>
+          {% else %}
+          <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line>
+          {% endif %}
+        </svg>
+      </div>
+      <h3 class="feature-card-title">{{ feature.title }}</h3>
+      {% if feature.description %}
+      <p class="feature-card-desc">{{ feature.description }}</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# Additional Page Content #}
+{% if page.content|trim %}
+<div class="container">
+  <div class="km-content-page">
+    {{ page.content|raw }}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

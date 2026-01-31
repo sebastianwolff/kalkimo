@@ -1,0 +1,19 @@
+{# Reusable Navigation Links
+   Parameters:
+   - nav_class: CSS class for the link ('km-nav-link' or 'km-mobile-nav-link')
+   - items: navigation items array (default: config.theme.nav.items)
+#}
+{% set nav_items = items|default(config.theme.nav.items) %}
+{% set lang = grav.language.getActive|default('de') %}
+
+{% for item in nav_items %}
+  {% set label = attribute(item, 'label_' ~ lang)|default(item.label_de) %}
+  {% set target_page = pages.find(item.route) %}
+  {% set url = target_page ? target_page.url : ('/' ~ lang ~ item.route) %}
+  {% set is_active = page.route == item.route or page.route starts with item.route ~ '/' %}
+
+  <a href="{{ url }}"
+     class="{{ nav_class|default('km-nav-link') }}{{ is_active ? ' active' : '' }}">
+    {{ label }}
+  </a>
+{% endfor %}

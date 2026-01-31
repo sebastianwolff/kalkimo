@@ -1,0 +1,51 @@
+{# SEO Meta Tags, OpenGraph, hreflang, Canonical #}
+
+<title>{% if page.title %}{{ page.title }} | {% endif %}{{ site.title }}</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+{# Description #}
+{% set description = page.header.metadata.description|default(site.metadata.description[grav.language.getActive]|default(site.metadata.description.de)) %}
+{% if description %}
+<meta name="description" content="{{ description }}">
+{% endif %}
+
+{# Keywords #}
+{% set keywords = page.header.metadata.keywords|default(site.metadata.keywords[grav.language.getActive]|default('')) %}
+{% if keywords %}
+<meta name="keywords" content="{{ keywords }}">
+{% endif %}
+
+{# Robots #}
+<meta name="robots" content="{{ page.header.metadata.robots|default(site.metadata.robots|default('index, follow')) }}">
+
+{# Canonical #}
+<link rel="canonical" href="{{ page.url(true, true) }}">
+
+{# hreflang for DE/EN #}
+{% for lang in grav.language.getLanguages %}
+<link rel="alternate" hreflang="{{ lang }}" href="{{ base_url_absolute }}/{{ lang }}{{ page.route }}">
+{% endfor %}
+<link rel="alternate" hreflang="x-default" href="{{ base_url_absolute }}/de{{ page.route }}">
+
+{# OpenGraph #}
+{% set og = page.header.metadata.og|default({}) %}
+<meta property="og:title" content="{{ og.title|default(page.title ~ ' | ' ~ site.title) }}">
+<meta property="og:description" content="{{ description }}">
+<meta property="og:type" content="{{ og.type|default('website') }}">
+<meta property="og:url" content="{{ page.url(true, true) }}">
+{% if og.image %}
+<meta property="og:image" content="{{ page.media[og.image].url|default(url('theme://images/og-default.jpg', true)) }}">
+{% else %}
+<meta property="og:image" content="{{ url('theme://images/og-default.jpg', true) }}">
+{% endif %}
+<meta property="og:locale" content="{{ grav.language.getActive == 'de' ? 'de_DE' : 'en_US' }}">
+<meta property="og:site_name" content="{{ site.title }}">
+
+{# Twitter Card #}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ og.title|default(page.title) }}">
+<meta name="twitter:description" content="{{ description }}">
+
+{# Favicon #}
+<link rel="icon" type="image/png" href="{{ url('theme://images/favicon.ico') }}">

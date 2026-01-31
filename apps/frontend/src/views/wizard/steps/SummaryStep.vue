@@ -738,8 +738,7 @@ import { KalkCard } from '@/components';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUiStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/authStore';
-import { projectsApi } from '@/api';
-import { calculateProject } from '@/services/calculationService';
+import { projectsApi, calculationApi } from '@/api';
 import type { CalculationResult, YearlyCashflowRow } from '@/stores/types';
 
 const emit = defineEmits<{
@@ -933,15 +932,12 @@ async function calculate() {
   if (!project.value) return;
   isCalculating.value = true;
   try {
+    let r: CalculationResult;
     if (authStore.isAuthenticated) {
-      try {
-        const r = await projectsApi.calculate(project.value.id);
-        result.value = r;
-        projectStore.setCalculationResult(r);
-        return;
-      } catch { /* fallthrough to local */ }
+      r = await projectsApi.calculate(project.value.id);
+    } else {
+      r = await calculationApi.calculateAnonymous(project.value);
     }
-    const r = calculateProject(project.value);
     result.value = r;
     projectStore.setCalculationResult(r);
   } catch {

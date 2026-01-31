@@ -1,0 +1,23 @@
+{# Hero Module – Used in modular homepage #}
+<section class="km-hero">
+  <div class="km-hero-inner">
+    <div class="km-hero-text">
+      <h1 class="km-hero-title">{{ page.header.hero_title|default(page.title) }}</h1>
+      {% if page.header.hero_subtitle %}
+      <p class="km-hero-subtitle">{{ page.header.hero_subtitle }}</p>
+      {% endif %}
+      {% if page.header.cta_text %}
+      <div class="km-hero-cta">
+        <a href="{{ page.header.cta_link|default('/rechner') }}" class="btn-primary">
+          {{ page.header.cta_text }} &rarr;
+        </a>
+      </div>
+      {% endif %}
+    </div>
+    <div class="km-hero-illustration">
+      {% set hero_img = page.header.hero_image|default('kalkimo.png') %}
+      <img src="{{ page.media[hero_img].url|default(url('theme://images/' ~ hero_img)) }}"
+           alt="Kalkimo Planner" class="km-hero-mascot" loading="eager">
+    </div>
+  </div>
+</section>

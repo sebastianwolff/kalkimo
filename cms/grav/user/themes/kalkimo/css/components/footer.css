@@ -1,0 +1,106 @@
+/* ==========================================================================
+   Footer – Navy Background, Links, Copyright
+   ========================================================================== */
+
+.km-footer {
+  background-color: var(--km-navy);
+  color: var(--km-white);
+  padding: var(--km-space-2xl) 0 var(--km-space-xl);
+}
+
+.km-footer-inner {
+  max-width: var(--km-max-width);
+  margin: 0 auto;
+  padding: 0 var(--km-space-md);
+}
+
+@media (min-width: 768px) {
+  .km-footer-inner {
+    padding: 0 var(--km-space-lg);
+  }
+}
+
+/* ---------- Footer Top ---------- */
+.km-footer-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--km-space-lg);
+  padding-bottom: var(--km-space-lg);
+}
+
+@media (min-width: 768px) {
+  .km-footer-top {
+    flex-direction: row;
+    justify-content: space-between;
+    padding-bottom: var(--km-space-xl);
+  }
+}
+
+/* ---------- Footer Logo ---------- */
+.km-footer-logo img {
+  height: 32px;
+  width: auto;
+  filter: brightness(0) invert(1);
+}
+
+/* ---------- Footer Navigation ---------- */
+.km-footer-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--km-space-sm);
+}
+
+@media (min-width: 768px) {
+  .km-footer-nav {
+    flex-direction: row;
+    gap: var(--km-space-lg);
+  }
+}
+
+.km-footer-nav a {
+  color: var(--km-gray-400);
+  font-size: var(--km-body);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color var(--km-transition-base);
+}
+
+.km-footer-nav a:hover {
+  color: var(--km-white);
+}
+
+/* ---------- Footer Bottom ---------- */
+.km-footer-bottom {
+  border-top: 1px solid var(--km-navy-light);
+  padding-top: var(--km-space-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--km-space-sm);
+  font-size: var(--km-small);
+  color: var(--km-gray-400);
+}
+
+@media (min-width: 768px) {
+  .km-footer-bottom {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+.km-footer-legal {
+  display: flex;
+  gap: var(--km-space-md);
+}
+
+.km-footer-legal a {
+  color: var(--km-gray-400);
+  text-decoration: none;
+  transition: color var(--km-transition-base);
+}
+
+.km-footer-legal a:hover {
+  color: var(--km-white);
+}

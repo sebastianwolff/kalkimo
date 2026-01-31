@@ -9,7 +9,7 @@ public class CalculationOrchestrator
 {
     private readonly TaxCalculator _taxCalculator;
 
-    public const string EngineVersion = "1.0.0";
+    public const string EngineVersion = "2.0.0";
 
     public CalculationOrchestrator(TaxCalculator taxCalculator)
     {
@@ -40,13 +40,15 @@ public class CalculationOrchestrator
         var grossRent = CashflowCalculator.CalculateGrossRent(
             effectiveProject.Rent,
             startPeriod,
-            endPeriod);
+            endPeriod,
+            currency);
 
         var effectiveRent = CashflowCalculator.CalculateEffectiveRent(
             grossRent,
             effectiveProject.Rent,
             startPeriod,
-            endPeriod);
+            endPeriod,
+            currency);
 
         // === 3. Nebenkosten / Service Charges ===
         var serviceChargeIncome = CashflowCalculator.CalculateServiceChargeIncome(
@@ -77,32 +79,67 @@ public class CalculationOrchestrator
             endPeriod,
             currency);
 
-        // === 5. NOI (Net Operating Income) ===
+        // === 5. Recurring CapEx Expansion ===
+        var recurringOccurrences = RecurringCapExExpander.Expand(
+            effectiveProject.CapEx,
+            effectiveProject.Property,
+            startPeriod.Year,
+            endPeriod.Year,
+            currency);
+
+        // Merge recurring occurrences into effective CapEx configuration
+        var effectiveCapEx = recurringOccurrences.Count > 0
+            ? RecurringCapExExpander.ExpandIntoConfiguration(
+                effectiveProject.CapEx,
+                effectiveProject.Property,
+                startPeriod.Year,
+                endPeriod.Year,
+                currency)
+            : effectiveProject.CapEx;
+
+        // === 5b. Maßnahmen-Impacts (Mietanpassungen + Kosteneinsparungen) ===
+        var (rentAdjustment, costSavings) = CashflowCalculator.CalculateMeasureImpacts(
+            effectiveCapEx, grossRent, startPeriod, endPeriod, currency);
+
+        // Apply rent adjustments: create adjusted gross rent, then recalculate effective rent
+        grossRent = grossRent.Add(rentAdjustment);
+        effectiveRent = CashflowCalculator.CalculateEffectiveRent(
+            grossRent, effectiveProject.Rent, startPeriod, endPeriod, currency);
+
+        // Apply cost savings to operating costs
+        var adjustedOperatingCosts = new MoneyTimeSeries(startPeriod, endPeriod, currency);
+        foreach (var period in adjustedOperatingCosts.Periods)
+            adjustedOperatingCosts[period] = operatingCosts[period] - costSavings[period];
+        operatingCosts = adjustedOperatingCosts;
+
+        // === 6. NOI (Net Operating Income) ===
         // NOI = Effective Rent + Service Charge Income - Operating Costs
-        // (Service charges are income for cashflow, transferable costs offset by service charge advances)
         var noi = CashflowCalculator.CalculateNoi(
             effectiveRent,
+            serviceChargeIncome,
             operatingCosts,
             startPeriod,
-            endPeriod);
+            endPeriod,
+            currency);
 
-        // === 6. CapEx ===
+        // === 7. CapEx ===
         var capExPayments = CashflowCalculator.CalculateCapExPayments(
-            effectiveProject.CapEx,
+            effectiveCapEx,
             startPeriod,
             endPeriod);
 
-        // === 7. Cashflow vor Steuern ===
+        // === 8. Cashflow vor Steuern ===
         var cashflowBeforeTax = CashflowCalculator.CalculateCashflowBeforeTax(
             noi,
             aggregatedFinancing.TotalDebtService,
             capExPayments,
             startPeriod,
-            endPeriod);
+            endPeriod,
+            currency);
 
-        // === 8. Steuern ===
-        // Calculate maintenance expenses for tax purposes
-        var maintenanceExpense = CalculateMaintenanceExpenseForTax(effectiveProject, startPeriod, endPeriod);
+        // === 9. Steuern ===
+        // Calculate maintenance expenses for tax purposes (using effectiveCapEx with recurring expansions)
+        var maintenanceExpense = CalculateMaintenanceExpenseForTax(effectiveProject, effectiveCapEx, startPeriod, endPeriod);
 
         // Other deductions (non-transferable costs that are tax deductible)
         var otherDeductions = CalculateOtherTaxDeductions(effectiveProject.Costs, livingArea, startPeriod, endPeriod, currency);
@@ -116,12 +153,13 @@ public class CalculationOrchestrator
             startPeriod,
             endPeriod);
 
-        // === 9. Cashflow nach Steuern ===
+        // === 10. Cashflow nach Steuern ===
         var cashflowAfterTax = CashflowCalculator.CalculateCashflowAfterTax(
             cashflowBeforeTax,
             taxTimeSeries.TaxPayment,
             startPeriod,
-            endPeriod);
+            endPeriod,
+            currency);
 
         // === 10. Kumulativer Cashflow ===
         var cumulativeCashflow = cashflowAfterTax.Cumulative();
@@ -136,12 +174,12 @@ public class CalculationOrchestrator
             endPeriod,
             currency);
 
-        // === 12. Objektwert ===
+        // === 13. Objektwert ===
         var initialValue = effectiveProject.Purchase.PurchasePrice;
         var propertyValue = CashflowCalculator.CalculatePropertyValue(
             initialValue,
             effectiveProject.Valuation,
-            effectiveProject.CapEx,
+            effectiveCapEx,
             startPeriod,
             endPeriod);
 
@@ -171,18 +209,18 @@ public class CalculationOrchestrator
                 saleNetProceeds = salePrice - saleCosts - capitalGainsResult.TaxAmount;
 
                 taxSummary = BuildTaxSummary(
-                    effectiveProject, taxTimeSeries, aggregatedFinancing.TotalInterest, maintenanceExpense, capitalGainsResult);
+                    effectiveProject, taxTimeSeries, aggregatedFinancing.TotalInterest, maintenanceExpense, operatingCosts, capitalGainsResult);
             }
             else
             {
                 taxSummary = BuildTaxSummary(
-                    effectiveProject, taxTimeSeries, aggregatedFinancing.TotalInterest, maintenanceExpense, null);
+                    effectiveProject, taxTimeSeries, aggregatedFinancing.TotalInterest, maintenanceExpense, operatingCosts, null);
             }
         }
         else
         {
             taxSummary = BuildTaxSummary(
-                effectiveProject, taxTimeSeries, aggregatedFinancing.TotalInterest, maintenanceExpense, null);
+                effectiveProject, taxTimeSeries, aggregatedFinancing.TotalInterest, maintenanceExpense, operatingCosts, null);
         }
 
         // === 14. Kennzahlen ===
@@ -210,9 +248,10 @@ public class CalculationOrchestrator
             startPeriod,
             endPeriod);
 
-        // === 15. Warnungen ===
+        // === 16. Warnungen ===
         var warnings = GenerateWarnings(
             effectiveProject,
+            effectiveCapEx,
             cashflowAfterTax,
             reserveBalance,
             noi,
@@ -232,7 +271,26 @@ public class CalculationOrchestrator
             endPeriod,
             currency);
 
-        return new CalculationResult
+        // === 17. Immobilienwert-Prognose (Multi-Szenario) ===
+        var propertyValueForecast = PropertyValueForecastCalculator.Calculate(
+            effectiveProject, startPeriod.Year, endPeriod.Year);
+
+        // === 18. Exit-Analyse ===
+        var exitAnalysis = ExitAnalysisCalculator.Calculate(
+            effectiveProject,
+            propertyValueForecast,
+            cashflowAfterTax,
+            grossRent,
+            operatingCosts,
+            aggregatedFinancing.TotalDebtService,
+            capExPayments,
+            taxTimeSeries.TaxPayment,
+            aggregatedFinancing.TotalOutstandingDebt,
+            reserveBalance,
+            taxTimeSeries.Depreciation);
+
+        // === 19. Jahresaggregation ===
+        var result = new CalculationResult
         {
             ProjectId = effectiveProject.Id,
             ScenarioId = scenarioId ?? "base",
@@ -266,8 +324,28 @@ public class CalculationOrchestrator
             Metrics = metrics,
             TaxSummary = taxSummary,
             Warnings = warnings,
-            InvestorResults = investorResults
+            InvestorResults = investorResults,
+
+            // Neue Felder
+            PropertyValueForecast = propertyValueForecast,
+            ExitAnalysis = exitAnalysis,
+            TotalEquityInvested = equity.Amount,
+            TotalCashflowBeforeTax = cashflowBeforeTax.Sum().Amount,
+            TotalCashflowAfterTax = cashflowAfterTax.Sum().Amount,
+            CapExTimeline = YearlyAggregationService.BuildCapExTimeline(
+                effectiveProject.CapEx, recurringOccurrences)
         };
+
+        // Jahresaggregate als letzter Schritt (braucht das CalculationResult)
+        result = result with
+        {
+            YearlyCashflows = YearlyAggregationService.AggregateToYearlyCashflowRows(
+                result, grossRent, capExPayments, maintenanceExpense, propertyValue),
+            TaxBridge = YearlyAggregationService.AggregateToTaxBridgeRows(
+                result, grossRent, maintenanceExpense)
+        };
+
+        return result;
     }
 
     /// <summary>
@@ -391,19 +469,20 @@ public class CalculationOrchestrator
     /// <summary>
     /// Berechnet steuerlich absetzbare Instandhaltungskosten
     /// </summary>
-    private MoneyTimeSeries CalculateMaintenanceExpenseForTax(Project project, YearMonth startPeriod, YearMonth endPeriod)
+    private MoneyTimeSeries CalculateMaintenanceExpenseForTax(Project project, CapExConfiguration? effectiveCapEx, YearMonth startPeriod, YearMonth endPeriod)
     {
         var result = new MoneyTimeSeries(startPeriod, endPeriod);
+        var capEx = effectiveCapEx ?? project.CapEx;
 
-        if (project.CapEx == null)
+        if (capEx == null)
             return result;
 
         // Check for 15% rule
         var acquisitionRelatedResult = _taxCalculator.CheckAcquisitionRelatedCosts(
             project.Purchase,
-            project.CapEx.Measures);
+            capEx.Measures);
 
-        foreach (var measure in project.CapEx.Measures.Where(m => m.IsExecuted))
+        foreach (var measure in capEx.Measures.Where(m => m.IsExecuted))
         {
             // Classify the measure (considering 15% rule)
             var classification = _taxCalculator.ClassifyMeasure(
@@ -515,6 +594,7 @@ public class CalculationOrchestrator
         TaxTimeSeries taxTimeSeries,
         MoneyTimeSeries interestExpense,
         MoneyTimeSeries maintenanceExpense,
+        MoneyTimeSeries operatingCosts,
         CapitalGainsTaxResult? capitalGainsResult)
     {
         var acquisitionRelatedResult = project.CapEx != null
@@ -567,24 +647,44 @@ public class CalculationOrchestrator
                 Depreciation = depreciation,
                 InterestExpense = interest,
                 MaintenanceExpense = maintenance,
-                OtherDeductions = Money.Zero(), // Could be calculated separately
+                OtherDeductions = Money.Zero(),
                 TaxableIncome = grossIncome - depreciation - interest - maintenance,
                 TaxPayment = taxPayment
             };
         }
+
+        // Compute depreciation basis and rate from actual property data
+        var depreciationBasis = _taxCalculator.CalculateEffectiveDepreciationBase(project.Purchase, project.CapEx);
+        var depreciationRate = project.TaxProfile.CustomDepreciationRatePercent
+            ?? DepreciationRates.GetAnnualRate(project.Property.ConstructionYear);
+        var annualDepreciation = _taxCalculator.CalculateAnnualDepreciation(
+            project.Purchase, project.Property, project.TaxProfile, project.CapEx);
+        var effectiveTaxRate = project.TaxProfile.EffectiveTaxRatePercent;
+
+        // Total deductions and tax savings
+        var totalOperatingDeduction = operatingCosts.Sum();
+        var totalDeductions = taxTimeSeries.Depreciation.Sum() + interestExpense.Sum() +
+                              maintenanceExpense.Sum() + totalOperatingDeduction;
+        var totalTaxSavings = (totalDeductions * effectiveTaxRate / 100).Round();
 
         return new TaxSummary
         {
             TotalDepreciation = taxTimeSeries.Depreciation.Sum(),
             TotalInterestDeduction = interestExpense.Sum(),
             TotalMaintenanceDeduction = maintenanceExpense.Sum(),
+            TotalOperatingDeduction = totalOperatingDeduction,
             AcquisitionRelatedCostsTriggered = acquisitionRelatedResult.IsTriggered,
             AcquisitionRelatedCostsAmount = acquisitionRelatedResult.ActualCosts,
             MaintenanceDistributions = distributions,
             CapitalGainsTax = capitalGainsResult?.TaxAmount,
             SaleTaxExempt = capitalGainsResult?.IsTaxExempt ?? true,
             TotalTaxPayment = taxTimeSeries.TaxPayment.Sum() + (capitalGainsResult?.TaxAmount ?? Money.Zero()),
-            YearlyTax = yearlySummaries
+            YearlyTax = yearlySummaries,
+            DepreciationBasis = depreciationBasis,
+            AnnualDepreciation = annualDepreciation,
+            DepreciationRatePercent = depreciationRate,
+            EffectiveTaxRatePercent = effectiveTaxRate,
+            TotalTaxSavings = totalTaxSavings
         };
     }
 
@@ -593,6 +693,7 @@ public class CalculationOrchestrator
     /// </summary>
     private static IReadOnlyList<CalculationWarning> GenerateWarnings(
         Project project,
+        CapExConfiguration? effectiveCapEx,
         MoneyTimeSeries cashflowAfterTax,
         MoneyTimeSeries reserveBalance,
         MoneyTimeSeries noi,
@@ -680,10 +781,11 @@ public class CalculationOrchestrator
             });
         }
 
-        // Check for deferred maintenance
-        if (project.CapEx != null)
+        // Check for deferred maintenance (use effectiveCapEx to include recurring expansions)
+        var capExForWarnings = effectiveCapEx ?? project.CapEx;
+        if (capExForWarnings != null)
         {
-            var deferredMeasures = project.CapEx.Measures
+            var deferredMeasures = capExForWarnings.Measures
                 .Where(m => m.IsNecessary && !m.IsExecuted && m.PlannedPeriod <= endPeriod)
                 .ToList();
 

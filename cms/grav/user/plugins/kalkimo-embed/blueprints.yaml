@@ -1,0 +1,34 @@
+name: Kalkimo Embed
+slug: kalkimo-embed
+type: plugin
+version: 0.1.0
+description: "Embeds the Kalkimo Planner Vue.js app into GRAV pages via <km-planner> custom element."
+icon: calculator
+author:
+  name: Kalkimo Team
+  email: info@kalkimo.de
+homepage: https://kalkimo.de
+license: proprietary
+
+dependencies:
+  - { name: grav, version: '>=1.7.0' }
+
+form:
+  validation: loose
+  fields:
+    enabled:
+      type: toggle
+      label: Plugin status
+      highlight: 1
+      default: 1
+      options:
+        1: Enabled
+        0: Disabled
+      validate:
+        type: bool
+
+    api_url:
+      type: text
+      label: Backend API URL
+      default: "http://localhost:5000/api"
+      help: "URL of the Kalkimo backend API"

@@ -1,0 +1,21 @@
+{# Call-to-Action Banner Module #}
+{% set bg = page.header.bg|default('teal') %}
+
+<section class="km-cta {{ bg == 'navy' ? 'km-cta--navy' : 'km-cta--teal' }}">
+  <div class="container">
+    <div class="km-cta-inner">
+      {% if page.header.title %}
+      <h2 class="km-cta-title">{{ page.header.title }}</h2>
+      {% endif %}
+      {% if page.header.subtitle %}
+      <p class="km-cta-subtitle">{{ page.header.subtitle }}</p>
+      {% endif %}
+      {% if page.header.cta_text %}
+      <a href="{{ page.header.cta_link|default('/rechner') }}"
+         class="{{ bg == 'navy' ? 'btn-primary' : 'btn-dark' }}">
+        {{ page.header.cta_text }} &rarr;
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</section>

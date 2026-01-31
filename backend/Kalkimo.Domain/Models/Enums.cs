@@ -7,7 +7,9 @@ public enum PropertyType
 {
     SingleFamilyHome,    // Einfamilienhaus
     MultiFamilyHome,     // Mehrfamilienhaus
-    Condominium          // Eigentumswohnung (WEG)
+    Condominium,         // Eigentumswohnung (WEG)
+    Commercial,          // Gewerbeimmobilie
+    Mixed                // Gemischt (Wohn- und Gewerbe)
 }
 
 /// <summary>
@@ -15,9 +17,11 @@ public enum PropertyType
 /// </summary>
 public enum Condition
 {
-    Good,    // Gut
-    Medium,  // Mittel
-    Poor     // Schlecht
+    Good = 0,             // Gut (backward compat: bleibt 0)
+    Fair = 1,             // Befriedigend (war "Medium", bleibt 1)
+    Poor = 2,             // Schlecht (backward compat: bleibt 2)
+    New = 3,              // Neu
+    NeedsRenovation = 4   // Sanierungsbedürftig
 }
 
 /// <summary>
@@ -50,7 +54,8 @@ public enum TaxClassification
     MaintenanceExpense,           // Erhaltungsaufwand (sofort absetzbar)
     MaintenanceExpenseDistributed,// Erhaltungsaufwand verteilt (§82b EStDV)
     ManufacturingCosts,           // Herstellungskosten (aktivierungspflichtig)
-    AcquisitionRelatedCosts       // Anschaffungsnahe HK (15%-Regel)
+    AcquisitionRelatedCosts,      // Anschaffungsnahe HK (15%-Regel)
+    NotDeductible                 // Nicht absetzbar (z.B. Eigenleistung)
 }
 
 /// <summary>
@@ -66,6 +71,7 @@ public enum CapExCategory
     Plumbing,     // Sanitär
     Interior,     // Innenausbau
     Energy,       // Energetische Sanierung
+    Exterior,     // Außenanlagen
     Other         // Sonstiges
 }
 

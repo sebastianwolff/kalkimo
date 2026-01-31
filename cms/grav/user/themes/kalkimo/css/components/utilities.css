@@ -1,0 +1,72 @@
+/* ==========================================================================
+   Utilities – Visibility, Spacing, Text, Misc
+   ========================================================================== */
+
+/* ---------- Screen Reader Only ---------- */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ---------- Responsive Visibility ---------- */
+.desktop-only {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .desktop-only {
+    display: block;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-only {
+    display: none;
+  }
+}
+
+/* ---------- Text Alignment ---------- */
+.text-center { text-align: center; }
+.text-left   { text-align: left; }
+.text-right  { text-align: right; }
+
+/* ---------- Reading Time Badge ---------- */
+.reading-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--km-caption);
+  color: var(--km-gray-400);
+  font-weight: 500;
+}
+
+.reading-time svg {
+  flex-shrink: 0;
+}
+
+/* ---------- Spacing Utilities ---------- */
+.mt-0  { margin-top: 0; }
+.mt-sm { margin-top: var(--km-space-sm); }
+.mt-md { margin-top: var(--km-space-md); }
+.mt-lg { margin-top: var(--km-space-lg); }
+.mt-xl { margin-top: var(--km-space-xl); }
+
+.mb-0  { margin-bottom: 0; }
+.mb-sm { margin-bottom: var(--km-space-sm); }
+.mb-md { margin-bottom: var(--km-space-md); }
+.mb-lg { margin-bottom: var(--km-space-lg); }
+.mb-xl { margin-bottom: var(--km-space-xl); }
+
+.py-md { padding-top: var(--km-space-md); padding-bottom: var(--km-space-md); }
+.py-lg { padding-top: var(--km-space-lg); padding-bottom: var(--km-space-lg); }
+.py-xl { padding-top: var(--km-space-xl); padding-bottom: var(--km-space-xl); }
+
+.px-md { padding-left: var(--km-space-md); padding-right: var(--km-space-md); }
+.px-lg { padding-left: var(--km-space-lg); padding-right: var(--km-space-lg); }

@@ -1,0 +1,4 @@
+enabled: true
+api_url: "http://localhost:5000/api"
+embed_js: "plugin://kalkimo-embed/assets/km-planner.embed.js"
+embed_css: "plugin://kalkimo-embed/assets/km-planner.embed.css"

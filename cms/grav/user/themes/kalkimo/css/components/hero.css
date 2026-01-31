@@ -1,0 +1,148 @@
+/* ==========================================================================
+   Hero Section – Homepage
+   ========================================================================== */
+
+.km-hero {
+  background-color: var(--km-gray-50);
+  padding: 80px var(--km-space-md) var(--km-space-2xl);
+}
+
+@media (min-width: 768px) {
+  .km-hero {
+    padding: 80px var(--km-space-lg) var(--km-space-3xl);
+  }
+}
+
+@media (min-width: 1024px) {
+  .km-hero {
+    padding: 100px var(--km-space-lg) var(--km-space-3xl);
+  }
+}
+
+.km-hero-inner {
+  max-width: var(--km-max-width);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--km-space-xl);
+}
+
+@media (min-width: 1024px) {
+  .km-hero-inner {
+    flex-direction: row;
+    text-align: left;
+    gap: var(--km-space-3xl);
+  }
+}
+
+/* ---------- Hero Text ---------- */
+.km-hero-text {
+  flex: 1 1 55%;
+  max-width: 560px;
+}
+
+@media (min-width: 1024px) {
+  .km-hero-text {
+    max-width: none;
+  }
+}
+
+.km-hero-title {
+  font-size: var(--km-h1);
+  font-weight: 700;
+  color: var(--km-navy);
+  line-height: 1.15;
+  margin-bottom: var(--km-space-lg);
+}
+
+.km-hero-subtitle {
+  font-size: var(--km-body-lg);
+  color: var(--km-gray-600);
+  line-height: 1.6;
+  margin-bottom: var(--km-space-xl);
+  max-width: 480px;
+}
+
+@media (min-width: 1024px) {
+  .km-hero-subtitle {
+    max-width: none;
+  }
+}
+
+.km-hero-cta {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .km-hero-cta {
+    width: auto;
+  }
+}
+
+.km-hero-cta .btn-primary {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .km-hero-cta .btn-primary {
+    width: auto;
+  }
+}
+
+/* ---------- Hero Illustration ---------- */
+.km-hero-illustration {
+  flex: 1 1 45%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.km-hero-mascot {
+  max-height: 200px;
+  width: auto;
+  position: relative;
+  z-index: 2;
+}
+
+@media (min-width: 768px) {
+  .km-hero-mascot {
+    max-height: 260px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .km-hero-mascot {
+    max-height: 320px;
+  }
+}
+
+/* ---------- Feature Strip (below Hero) ---------- */
+.km-features-strip {
+  padding: var(--km-space-2xl) var(--km-space-md);
+  background-color: var(--km-white);
+}
+
+@media (min-width: 768px) {
+  .km-features-strip {
+    padding: var(--km-space-3xl) var(--km-space-lg);
+  }
+}
+
+.km-features-grid {
+  max-width: var(--km-max-width);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--km-space-lg);
+}
+
+@media (min-width: 768px) {
+  .km-features-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--km-space-xl);
+  }
+}

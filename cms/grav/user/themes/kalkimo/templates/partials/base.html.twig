@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="{{ grav.language.getActive|default('de') }}">
+<head>
+  {% include 'partials/metadata.html.twig' %}
+
+  {# Theme CSS (loaded via kalkimo.php onTwigSiteVariables) #}
+  {{ assets.css()|raw }}
+
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="{{ page.header.body_classes|default('') }}">
+
+  {# Skip Link for Accessibility #}
+  <a class="skip-link" href="#main-content">
+    {{ grav.language.getActive == 'de' ? 'Zum Inhalt springen' : 'Skip to content' }}
+  </a>
+
+  {# Header #}
+  {% include 'partials/header.html.twig' %}
+
+  {# Main Content #}
+  <main id="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  {# Footer #}
+  {% include 'partials/footer.html.twig' %}
+
+  {# Theme JS (loaded via kalkimo.php onTwigSiteVariables) #}
+  {{ assets.js('bottom')|raw }}
+
+  {% block js_extra %}{% endblock %}
+</body>
+</html>

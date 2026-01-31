@@ -1,0 +1,262 @@
+/* ==========================================================================
+   Kalkimo Theme – Basis-Styles
+   Mobile-first. Erweitert durch min-width Media Queries.
+   ========================================================================== */
+
+/* ---------- Reset ---------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---------- Body ---------- */
+body {
+  font-family: var(--km-font-family);
+  font-size: var(--km-body);
+  line-height: 1.65;
+  color: var(--km-gray-600);
+  background-color: var(--km-white);
+  padding-top: var(--km-header-height);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body.menu-open {
+  overflow: hidden;
+}
+
+/* ---------- Typography ---------- */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--km-navy);
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: var(--km-space-md);
+}
+
+h1 { font-size: var(--km-h1); }
+h2 { font-size: var(--km-h2); margin-top: var(--km-space-2xl); }
+h3 { font-size: var(--km-h3); font-weight: 600; margin-top: var(--km-space-xl); }
+h4 { font-size: var(--km-h4); font-weight: 600; margin-top: var(--km-space-lg); }
+
+p {
+  margin-bottom: var(--km-space-md);
+}
+
+.lead {
+  font-size: var(--km-body-lg);
+  color: var(--km-gray-600);
+}
+
+/* ---------- Links ---------- */
+a {
+  color: var(--km-teal);
+  text-decoration: none;
+  transition: color var(--km-transition-base);
+}
+
+a:hover {
+  color: var(--km-teal-hover);
+}
+
+/* ---------- Focus ---------- */
+:focus-visible {
+  outline: 2px solid var(--km-teal);
+  outline-offset: 2px;
+}
+
+/* ---------- Skip Link (Accessibility) ---------- */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--km-space-md);
+  padding: var(--km-space-sm) var(--km-space-md);
+  background: var(--km-navy);
+  color: var(--km-white);
+  border-radius: var(--km-radius-md);
+  z-index: 9999;
+  font-weight: 600;
+  font-size: var(--km-small);
+}
+
+.skip-link:focus {
+  top: var(--km-space-sm);
+}
+
+/* ---------- Images ---------- */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ---------- Container ---------- */
+.container {
+  max-width: var(--km-max-width);
+  margin: 0 auto;
+  padding: 0 var(--km-space-md);
+}
+
+@media (min-width: 768px) {
+  .container { padding: 0 var(--km-space-lg); }
+}
+
+@media (min-width: 1280px) {
+  .container { padding: 0 var(--km-space-xl); }
+}
+
+/* ---------- Sections ---------- */
+.km-section {
+  padding: var(--km-space-2xl) 0;
+}
+
+@media (min-width: 768px) {
+  .km-section {
+    padding: var(--km-space-3xl) 0;
+  }
+}
+
+.km-section--alt {
+  background-color: var(--km-gray-50);
+}
+
+.km-section--dark {
+  background-color: var(--km-navy);
+  color: var(--km-white);
+}
+
+/* ---------- Buttons ---------- */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--km-space-sm);
+  background-color: var(--km-teal);
+  color: var(--km-white);
+  border: 2px solid var(--km-teal);
+  border-radius: var(--km-radius-md);
+  padding: 12px 28px;
+  font-family: var(--km-font-family);
+  font-size: var(--km-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--km-transition-base), transform var(--km-transition-base);
+  text-decoration: none;
+  line-height: 1.2;
+}
+
+.btn-primary:hover {
+  background-color: var(--km-teal-hover);
+  border-color: var(--km-teal-hover);
+  color: var(--km-white);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--km-space-sm);
+  background-color: transparent;
+  color: var(--km-teal);
+  border: 2px solid var(--km-teal);
+  border-radius: var(--km-radius-md);
+  padding: 8px 20px;
+  font-family: var(--km-font-family);
+  font-size: var(--km-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--km-transition-base);
+  text-decoration: none;
+  line-height: 1.2;
+}
+
+.btn-outline:hover {
+  background-color: var(--km-teal);
+  color: var(--km-white);
+}
+
+.btn-dark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--km-space-sm);
+  background-color: var(--km-navy);
+  color: var(--km-white);
+  border: 2px solid var(--km-navy);
+  border-radius: var(--km-radius-md);
+  padding: 12px 28px;
+  font-family: var(--km-font-family);
+  font-size: var(--km-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--km-transition-base);
+  text-decoration: none;
+  line-height: 1.2;
+}
+
+.btn-dark:hover {
+  background-color: var(--km-navy-medium);
+  border-color: var(--km-navy-medium);
+  color: var(--km-white);
+}
+
+.link-arrow {
+  color: var(--km-teal);
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.link-arrow::after {
+  content: '\2192';
+  transition: transform var(--km-transition-base);
+}
+
+.link-arrow:hover {
+  color: var(--km-teal-hover);
+}
+
+.link-arrow:hover::after {
+  transform: translateX(4px);
+}
+
+/* ---------- Content Page ---------- */
+.km-content-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: var(--km-space-2xl) 0;
+}
+
+.km-content-page h2 {
+  margin-top: var(--km-space-2xl);
+}
+
+.km-content-page ul,
+.km-content-page ol {
+  margin-bottom: var(--km-space-md);
+  padding-left: var(--km-space-lg);
+}
+
+.km-content-page li {
+  margin-bottom: var(--km-space-sm);
+}
+
+/* ---------- Lists ---------- */
+ul, ol {
+  list-style-position: outside;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--km-gray-200);
+  margin: var(--km-space-xl) 0;
+}

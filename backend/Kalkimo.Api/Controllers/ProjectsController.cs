@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text.Json;
 using Kalkimo.Api.Infrastructure;
+using Kalkimo.Api.Mapping;
 using Kalkimo.Api.Models;
 using Kalkimo.Api.Services;
 using Kalkimo.Domain.Calculators;
@@ -256,7 +257,7 @@ public class ProjectsController : ControllerBase
     /// Berechnung ausführen
     /// </summary>
     [HttpPost("{id}/calculate")]
-    public async Task<ActionResult<CalculationResult>> Calculate(
+    public async Task<ActionResult<CalculationResponseDto>> Calculate(
         string id,
         [FromBody] CalculateRequest? request,
         CancellationToken ct)
@@ -289,7 +290,8 @@ public class ProjectsController : ControllerBase
                 result.Metrics.IrrAfterTaxPercent,
                 result.Metrics.NpvAfterTax);
 
-            return Ok(result);
+            var response = CalculationResultMapper.MapToDto(result);
+            return Ok(response);
         }
         catch (Exception ex)
         {

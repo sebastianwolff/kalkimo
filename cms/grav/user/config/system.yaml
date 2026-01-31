@@ -1,0 +1,55 @@
+absolute_urls: false
+
+languages:
+  supported:
+    - de
+    - en
+  default_lang: de
+  include_default_lang: true
+  translations: true
+  session_store_active: false
+  http_accept_language: true
+
+home:
+  alias: /home
+
+pages:
+  theme: kalkimo
+  markdown:
+    extra: true
+  process:
+    markdown: true
+    twig: false
+  append_url_extension: ''
+  types:
+    - html
+    - json
+    - xml
+
+cache:
+  enabled: true
+  check:
+    method: file
+  driver: auto
+  lifetime: 604800
+
+twig:
+  cache: true
+  debug: false
+  auto_reload: true
+  autoescape: false
+
+assets:
+  css_pipeline: false
+  js_pipeline: false
+
+session:
+  enabled: true
+  timeout: 1800
+
+debugger:
+  enabled: false
+
+errors:
+  display: 0
+  log: true

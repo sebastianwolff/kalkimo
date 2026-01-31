@@ -1,0 +1,12 @@
+{% extends 'partials/base.html.twig' %}
+
+{% block content %}
+  {% for module in page.collection() %}
+    {% set tmpl = module.template %}
+    {% if tmpl starts with 'modular/' %}
+      {% include tmpl ~ '.html.twig' with {page: module} %}
+    {% else %}
+      {% include 'modular/' ~ tmpl ~ '.html.twig' with {page: module} %}
+    {% endif %}
+  {% endfor %}
+{% endblock %}

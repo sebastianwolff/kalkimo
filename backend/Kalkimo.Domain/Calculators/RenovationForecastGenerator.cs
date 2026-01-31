@@ -123,7 +123,7 @@ public static class RenovationForecastGenerator
     private static decimal GetConditionCostFactor(Condition condition) => condition switch
     {
         Condition.Good => 0.2m,
-        Condition.Medium => 0.5m,
+        Condition.Fair => 0.5m,
         Condition.Poor => 1.0m,
         _ => 0.5m
     };

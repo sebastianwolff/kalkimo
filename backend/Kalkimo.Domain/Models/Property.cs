@@ -28,6 +28,9 @@ public record Property
     /// <summary>Bauteilzustände für Maßnahmenvorschläge</summary>
     public IReadOnlyList<ComponentCondition> Components { get; init; } = [];
 
+    /// <summary>Regionaler Vergleichspreis pro m² Wohnfläche (für Mean-Reversion)</summary>
+    public decimal? RegionalPricePerSqm { get; init; }
+
     /// <summary>WEG-Rücklagenstand (nur für ETW) - veraltet, verwende WegConfiguration</summary>
     [Obsolete("Use WegConfiguration.CurrentReserveBalance instead")]
     public Money? WegReserveBalance { get; init; }

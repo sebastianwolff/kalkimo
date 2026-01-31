@@ -277,7 +277,7 @@ public static class MetricsCalculator
                 score += component.Condition switch
                 {
                     Condition.Poor => Math.Min(30, overdueYears * 5),
-                    Condition.Medium => Math.Min(20, overdueYears * 3),
+                    Condition.Fair => Math.Min(20, overdueYears * 3),
                     _ => Math.Min(10, overdueYears * 2)
                 };
             }

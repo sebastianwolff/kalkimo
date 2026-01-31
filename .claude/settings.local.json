@@ -29,7 +29,9 @@
       "Bash(cmd /c \"dir /b c:\\\\Users\\\\swolf\\\\source\\\\repos\\\\kalkimo\\\\apps\\\\frontend\\\\src\\\\views\\\\wizard\\\\steps\"\")",
       "Bash(git mv:*)",
       "WebFetch(domain:www.haufe.de)",
-      "WebFetch(domain:www.juhn.com)"
+      "WebFetch(domain:www.juhn.com)",
+      "Bash(docker exec:*)",
+      "Bash(docker ps:*)"
     ]
   }
 }
