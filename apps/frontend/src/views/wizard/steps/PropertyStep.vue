@@ -63,6 +63,20 @@
       :max="500"
     />
 
+    <!-- Regional Market Price -->
+    <div class="market-section">
+      <h4 class="section-label">{{ t('property.marketReference.title') }}</h4>
+      <p class="components-hint">{{ t('property.marketReference.hint') }}</p>
+      <div class="market-fields">
+        <KalkCurrency
+          v-model="regionalPricePerSqm"
+          :label="t('property.marketReference.pricePerSqm')"
+          :currency="currency"
+          :hint="fairMarketValueHint"
+        />
+      </div>
+    </div>
+
     <!-- Building Components Section -->
     <div class="components-section">
       <h4 class="section-label">{{ t('property.components.title') }}</h4>
@@ -173,7 +187,7 @@ const emit = defineEmits<{
   'validation-change': [valid: boolean];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const projectStore = useProjectStore();
 
 // Form values
@@ -184,6 +198,9 @@ const totalArea = ref<number>(150);
 const livingArea = ref<number>(120);
 const landArea = ref<number | undefined>();
 const unitCount = ref<number>(1);
+
+// Regional market price
+const regionalPricePerSqm = ref<number | undefined>();
 
 // WEG fields
 const meaPerMille = ref<number>(100);
@@ -227,6 +244,17 @@ const showUnitCount = computed(() =>
   ['MultiFamily', 'Mixed'].includes(propertyType.value)
 );
 
+const fairMarketValueHint = computed(() => {
+  if (!regionalPricePerSqm.value || !livingArea.value) return t('property.marketReference.hintEmpty');
+  const fmv = regionalPricePerSqm.value * livingArea.value;
+  const formatted = new Intl.NumberFormat(locale.value, {
+    style: 'currency',
+    currency: currency.value,
+    maximumFractionDigits: 0,
+  }).format(fmv);
+  return `${t('property.marketReference.fairValue')}: ${formatted}`;
+});
+
 // Initialize from store
 onMounted(() => {
   const property = projectStore.currentProject?.property;
@@ -238,6 +266,7 @@ onMounted(() => {
     livingArea.value = property.livingArea;
     landArea.value = property.landArea;
     unitCount.value = property.unitCount;
+    regionalPricePerSqm.value = property.regionalPricePerSqm;
 
     if (property.wegConfiguration) {
       meaPerMille.value = property.wegConfiguration.meaPerMille;
@@ -276,7 +305,7 @@ watch(isValid, (valid) => {
 
 // Sync to store
 watch(
-  [propertyType, constructionYear, condition, totalArea, livingArea, landArea, unitCount, meaPerMille, totalMea, reserveBalance, components],
+  [propertyType, constructionYear, condition, totalArea, livingArea, landArea, unitCount, regionalPricePerSqm, meaPerMille, totalMea, reserveBalance, components],
   () => {
     if (!projectStore.currentProject) return;
 
@@ -306,6 +335,7 @@ watch(
         livingArea: livingArea.value,
         landArea: landArea.value,
         unitCount: showUnitCount.value ? unitCount.value : 1,
+        regionalPricePerSqm: regionalPricePerSqm.value || undefined,
         wegConfiguration,
         components: components.map(c => ({
           category: c.category,
@@ -331,6 +361,15 @@ watch(
   .area-section {
     grid-template-columns: 1fr;
   }
+}
+
+.market-section {
+  margin-top: var(--kalk-space-8);
+  padding-top: var(--kalk-space-6);
+  border-top: 1px solid var(--kalk-gray-200);
+}
+.market-fields {
+  max-width: 300px;
 }
 
 .weg-section {

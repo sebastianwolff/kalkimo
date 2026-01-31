@@ -79,6 +79,7 @@ export interface Property {
   units: Unit[];
   components: ComponentCondition[];
   wegConfiguration?: WegConfiguration;
+  regionalPricePerSqm?: number;
 }
 
 // WEG models
@@ -181,6 +182,8 @@ export interface CostItem {
 
 export interface CostConfiguration {
   items: CostItem[];
+  maintenanceReserveMonthly: Money;
+  maintenanceReserveAnnualIncreasePercent: number;
 }
 
 // CapEx models
@@ -197,6 +200,12 @@ export interface MeasureImpact {
   delayMonths?: number;
 }
 
+export interface RecurringMeasureConfig {
+  intervalPercent: number;          // Interval as % of component cycle (e.g., 40)
+  costPercent: number;              // Cost per occurrence as % of full renewal (e.g., 25)
+  cycleExtensionPercent: number;    // Effective cycle extension (default = intervalPercent)
+}
+
 export interface CapExMeasure {
   id: string;
   name: string;
@@ -206,6 +215,8 @@ export interface CapExMeasure {
   taxClassification: TaxClassification;
   distributionYears?: number; // for §82b
   impact?: MeasureImpact;
+  isRecurring?: boolean;
+  recurringConfig?: RecurringMeasureConfig;
 }
 
 // Tax profile
@@ -247,11 +258,16 @@ export interface YearlyCashflowRow {
   effectiveRent: number;
   serviceChargeIncome: number;
   operatingCosts: number;
+  maintenanceReserve: number;
   netOperatingIncome: number;
   debtService: number;
   interestPortion: number;
   principalPortion: number;
   capexPayments: number;
+  reserveBalanceStart: number;
+  capexFromReserve: number;
+  capexFromCashflow: number;
+  reserveBalanceEnd: number;
   cashflowBeforeTax: number;
   depreciation: number;
   interestDeduction: number;
@@ -274,6 +290,7 @@ export interface TaxBridgeRow {
   interestExpense: number;
   maintenanceExpense: number;
   operatingExpenses: number;
+  maintenanceReserve: number;
   taxableIncome: number;
   taxPayment: number;
 }
@@ -323,6 +340,7 @@ export interface TaxSummary {
   depreciationRatePercent: number;
   depreciationBasis: Money;
   effectiveTaxRatePercent: number;
+  totalMaintenanceReserve: Money;
 }
 
 // Calculation warning
@@ -332,6 +350,123 @@ export interface CalculationWarning {
   type: string;
   message: string;
   severity: WarningSeverity;
+}
+
+// Component deterioration tracking
+export interface RecurringMaintenanceInfo {
+  name: string;
+  intervalYears: number;
+  costPerOccurrence: number;
+  occurrencesInPeriod: number;
+  totalCostInPeriod: number;
+  effectiveCycleYears: number;
+  valueImprovement: number;       // Positive: avoided deterioration
+}
+
+export interface ComponentDeteriorationRow {
+  category: CapExCategory;
+  ageAtStart: number;
+  ageAtEnd: number;
+  cycleYears: number;
+  dueYear: number;
+  renewalCostEstimate: number;
+  capexAddressedYear: number | null;
+  valueImpact: number;
+  statusAtEnd: 'OK' | 'Overdue' | 'OverdueAtPurchase' | 'Renewed';
+  recurringMaintenance?: RecurringMaintenanceInfo;
+}
+
+export interface ComponentDeteriorationSummary {
+  components: ComponentDeteriorationRow[];
+  totalValueImpact: number;
+  totalRenewalCostIfAllDone: number;
+  coveredByCapex: number;
+  uncoveredDeterioration: number;
+}
+
+// Property value forecast
+export interface PropertyValueRow {
+  year: number;
+  marketValue: number;
+  improvementUplift: number;
+  conditionFactor: number;
+  conditionDelta: number;
+  meanReversionAdjustment: number;
+  componentDeteriorationCumulative: number;
+  estimatedValue: number;
+}
+
+export interface PropertyValueScenario {
+  label: string;
+  annualAppreciationPercent: number;
+  yearlyValues: PropertyValueRow[];
+  finalValue: number;
+}
+
+export interface MarketComparison {
+  regionalPricePerSqm: number;
+  livingArea: number;
+  fairMarketValue: number;
+  purchasePriceToMarketRatio: number;
+  assessment: 'below' | 'at' | 'above';
+}
+
+export type ForecastDriverType =
+  | 'initialCondition'
+  | 'overdueComponents'
+  | 'degradation'
+  | 'componentDeterioration'
+  | 'investments'
+  | 'marketAppreciation'
+  | 'meanReversion'
+  | 'summary';
+
+export interface ForecastDriver {
+  type: ForecastDriverType;
+  params: Record<string, string | number>;
+}
+
+export interface PropertyValueForecast {
+  purchasePrice: number;
+  improvementValueFactor: number;
+  initialConditionFactor: number;
+  marketComparison?: MarketComparison;
+  componentDeterioration?: ComponentDeteriorationSummary;
+  drivers: ForecastDriver[];
+  scenarios: PropertyValueScenario[];
+}
+
+// Exit / total return analysis
+export interface ExitScenario {
+  label: string;
+  annualAppreciationPercent: number;
+  propertyValueAtExit: number;
+  saleCosts: number;
+  capitalGain: number;
+  capitalGainsTax: number;
+  netSaleProceeds: number;
+  totalReturn: number;
+  totalReturnPercent: number;
+  annualizedReturnPercent: number;
+}
+
+export interface ExitAnalysis {
+  holdingPeriodYears: number;
+  isWithinSpeculationPeriod: boolean;
+  purchasePrice: number;
+  totalPurchaseCosts: number;
+  equityInvested: number;
+  totalCashflowAfterTax: number;
+  outstandingDebtAtExit: number;
+  totalGrossIncome: number;
+  totalOperatingCosts: number;
+  totalDebtService: number;
+  totalCapex: number;
+  totalTaxPaid: number;
+  totalMaintenanceReserve: number;
+  finalReserveBalance: number;
+  saleCostsPercent: number;
+  scenarios: ExitScenario[];
 }
 
 // Full calculation result
@@ -347,4 +482,6 @@ export interface CalculationResult {
   totalEquityInvested: number;
   totalCashflowBeforeTax: number;
   totalCashflowAfterTax: number;
+  exitAnalysis: ExitAnalysis;
+  propertyValueForecast: PropertyValueForecast;
 }

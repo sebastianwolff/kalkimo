@@ -1,5 +1,33 @@
 <template>
   <div class="summary-page">
+    <!-- Empty state: before calculation -->
+    <div v-if="!result" class="empty-result-state">
+      <div class="empty-result-icon">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="4" width="32" height="40" rx="4" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M16 12h16M16 12h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <rect x="14" y="20" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="14" y="30" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="24" y="20" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="24" y="30" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="34" y="20" width="0" height="16" rx="0" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <h3 class="empty-result-title">Ergebnis berechnen</h3>
+      <p class="empty-result-text">
+        Alle Projektdaten wurden erfasst. Klicken Sie auf
+        <strong>Berechnen</strong> in der unteren Leiste, um die
+        Investitionsanalyse zu starten.
+      </p>
+      <div v-if="isCalculating" class="calculating-indicator">
+        <span class="spinner"></span>
+        <span>Berechnung l&auml;uft...</span>
+      </div>
+    </div>
+
+    <!-- ===== RESULTS (shown after calculation) ===== -->
+    <template v-if="result">
+
     <!-- Project Overview -->
     <KalkCard :title="t('summary.projectOverview')">
       <div class="overview-grid">
@@ -29,20 +57,6 @@
         </div>
       </div>
     </KalkCard>
-
-    <!-- Calculate Button -->
-    <KalkCard v-if="!result" :title="t('summary.keyMetrics')" class="metrics-card">
-      <div class="calculate-prompt">
-        <p>Berechnung starten um Kennzahlen zu sehen</p>
-        <button type="button" class="btn btn-primary btn-lg" @click="calculate" :disabled="isCalculating">
-          <span v-if="isCalculating" class="spinner"></span>
-          {{ isCalculating ? 'Berechne...' : t('summary.calculate') }}
-        </button>
-      </div>
-    </KalkCard>
-
-    <!-- ===== RESULTS ===== -->
-    <template v-if="result">
 
       <!-- Warnings -->
       <div v-if="result.warnings.length > 0" class="warnings-section">
@@ -163,6 +177,211 @@
         </div>
       </KalkCard>
 
+      <!-- ===== PROPERTY VALUE FORECAST ===== -->
+      <KalkCard :title="t('summary.propertyValue.title')">
+        <p class="exit-subtitle">{{ t('summary.propertyValue.subtitle') }}</p>
+
+        <!-- Market Comparison Banner -->
+        <div v-if="result.propertyValueForecast.marketComparison" class="market-comparison">
+          <div class="mc-item">
+            <span>{{ t('summary.propertyValue.regionalPrice') }}</span>
+            <strong>{{ fmtCur(result.propertyValueForecast.marketComparison.regionalPricePerSqm) }}/m²</strong>
+          </div>
+          <div class="mc-item">
+            <span>{{ t('summary.propertyValue.fairMarketValue') }}</span>
+            <strong>{{ fmtCur(result.propertyValueForecast.marketComparison.fairMarketValue) }}</strong>
+          </div>
+          <div class="mc-item" :class="marketAssessmentClass">
+            <span>{{ t('summary.propertyValue.purchaseVsMarket') }}</span>
+            <strong>
+              {{ fmtPct((result.propertyValueForecast.marketComparison.purchasePriceToMarketRatio - 1) * 100) }}
+              ({{ t(`summary.propertyValue.assessment.${result.propertyValueForecast.marketComparison.assessment}`) }})
+            </strong>
+          </div>
+        </div>
+
+        <div class="exit-meta" style="margin-bottom: var(--kalk-space-4);">
+          <div class="exit-meta-item">
+            <span>{{ t('summary.propertyValue.initialCondition') }}</span>
+            <strong>{{ (result.propertyValueForecast.initialConditionFactor * 100).toFixed(0) }}%</strong>
+          </div>
+          <div class="exit-meta-item">
+            <span>{{ t('summary.propertyValue.improvementFactor') }}</span>
+            <strong>{{ (result.propertyValueForecast.improvementValueFactor * 100).toFixed(0) }}%</strong>
+          </div>
+        </div>
+
+        <!-- Value chart: bars per year for base scenario -->
+        <div class="chart-container">
+          <div class="pv-chart">
+            <div class="pv-baseline" :style="{ bottom: pvBarPct(result.propertyValueForecast.purchasePrice) }">
+              <span class="pv-baseline-label">{{ fmtCompact(result.propertyValueForecast.purchasePrice) }}</span>
+            </div>
+            <div v-for="row in baseScenarioValues" :key="row.year" class="pv-bar-group">
+              <div class="pv-bar" :style="{ height: pvBarPct(row.estimatedValue) }"
+                :title="`${row.year}: ${fmtCur(row.estimatedValue)} (Zustand: ${(row.conditionFactor * 100).toFixed(0)}%)`">
+                <span v-if="row.conditionFactor < 0.80" class="pv-condition-warn">!</span>
+              </div>
+              <span class="bar-label">{{ row.year.toString().slice(-2) }}</span>
+            </div>
+          </div>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="swatch swatch-pv"></span> {{ t('summary.propertyValue.scenario.base') }} (1,5% p.a.)</span>
+            <span class="legend-item pv-baseline-legend">{{ t('summary.propertyValue.purchasePrice') }}</span>
+          </div>
+        </div>
+
+        <!-- Scenario breakdown table -->
+        <div class="scenario-table-scroll" style="margin-top: var(--kalk-space-4);">
+          <table class="scenario-table">
+            <thead>
+              <tr>
+                <th class="scenario-label-col"></th>
+                <th v-for="s in result.propertyValueForecast.scenarios" :key="s.label" class="scenario-col" :class="{ 'scenario-base': s.label === 'base' }">
+                  {{ t(`summary.propertyValue.scenario.${s.label}`) }}
+                  <span class="scenario-rate">{{ fmtPct(s.annualAppreciationPercent) }} p.a.</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{ t('summary.propertyValue.purchasePrice') }}</td>
+                <td v-for="s in result.propertyValueForecast.scenarios" :key="s.label" :class="{ 'scenario-base': s.label === 'base' }">{{ fmtCur(result.propertyValueForecast.purchasePrice) }}</td>
+              </tr>
+              <tr>
+                <td>{{ t('summary.propertyValue.marketAppreciationRow') }}</td>
+                <td v-for="(s, idx) in result.propertyValueForecast.scenarios" :key="s.label"
+                  :class="[valClass(scenarioBreakdowns[idx].marketAppreciation), { 'scenario-base': s.label === 'base' }]">
+                  {{ scenarioBreakdowns[idx].marketAppreciation >= 0 ? '+' : '' }}{{ fmtCur(scenarioBreakdowns[idx].marketAppreciation) }}
+                </td>
+              </tr>
+              <tr>
+                <td>{{ t('summary.propertyValue.conditionAdjustment') }}</td>
+                <td v-for="(s, idx) in result.propertyValueForecast.scenarios" :key="s.label"
+                  :class="[valClass(scenarioBreakdowns[idx].conditionAdjustment), { 'scenario-base': s.label === 'base' }]">
+                  {{ fmtCur(scenarioBreakdowns[idx].conditionAdjustment) }}
+                  <span v-if="!hasComponentDeterioration" class="scenario-rate">({{ (scenarioBreakdowns[idx].conditionFactor * 100).toFixed(0) }}%)</span>
+                </td>
+              </tr>
+              <tr v-if="hasInvestments">
+                <td>{{ t('summary.propertyValue.investmentRow') }}</td>
+                <td v-for="(s, idx) in result.propertyValueForecast.scenarios" :key="s.label"
+                  :class="[valClass(scenarioBreakdowns[idx].investments), { 'scenario-base': s.label === 'base' }]">
+                  +{{ fmtCur(scenarioBreakdowns[idx].investments) }}
+                </td>
+              </tr>
+              <tr v-if="hasMeanReversion">
+                <td>{{ t('summary.propertyValue.meanReversionRow') }}</td>
+                <td v-for="(s, idx) in result.propertyValueForecast.scenarios" :key="s.label"
+                  :class="[valClass(scenarioBreakdowns[idx].meanReversion), { 'scenario-base': s.label === 'base' }]">
+                  {{ scenarioBreakdowns[idx].meanReversion >= 0 ? '+' : '' }}{{ fmtCur(scenarioBreakdowns[idx].meanReversion) }}
+                </td>
+              </tr>
+              <tr class="scenario-highlight">
+                <td>{{ t('summary.propertyValue.finalValue') }}</td>
+                <td v-for="s in result.propertyValueForecast.scenarios" :key="s.label" :class="{ 'scenario-base': s.label === 'base' }">
+                  <strong>{{ fmtCur(s.finalValue) }}</strong>
+                </td>
+              </tr>
+              <tr class="scenario-highlight">
+                <td>{{ t('summary.propertyValue.vs') }}</td>
+                <td v-for="s in result.propertyValueForecast.scenarios" :key="s.label"
+                  :class="[valClass(s.finalValue - result.propertyValueForecast.purchasePrice), { 'scenario-base': s.label === 'base' }]">
+                  <strong>{{ s.finalValue >= result.propertyValueForecast.purchasePrice ? '+' : '' }}{{ fmtCur(s.finalValue - result.propertyValueForecast.purchasePrice) }}</strong>
+                  <span class="scenario-rate">{{ s.finalValue >= result.propertyValueForecast.purchasePrice ? '+' : '' }}{{ fmtPct(((s.finalValue / result.propertyValueForecast.purchasePrice) - 1) * 100) }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Forecast Explanation -->
+        <div v-if="forecastDriverTexts.length > 0" class="forecast-explanation">
+          <h4 class="exit-section-title">{{ t('summary.propertyValue.explanationTitle') }}</h4>
+          <ul class="explanation-list">
+            <li v-for="(driver, i) in forecastDriverTexts" :key="i" :class="driver.type">
+              {{ driver.text }}
+            </li>
+          </ul>
+        </div>
+      </KalkCard>
+
+      <!-- ===== COMPONENT DETERIORATION TABLE ===== -->
+      <KalkCard v-if="hasComponentDeterioration" :title="t('summary.propertyValue.componentDeterioration.title')">
+        <p class="exit-subtitle">{{ t('summary.propertyValue.componentDeterioration.subtitle') }}</p>
+        <div class="comp-det-table-wrap">
+          <table class="scenario-table comp-det-table">
+            <thead>
+              <tr>
+                <th>{{ t('summary.propertyValue.componentDeterioration.component') }}</th>
+                <th>{{ t('summary.propertyValue.componentDeterioration.age') }}</th>
+                <th>{{ t('summary.propertyValue.componentDeterioration.cycleYears') }}</th>
+                <th>{{ t('summary.propertyValue.componentDeterioration.dueYear') }}</th>
+                <th>{{ t('summary.propertyValue.componentDeterioration.renewalCost') }}</th>
+                <th>{{ t('summary.propertyValue.componentDeterioration.valueImpact') }}</th>
+                <th>{{ t('summary.propertyValue.componentDeterioration.statusAtEnd') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template v-for="row in componentDeteriorationRows" :key="row.category">
+                <tr>
+                  <td class="comp-det-label">{{ t(`property.components.categories.${row.category}`) }}</td>
+                  <td>{{ row.ageAtEnd }} {{ t('summary.propertyValue.componentDeterioration.yearsShort') }}</td>
+                  <td>{{ row.cycleYears }} {{ t('summary.propertyValue.componentDeterioration.yearsShort') }}</td>
+                  <td>{{ row.dueYear }}</td>
+                  <td>{{ fmtCur(row.renewalCostEstimate) }}</td>
+                  <td :class="valClass(row.valueImpact)">
+                    <template v-if="row.statusAtEnd === 'OverdueAtPurchase'">
+                      0 € ({{ t('summary.propertyValue.componentDeterioration.pricedIn') }})
+                    </template>
+                    <template v-else>
+                      {{ fmtCur(row.valueImpact) }}
+                    </template>
+                  </td>
+                  <td>
+                    <span class="comp-det-status" :class="'status-' + row.statusAtEnd">
+                      {{ t(`summary.propertyValue.componentDeterioration.statusLabels.${row.statusAtEnd}`) }}
+                    </span>
+                  </td>
+                </tr>
+                <tr v-if="row.recurringMaintenance" class="comp-det-explanation-row">
+                  <td colspan="7" class="comp-det-explanation">
+                    {{ t('summary.propertyValue.componentDeterioration.recurringExplanation', {
+                      name: row.recurringMaintenance.name,
+                      interval: row.recurringMaintenance.intervalYears,
+                      count: row.recurringMaintenance.occurrencesInPeriod,
+                      cost: fmtCur(row.recurringMaintenance.costPerOccurrence),
+                      total: fmtCur(row.recurringMaintenance.totalCostInPeriod),
+                      effectiveCycle: row.recurringMaintenance.effectiveCycleYears,
+                      extensionPercent: getRecurringExtensionPercent(row),
+                      improvement: fmtCur(row.recurringMaintenance.valueImprovement),
+                    }) }}
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+            <tfoot v-if="componentDeteriorationSummary">
+              <tr class="scenario-highlight">
+                <td colspan="4"></td>
+                <td>{{ fmtCur(componentDeteriorationSummary.totalRenewalCostIfAllDone) }}</td>
+                <td :class="valClass(componentDeteriorationSummary.totalValueImpact)">
+                  <strong>{{ fmtCur(componentDeteriorationSummary.totalValueImpact) }}</strong>
+                </td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div v-if="componentDeteriorationSummary && componentDeteriorationSummary.uncoveredDeterioration > 0" class="comp-det-summary">
+          <span class="comp-det-summary-item negative">
+            {{ t('summary.propertyValue.componentDeterioration.totalUncovered') }}: {{ fmtCur(-componentDeteriorationSummary.uncoveredDeterioration) }}
+          </span>
+          <span v-if="componentDeteriorationSummary.coveredByCapex > 0" class="comp-det-summary-item positive">
+            {{ t('summary.propertyValue.componentDeterioration.totalCovered') }}: {{ fmtCur(componentDeteriorationSummary.coveredByCapex) }}
+          </span>
+        </div>
+      </KalkCard>
+
       <!-- ===== STEUER-BRIDGE ===== -->
       <KalkCard :title="t('summary.taxBridge')">
         <div class="tax-bridge">
@@ -240,10 +459,13 @@
                 <th class="sticky-col">{{ t('summary.cashflow.year') }}</th>
                 <th>{{ t('summary.cashflow.effectiveRent') }}</th>
                 <th>{{ t('summary.cashflow.operatingCosts') }}</th>
+                <th v-if="hasMaintenanceReserve">{{ t('summary.cashflow.maintenanceReserve') }}</th>
                 <th>{{ t('summary.cashflow.noi') }}</th>
                 <th>{{ t('summary.cashflow.interest') }}</th>
                 <th>{{ t('summary.cashflow.principal') }}</th>
                 <th>{{ t('summary.cashflow.capex') }}</th>
+                <th v-if="hasMaintenanceReserve">{{ t('summary.cashflow.capexNet') }}</th>
+                <th v-if="hasMaintenanceReserve">{{ t('summary.cashflow.reserveBalance') }}</th>
                 <th>{{ t('summary.cashflow.beforeTax') }}</th>
                 <th>{{ t('summary.cashflow.tax') }}</th>
                 <th class="highlight-col">{{ t('summary.cashflow.afterTax') }}</th>
@@ -258,10 +480,13 @@
                 <td class="sticky-col year-col">{{ row.year }}</td>
                 <td>{{ fmtCompact(row.effectiveRent) }}</td>
                 <td class="neg">{{ fmtCompact(-row.operatingCosts) }}</td>
+                <td v-if="hasMaintenanceReserve" class="neg">{{ fmtCompact(-row.maintenanceReserve) }}</td>
                 <td :class="valClass(row.netOperatingIncome)">{{ fmtCompact(row.netOperatingIncome) }}</td>
                 <td class="neg">{{ fmtCompact(-row.interestPortion) }}</td>
                 <td class="neg">{{ fmtCompact(-row.principalPortion) }}</td>
                 <td class="neg">{{ row.capexPayments > 0 ? fmtCompact(-row.capexPayments) : '–' }}</td>
+                <td v-if="hasMaintenanceReserve" class="neg">{{ row.capexFromCashflow > 0 ? fmtCompact(-row.capexFromCashflow) : '–' }}</td>
+                <td v-if="hasMaintenanceReserve">{{ fmtCompact(row.reserveBalanceEnd) }}</td>
                 <td :class="valClass(row.cashflowBeforeTax)">{{ fmtCompact(row.cashflowBeforeTax) }}</td>
                 <td class="neg">{{ fmtCompact(-row.taxPayment) }}</td>
                 <td class="highlight-col" :class="valClass(row.cashflowAfterTax)">
@@ -278,10 +503,13 @@
                 <td class="sticky-col"><strong>{{ t('common.total') }}</strong></td>
                 <td>{{ fmtCompact(sumCol('effectiveRent')) }}</td>
                 <td class="neg">{{ fmtCompact(-sumCol('operatingCosts')) }}</td>
+                <td v-if="hasMaintenanceReserve" class="neg">{{ fmtCompact(-sumCol('maintenanceReserve')) }}</td>
                 <td>{{ fmtCompact(sumCol('netOperatingIncome')) }}</td>
                 <td class="neg">{{ fmtCompact(-sumCol('interestPortion')) }}</td>
                 <td class="neg">{{ fmtCompact(-sumCol('principalPortion')) }}</td>
                 <td class="neg">{{ fmtCompact(-sumCol('capexPayments')) }}</td>
+                <td v-if="hasMaintenanceReserve" class="neg">{{ fmtCompact(-sumCol('capexFromCashflow')) }}</td>
+                <td v-if="hasMaintenanceReserve"></td>
                 <td>{{ fmtCompact(result.totalCashflowBeforeTax) }}</td>
                 <td class="neg">{{ fmtCompact(-sumCol('taxPayment')) }}</td>
                 <td class="highlight-col"><strong>{{ fmtCompact(result.totalCashflowAfterTax) }}</strong></td>
@@ -323,6 +551,10 @@
             <span>{{ t('summary.tax.totalOperating') }}</span>
             <strong>{{ fmtCur(result.taxSummary.totalOperatingDeduction.amount) }}</strong>
           </div>
+          <div v-if="hasMaintenanceReserve" class="tax-row tax-row-info">
+            <span>{{ t('summary.tax.totalMaintenanceReserve') }}</span>
+            <strong class="hint-text">{{ fmtCur(result.taxSummary.totalMaintenanceReserve.amount) }}</strong>
+          </div>
           <div class="tax-row highlight">
             <span>{{ t('summary.tax.totalSavings') }}</span>
             <strong class="pos">{{ fmtCur(result.taxSummary.totalTaxSavings.amount) }}</strong>
@@ -343,6 +575,132 @@
                 : t('summary.tax.rule15NotTriggered')
               }}
             </strong>
+          </div>
+        </div>
+      </KalkCard>
+
+      <!-- ===== EXIT ANALYSIS ===== -->
+      <KalkCard :title="t('summary.exit.title')">
+        <p class="exit-subtitle">{{ t('summary.exit.subtitle') }}</p>
+
+        <!-- Holding period & speculation status -->
+        <div class="exit-meta">
+          <div class="exit-meta-item">
+            <span>{{ t('summary.exit.holdingPeriod') }}</span>
+            <strong>{{ result.exitAnalysis.holdingPeriodYears }} {{ t('summary.exit.years') }}</strong>
+          </div>
+          <div class="exit-meta-item" :class="{ 'speculation-active': result.exitAnalysis.isWithinSpeculationPeriod }">
+            <span>{{ t('summary.exit.speculationPeriod') }}</span>
+            <strong>{{ result.exitAnalysis.isWithinSpeculationPeriod ? t('summary.exit.withinPeriod') : t('summary.exit.outsidePeriod') }}</strong>
+          </div>
+        </div>
+
+        <!-- P&L over holding period -->
+        <div class="exit-pnl">
+          <h4 class="exit-section-title">{{ t('summary.exit.pnlTitle') }}</h4>
+          <div class="exit-pnl-row">
+            <span>{{ t('summary.exit.totalGrossIncome') }}</span>
+            <strong class="pos">+{{ fmtCur(result.exitAnalysis.totalGrossIncome) }}</strong>
+          </div>
+          <div class="exit-pnl-row">
+            <span>{{ t('summary.exit.totalOperatingCosts') }}</span>
+            <strong class="neg">-{{ fmtCur(result.exitAnalysis.totalOperatingCosts) }}</strong>
+          </div>
+          <div class="exit-pnl-row">
+            <span>{{ t('summary.exit.totalDebtService') }}</span>
+            <strong class="neg">-{{ fmtCur(result.exitAnalysis.totalDebtService) }}</strong>
+          </div>
+          <div class="exit-pnl-row" v-if="result.exitAnalysis.totalCapex > 0">
+            <span>{{ t('summary.exit.totalCapex') }}</span>
+            <strong class="neg">-{{ fmtCur(result.exitAnalysis.totalCapex) }}</strong>
+          </div>
+          <div v-if="hasMaintenanceReserve" class="exit-pnl-row">
+            <span>{{ t('summary.exit.totalMaintenanceReserve') }}</span>
+            <strong class="neg">-{{ fmtCur(result.exitAnalysis.totalMaintenanceReserve) }}</strong>
+          </div>
+          <div v-if="hasMaintenanceReserve && result.exitAnalysis.finalReserveBalance > 0" class="exit-pnl-row">
+            <span>{{ t('summary.exit.finalReserveBalance') }}</span>
+            <strong class="pos">+{{ fmtCur(result.exitAnalysis.finalReserveBalance) }}</strong>
+          </div>
+          <div class="exit-pnl-row">
+            <span>{{ t('summary.exit.totalTaxPaid') }}</span>
+            <strong class="neg">-{{ fmtCur(result.exitAnalysis.totalTaxPaid) }}</strong>
+          </div>
+          <div class="exit-pnl-row exit-pnl-total">
+            <span>{{ t('summary.exit.netCashflow') }}</span>
+            <strong :class="valClass(result.exitAnalysis.totalCashflowAfterTax)">{{ fmtCur(result.exitAnalysis.totalCashflowAfterTax) }}</strong>
+          </div>
+        </div>
+
+        <!-- Scenario comparison -->
+        <div class="exit-scenarios">
+          <h4 class="exit-section-title">{{ t('summary.exit.scenarioTitle') }}</h4>
+          <div class="scenario-table-scroll">
+            <table class="scenario-table">
+              <thead>
+                <tr>
+                  <th class="scenario-label-col"></th>
+                  <th v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="scenario-col" :class="{ 'scenario-base': s.label === 'base' }">
+                    {{ t(`summary.exit.scenario.${s.label}`) }}
+                    <span class="scenario-rate">{{ fmtPct(s.annualAppreciationPercent) }} p.a.</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{{ t('summary.exit.propertyValue') }}</td>
+                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" :class="{ 'scenario-base': s.label === 'base' }">{{ fmtCur(s.propertyValueAtExit) }}</td>
+                </tr>
+                <tr>
+                  <td>{{ t('summary.exit.saleCosts') }}</td>
+                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="neg" :class="{ 'scenario-base': s.label === 'base' }">-{{ fmtCur(s.saleCosts) }}</td>
+                </tr>
+                <tr v-if="result.exitAnalysis.isWithinSpeculationPeriod">
+                  <td>{{ t('summary.exit.capitalGainsTax') }}</td>
+                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="neg" :class="{ 'scenario-base': s.label === 'base' }">
+                    {{ s.capitalGainsTax > 0 ? `-${fmtCur(s.capitalGainsTax)}` : t('summary.exit.noTax') }}
+                  </td>
+                </tr>
+                <tr v-else>
+                  <td>{{ t('summary.exit.capitalGainsTax') }}</td>
+                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" :class="{ 'scenario-base': s.label === 'base' }">{{ t('summary.exit.noTax') }}</td>
+                </tr>
+                <tr>
+                  <td>{{ t('summary.exit.outstandingDebt') }}</td>
+                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="neg" :class="{ 'scenario-base': s.label === 'base' }">-{{ fmtCur(result.exitAnalysis.outstandingDebtAtExit) }}</td>
+                </tr>
+                <tr class="scenario-subtotal">
+                  <td>{{ t('summary.exit.netSaleProceeds') }}</td>
+                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" :class="[valClass(s.netSaleProceeds), { 'scenario-base': s.label === 'base' }]">{{ fmtCur(s.netSaleProceeds) }}</td>
+                </tr>
+                <tr>
+                  <td>{{ t('summary.exit.plusCashflow') }}</td>
+                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" :class="[valClass(result.exitAnalysis.totalCashflowAfterTax), { 'scenario-base': s.label === 'base' }]">+{{ fmtCur(result.exitAnalysis.totalCashflowAfterTax) }}</td>
+                </tr>
+                <tr>
+                  <td>{{ t('summary.exit.minusEquity') }}</td>
+                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="neg" :class="{ 'scenario-base': s.label === 'base' }">-{{ fmtCur(result.exitAnalysis.equityInvested) }}</td>
+                </tr>
+                <tr class="scenario-total">
+                  <td>{{ t('summary.exit.totalReturn') }}</td>
+                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" :class="[valClass(s.totalReturn), { 'scenario-base': s.label === 'base' }]">
+                    <strong>{{ fmtCur(s.totalReturn) }}</strong>
+                  </td>
+                </tr>
+                <tr class="scenario-highlight">
+                  <td>{{ t('summary.exit.totalReturnPercent') }}</td>
+                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" :class="[valClass(s.totalReturnPercent), { 'scenario-base': s.label === 'base' }]">
+                    <strong>{{ fmtPct(s.totalReturnPercent) }}</strong>
+                  </td>
+                </tr>
+                <tr class="scenario-highlight">
+                  <td>{{ t('summary.exit.annualizedReturn') }}</td>
+                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" :class="[valClass(s.annualizedReturnPercent), { 'scenario-base': s.label === 'base' }]">
+                    <strong>{{ fmtPct(s.annualizedReturnPercent) }}</strong>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </KalkCard>
@@ -399,6 +757,9 @@ const result = ref<CalculationResult | null>(null);
 const project = computed(() => projectStore.currentProject);
 const currency = computed(() => project.value?.currency || 'EUR');
 const totalInvestment = computed(() => projectStore.totalCapitalRequirement?.amount || 0);
+const hasMaintenanceReserve = computed(() =>
+  (project.value?.costs.maintenanceReserveMonthly?.amount || 0) > 0
+);
 const ltv = computed(() => {
   if (!project.value || totalInvestment.value === 0) return 0;
   const totalLoans = project.value.financing.loans.reduce((s, l) => s + l.principal.amount, 0);
@@ -422,6 +783,90 @@ const maxCapex = computed(() => {
   if (!result.value) return 1;
   return Math.max(...result.value.capexTimeline.map(r => r.amount), 1);
 });
+const maxPvValue = computed(() => {
+  if (!result.value) return 1;
+  const base = result.value.propertyValueForecast.scenarios.find(s => s.label === 'base');
+  if (!base || base.yearlyValues.length === 0) return result.value.propertyValueForecast.purchasePrice || 1;
+  return Math.max(...base.yearlyValues.map(r => r.estimatedValue), result.value.propertyValueForecast.purchasePrice, 1);
+});
+const minPvValue = computed(() => {
+  if (!result.value) return 0;
+  const base = result.value.propertyValueForecast.scenarios.find(s => s.label === 'base');
+  if (!base || base.yearlyValues.length === 0) return result.value.propertyValueForecast.purchasePrice || 0;
+  return Math.min(...base.yearlyValues.map(r => r.estimatedValue), result.value.propertyValueForecast.purchasePrice);
+});
+const baseScenarioValues = computed(() => {
+  if (!result.value) return [];
+  const base = result.value.propertyValueForecast.scenarios.find(s => s.label === 'base');
+  return base?.yearlyValues ?? [];
+});
+const marketAssessmentClass = computed(() => {
+  const mc = result.value?.propertyValueForecast.marketComparison;
+  if (!mc) return '';
+  return {
+    'mc-below': mc.assessment === 'below',
+    'mc-at': mc.assessment === 'at',
+    'mc-above': mc.assessment === 'above',
+  };
+});
+const forecastDriverTexts = computed(() => {
+  if (!result.value) return [];
+  return result.value.propertyValueForecast.drivers.map(d => ({
+    type: d.type,
+    text: t(`summary.propertyValue.driver.${d.type}`, d.params),
+  }));
+});
+const scenarioBreakdowns = computed(() => {
+  if (!result.value) return [];
+  const pp = result.value.propertyValueForecast.purchasePrice;
+  const initialFactor = result.value.propertyValueForecast.initialConditionFactor;
+  const hasComponentDet = !!result.value.propertyValueForecast.componentDeterioration;
+  return result.value.propertyValueForecast.scenarios.map(s => {
+    const last = s.yearlyValues[s.yearlyValues.length - 1];
+    if (!last) return { marketAppreciation: 0, conditionFactor: 1, conditionRatio: 1, conditionAdjustment: 0, investments: 0, meanReversion: 0 };
+    if (hasComponentDet) {
+      // Cost-based model: conditionAdjustment = cumulative EUR deterioration
+      return {
+        marketAppreciation: last.marketValue - pp,
+        conditionFactor: last.conditionFactor,
+        conditionRatio: 1,
+        conditionAdjustment: last.componentDeteriorationCumulative,
+        investments: last.improvementUplift,
+        meanReversion: last.meanReversionAdjustment,
+      };
+    }
+    // Abstract percentage model (fallback)
+    const conditionRatio = initialFactor > 0 ? last.conditionFactor / initialFactor : 1;
+    return {
+      marketAppreciation: last.marketValue - pp,
+      conditionFactor: last.conditionFactor,
+      conditionRatio,
+      conditionAdjustment: last.marketValue * (conditionRatio - 1),
+      investments: last.improvementUplift,
+      meanReversion: last.meanReversionAdjustment,
+    };
+  });
+});
+const hasInvestments = computed(() => scenarioBreakdowns.value.some(b => b.investments > 0));
+const hasMeanReversion = computed(() => scenarioBreakdowns.value.some(b => Math.abs(b.meanReversion) > 0.5));
+const hasComponentDeterioration = computed(() =>
+  !!result.value?.propertyValueForecast.componentDeterioration &&
+  result.value.propertyValueForecast.componentDeterioration.components.length > 0
+);
+const componentDeteriorationRows = computed(() =>
+  result.value?.propertyValueForecast.componentDeterioration?.components ?? []
+);
+const componentDeteriorationSummary = computed(() =>
+  result.value?.propertyValueForecast.componentDeterioration
+);
+
+// Recurring maintenance helper
+function getRecurringExtensionPercent(row: { category: string; cycleYears: number; recurringMaintenance?: { effectiveCycleYears: number } }): number {
+  if (!row.recurringMaintenance) return 0;
+  const comp = project.value?.property.components.find(c => c.category === row.category);
+  const originalCycle = comp?.expectedCycleYears || row.cycleYears;
+  return originalCycle > 0 ? Math.round(((row.recurringMaintenance.effectiveCycleYears / originalCycle) - 1) * 100) : 0;
+}
 
 // Formatters
 function fmtCur(v: number): string {
@@ -461,6 +906,14 @@ function bridgeWidth(value: number): string {
 function capexBarWidth(value: number): string {
   return Math.max((value / maxCapex.value) * 80, 10) + '%';
 }
+function pvBarPct(value: number): string {
+  const floor = minPvValue.value * 0.90;
+  const ceiling = maxPvValue.value * 1.05;
+  const range = ceiling - floor;
+  if (range <= 0) return '50%';
+  const pct = ((value - floor) / range) * 100;
+  return Math.max(Math.min(pct, 100), 2) + '%';
+}
 
 // Risk helpers
 function riskClass(score: number): string {
@@ -499,10 +952,65 @@ async function calculate() {
 }
 
 emit('validation-change', true);
+
+defineExpose({ calculate });
 </script>
 
 <style scoped>
 .summary-page { display: flex; flex-direction: column; gap: var(--kalk-space-6); }
+
+/* Empty state */
+.empty-result-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--kalk-space-12) var(--kalk-space-6);
+  min-height: 300px;
+}
+
+.empty-result-icon {
+  width: 64px;
+  height: 64px;
+  color: var(--kalk-gray-300);
+  margin-bottom: var(--kalk-space-6);
+}
+
+.empty-result-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.empty-result-title {
+  font-size: var(--kalk-text-lg);
+  font-weight: 600;
+  color: var(--kalk-gray-700);
+  margin: 0 0 var(--kalk-space-3);
+}
+
+.empty-result-text {
+  font-size: var(--kalk-text-sm);
+  color: var(--kalk-gray-500);
+  max-width: 360px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.empty-result-text strong {
+  color: var(--kalk-accent-600);
+  font-weight: 600;
+}
+
+.calculating-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--kalk-space-3);
+  margin-top: var(--kalk-space-6);
+  font-size: var(--kalk-text-sm);
+  color: var(--kalk-accent-600);
+  font-weight: 500;
+}
 
 /* Overview */
 .overview-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--kalk-space-4); }
@@ -573,6 +1081,57 @@ emit('validation-change', true);
 .swatch-tax { background: var(--kalk-gray-400); }
 .swatch-cf { background: var(--kalk-primary-900); border-radius: 50%; width: 8px; height: 8px; }
 .swatch-debt-bar { background: var(--kalk-primary-800); }
+
+/* === PROPERTY VALUE FORECAST === */
+.pv-chart { display: flex; align-items: flex-end; gap: 2px; height: 180px; padding: 0 var(--kalk-space-2); border-bottom: 1px solid var(--kalk-gray-200); position: relative; }
+.pv-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+.pv-bar { width: 100%; max-width: 32px; background: var(--kalk-primary-700); opacity: 0.7; border-radius: 2px 2px 0 0; transition: height 0.3s; min-height: 2px; position: relative; }
+.pv-bar:hover { opacity: 1; }
+.pv-condition-warn { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 700; color: #92400e; }
+.pv-baseline { position: absolute; left: 0; right: 0; border-top: 1.5px dashed var(--kalk-gray-400); z-index: 1; pointer-events: none; }
+.pv-baseline-label { position: absolute; right: 0; top: -14px; font-size: 9px; font-weight: 600; color: var(--kalk-gray-500); background: #fff; padding: 0 var(--kalk-space-1); }
+.pv-baseline-legend { position: relative; padding-left: 16px; }
+.pv-baseline-legend::before { content: ''; position: absolute; left: 0; top: 50%; width: 10px; border-top: 1.5px dashed var(--kalk-gray-400); }
+.swatch-pv { background: var(--kalk-primary-700); opacity: 0.7; }
+
+/* Market Comparison Banner */
+.market-comparison { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--kalk-space-4); margin-bottom: var(--kalk-space-6); }
+@media (max-width: 600px) { .market-comparison { grid-template-columns: 1fr; } }
+.mc-item { display: flex; flex-direction: column; padding: var(--kalk-space-3) var(--kalk-space-4); background: var(--kalk-gray-50); border-radius: var(--kalk-radius-md); }
+.mc-item span { font-size: var(--kalk-text-xs); color: var(--kalk-gray-500); margin-bottom: var(--kalk-space-1); }
+.mc-item strong { font-size: var(--kalk-text-sm); color: var(--kalk-gray-900); font-variant-numeric: tabular-nums; }
+.mc-item.mc-below { border-left: 3px solid var(--kalk-accent-500); }
+.mc-item.mc-below strong { color: #047857; }
+.mc-item.mc-above { border-left: 3px solid #d97706; }
+.mc-item.mc-above strong { color: #92400e; }
+.mc-item.mc-at { border-left: 3px solid var(--kalk-gray-400); }
+
+/* Forecast Explanation */
+.forecast-explanation { margin-top: var(--kalk-space-6); }
+.explanation-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--kalk-space-2); }
+.explanation-list li { font-size: var(--kalk-text-sm); color: var(--kalk-gray-600); padding: var(--kalk-space-2) var(--kalk-space-3); border-left: 2px solid var(--kalk-gray-200); line-height: 1.5; }
+.explanation-list li.summary { border-left-color: var(--kalk-primary-700); font-weight: 500; color: var(--kalk-gray-800); }
+.explanation-list li.overdueComponents { border-left-color: #d97706; }
+.explanation-list li.investments { border-left-color: var(--kalk-accent-500); }
+.explanation-list li.meanReversion { border-left-color: var(--kalk-primary-500); }
+.explanation-list li.componentDeterioration { border-left-color: #dc2626; }
+
+/* === COMPONENT DETERIORATION TABLE === */
+.comp-det-table-wrap { overflow-x: auto; margin-top: var(--kalk-space-4); }
+.comp-det-table th { font-size: var(--kalk-text-xs); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+.comp-det-table td { font-size: var(--kalk-text-sm); white-space: nowrap; }
+.comp-det-label { font-weight: 500; }
+.comp-det-status { display: inline-block; padding: 2px 8px; border-radius: var(--kalk-radius-sm); font-size: var(--kalk-text-xs); font-weight: 500; }
+.status-OK { background: #dcfce7; color: #166534; }
+.status-Renewed { background: #dbeafe; color: #1e40af; }
+.status-Overdue { background: #fee2e2; color: #991b1b; }
+.status-OverdueAtPurchase { background: var(--kalk-gray-100); color: var(--kalk-gray-500); }
+.comp-det-summary { display: flex; gap: var(--kalk-space-4); margin-top: var(--kalk-space-3); font-size: var(--kalk-text-sm); font-weight: 500; }
+.comp-det-summary-item.negative { color: #dc2626; }
+.comp-det-summary-item.positive { color: #16a34a; }
+.comp-det-explanation-row td { border-bottom: 1px solid var(--kalk-gray-100); }
+.comp-det-explanation { font-size: var(--kalk-text-xs); color: var(--kalk-gray-500); padding: var(--kalk-space-2) var(--kalk-space-3) var(--kalk-space-2) var(--kalk-space-6); white-space: normal; line-height: 1.5; background: var(--kalk-gray-50); }
+.comp-det-explanation::before { content: '\21B3 '; color: var(--kalk-gray-400); }
 
 /* === STEUER-BRIDGE === */
 .tax-bridge { display: flex; flex-direction: column; gap: var(--kalk-space-2); }
@@ -658,6 +1217,43 @@ emit('validation-change', true);
 .tax-row.highlight { background: var(--kalk-gray-50); font-weight: 600; }
 .tax-row.rule-triggered { background: #fefce8; }
 .tax-row.rule-triggered strong { color: #92400e; }
+.tax-row.tax-row-info { background: #fffbeb; }
+.tax-row.tax-row-info span { color: var(--kalk-gray-500); font-style: italic; }
+.hint-text { color: var(--kalk-gray-500) !important; font-style: italic; }
+
+/* === EXIT ANALYSIS === */
+.exit-subtitle { font-size: var(--kalk-text-sm); color: var(--kalk-gray-500); margin-bottom: var(--kalk-space-4); }
+
+.exit-meta { display: flex; gap: var(--kalk-space-4); margin-bottom: var(--kalk-space-6); }
+@media (max-width: 600px) { .exit-meta { flex-direction: column; } }
+.exit-meta-item { flex: 1; display: flex; flex-direction: column; padding: var(--kalk-space-3) var(--kalk-space-4); background: var(--kalk-gray-50); border-radius: var(--kalk-radius-md); }
+.exit-meta-item span { font-size: var(--kalk-text-xs); color: var(--kalk-gray-500); margin-bottom: var(--kalk-space-1); }
+.exit-meta-item strong { font-size: var(--kalk-text-sm); color: var(--kalk-gray-900); }
+.exit-meta-item.speculation-active { border-left: 3px solid #92400e; }
+.exit-meta-item.speculation-active strong { color: #92400e; }
+
+.exit-section-title { font-size: var(--kalk-text-sm); font-weight: 600; color: var(--kalk-gray-700); margin-bottom: var(--kalk-space-3); padding-bottom: var(--kalk-space-2); border-bottom: 1px solid var(--kalk-gray-200); }
+
+.exit-pnl { margin-bottom: var(--kalk-space-6); }
+.exit-pnl-row { display: flex; justify-content: space-between; align-items: center; padding: var(--kalk-space-2) var(--kalk-space-3); font-size: var(--kalk-text-sm); }
+.exit-pnl-row span { color: var(--kalk-gray-600); }
+.exit-pnl-row strong { font-variant-numeric: tabular-nums; }
+.exit-pnl-total { border-top: 2px solid var(--kalk-gray-300); margin-top: var(--kalk-space-2); padding-top: var(--kalk-space-3); background: var(--kalk-gray-50); border-radius: var(--kalk-radius-sm); }
+.exit-pnl-total span { font-weight: 600; color: var(--kalk-gray-900); }
+
+.exit-scenarios { margin-top: var(--kalk-space-2); }
+.scenario-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.scenario-table { width: 100%; border-collapse: collapse; font-size: var(--kalk-text-xs); font-variant-numeric: tabular-nums; }
+.scenario-table th, .scenario-table td { padding: var(--kalk-space-2) var(--kalk-space-3); text-align: right; white-space: nowrap; border-bottom: 1px solid var(--kalk-gray-100); }
+.scenario-table th { background: var(--kalk-gray-50); color: var(--kalk-gray-600); font-weight: 600; font-size: var(--kalk-text-xs); }
+.scenario-table .scenario-label-col { text-align: left; min-width: 140px; }
+.scenario-table td:first-child { text-align: left; color: var(--kalk-gray-600); font-weight: 500; }
+.scenario-rate { display: block; font-weight: 400; font-size: 10px; color: var(--kalk-gray-400); }
+.scenario-col { min-width: 120px; }
+.scenario-base { background: var(--kalk-gray-50); }
+.scenario-subtotal td { border-top: 1.5px solid var(--kalk-gray-300); font-weight: 600; }
+.scenario-total td { border-top: 2px solid var(--kalk-gray-400); background: var(--kalk-gray-50); font-weight: 700; }
+.scenario-highlight td { background: var(--kalk-gray-50); font-weight: 600; }
 
 /* === TOTALS === */
 .totals-section { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--kalk-space-4); }

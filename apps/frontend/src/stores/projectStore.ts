@@ -415,7 +415,9 @@ export const useProjectStore = defineStore('project', () => {
         rentLossReserveMonths: 3
       },
       costs: {
-        items: []
+        items: [],
+        maintenanceReserveMonthly: { amount: 0, currency },
+        maintenanceReserveAnnualIncreasePercent: 2
       },
       capex: [],
       taxProfile: {

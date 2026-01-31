@@ -130,23 +130,82 @@
             :label="t('capex.measure.category')"
             :options="categoryOptions"
           />
-          <KalkCurrency
-            v-model="measure.amount"
-            :label="t('capex.measure.amount')"
-            :currency="currency"
-          />
-          <KalkDatePicker
-            v-model="measure.scheduledDate"
-            :label="t('capex.measure.scheduledDate')"
-            :min-year="startYear"
-            :max-year="endYear"
-          />
-          <KalkSelect
-            v-model="measure.taxClassification"
-            :label="t('capex.measure.taxClassification')"
-            :options="taxClassificationOptions"
-            help-key="capex.taxClassification"
-          />
+        </div>
+
+        <!-- One-time investment toggle -->
+        <div class="recurring-section">
+          <label class="recurring-toggle-label">
+            <input
+              type="checkbox"
+              v-model="measure.isOneTime"
+              class="recurring-checkbox"
+            />
+            <span class="recurring-checkbox-visual"></span>
+            <span class="recurring-toggle-text">{{ t('capex.oneTime.toggle') }}</span>
+          </label>
+
+          <div v-if="measure.isOneTime" class="onetime-fields">
+            <KalkCurrency
+              v-model="measure.amount"
+              :label="t('capex.measure.amount')"
+              :currency="currency"
+            />
+            <KalkDatePicker
+              v-model="measure.scheduledDate"
+              :label="t('capex.measure.scheduledDate')"
+              :min-year="startYear"
+              :max-year="endYear"
+              @update:modelValue="applyTaxSuggestion(measure)"
+            />
+            <KalkSelect
+              v-model="measure.taxClassification"
+              :label="t('capex.measure.taxClassification')"
+              :options="taxClassificationOptions"
+              help-key="capex.taxClassification"
+            />
+          </div>
+        </div>
+
+        <div v-if="measure.isOneTime && measure.scheduledDate" class="tax-hint" :class="{ 'tax-hint--warning': getTaxSuggestion(measure).isWarning }">
+          {{ getTaxSuggestion(measure).reason }}
+        </div>
+
+        <!-- Recurring measure toggle -->
+        <div class="recurring-section">
+          <label class="recurring-toggle-label">
+            <input
+              type="checkbox"
+              v-model="measure.isRecurring"
+              class="recurring-checkbox"
+            />
+            <span class="recurring-checkbox-visual"></span>
+            <span class="recurring-toggle-text">{{ t('capex.recurring.toggle') }}</span>
+          </label>
+
+          <div v-if="measure.isRecurring" class="recurring-fields">
+            <KalkPercent
+              v-model="measure.recurringIntervalPercent"
+              :label="t('capex.recurring.intervalPercent')"
+            />
+            <KalkPercent
+              v-model="measure.recurringCostPercent"
+              :label="t('capex.recurring.costPercent')"
+            />
+            <KalkPercent
+              v-model="measure.recurringCycleExtensionPercent"
+              :label="t('capex.recurring.cycleExtension')"
+            />
+            <div class="recurring-hints">
+              <span class="recurring-hint">{{ t('capex.recurring.calculatedInterval', { years: getRecurringIntervalYears(measure) }) }}</span>
+              <span class="recurring-hint">{{ t('capex.recurring.calculatedCost', { cost: formatCurrency(getRecurringCostPerEvent(measure)) }) }}</span>
+              <span v-if="getRecurringOccurrenceYears(measure).length > 0" class="recurring-hint">
+                {{ t('capex.recurring.occurrences', { count: getRecurringOccurrenceYears(measure).length, years: getRecurringOccurrenceYears(measure).join(', ') }) }}
+              </span>
+              <span v-else class="recurring-hint recurring-hint--warn">
+                {{ t('capex.recurring.noOccurrences') }}
+              </span>
+            </div>
+          </div>
         </div>
 
         <!-- Impact / Wirtschaftliche Auswirkung -->
@@ -212,7 +271,7 @@ import { useI18n } from 'vue-i18n';
 import { KalkCard, KalkSelect, KalkCurrency, KalkDatePicker, KalkPercent, KalkInput } from '@/components';
 import { useProjectStore } from '@/stores/projectStore';
 import type { CapExCategory, TaxClassification, YearMonth } from '@/stores/types';
-import { generateForecast, type ForecastedMeasure } from '@/services/renovationForecastService';
+import { generateForecast, DEFAULT_COMPONENT_CYCLES, type ForecastedMeasure } from '@/services/renovationForecastService';
 
 interface MeasureImpactLocal {
   costSavingsMonthly: number;
@@ -230,6 +289,11 @@ interface MeasureItem {
   taxClassification: TaxClassification;
   impactExpanded: boolean;
   impact: MeasureImpactLocal;
+  isOneTime: boolean;
+  isRecurring: boolean;
+  recurringIntervalPercent: number;
+  recurringCostPercent: number;
+  recurringCycleExtensionPercent: number;
 }
 
 const emit = defineEmits<{
@@ -248,7 +312,11 @@ const startYear = computed(() => projectStore.currentProject?.startPeriod.year |
 const endYear = computed(() => projectStore.currentProject?.endPeriod.year || 2034);
 
 const totalCapex = computed(() =>
-  measures.value.reduce((sum, m) => sum + (m.amount || 0), 0)
+  measures.value.reduce((sum, m) => {
+    let total = m.isOneTime ? (m.amount || 0) : 0;
+    if (m.isRecurring) total += getRecurringTotalCost(m);
+    return sum + total;
+  }, 0)
 );
 
 const categoryOptions = computed(() => [
@@ -286,6 +354,138 @@ function hasImpactData(measure: MeasureItem): boolean {
   return (i.costSavingsMonthly > 0 || i.rentIncreaseMonthly > 0 || i.rentIncreasePercent > 0);
 }
 
+function getComponentCycle(category: CapExCategory): number {
+  const comp = projectStore.currentProject?.property.components.find(c => c.category === category);
+  if (comp) return comp.expectedCycleYears;
+  const cycleData = DEFAULT_COMPONENT_CYCLES[category];
+  return cycleData ? Math.round((cycleData.minYears + cycleData.maxYears) / 2) : 20;
+}
+
+function getRenewalCost(category: CapExCategory): number {
+  const property = projectStore.currentProject?.property;
+  if (!property) return 0;
+  const cycleData = DEFAULT_COMPONENT_CYCLES[category];
+  if (!cycleData) return 0;
+  let unitCount: number;
+  switch (cycleData.areaMode) {
+    case 'total': unitCount = property.totalArea; break;
+    case 'perUnit': unitCount = Math.ceil(property.livingArea * (cycleData.unitsPerSqm || (1 / 8))); break;
+    default: unitCount = property.livingArea; break;
+  }
+  return Math.round((cycleData.costPerSqmMax * unitCount) / 100) * 100;
+}
+
+function getRecurringIntervalYears(measure: MeasureItem): number {
+  return Math.round(getComponentCycle(measure.category) * measure.recurringIntervalPercent / 100);
+}
+
+function getRecurringCostPerEvent(measure: MeasureItem): number {
+  return Math.round(getRenewalCost(measure.category) * measure.recurringCostPercent / 100 / 100) * 100;
+}
+
+function getRecurringOccurrenceYears(measure: MeasureItem): number[] {
+  const cycle = getComponentCycle(measure.category);
+  const intervalYears = Math.round(cycle * measure.recurringIntervalPercent / 100);
+  if (intervalYears <= 0) return [];
+
+  const comp = projectStore.currentProject?.property.components.find(c => c.category === measure.category);
+  const lastReno = comp?.lastRenovationYear || projectStore.currentProject?.property.constructionYear || startYear.value;
+
+  const years: number[] = [];
+  for (let age = intervalYears; lastReno + age <= endYear.value; age += intervalYears) {
+    if (lastReno + age >= startYear.value) {
+      years.push(lastReno + age);
+    }
+  }
+  return years;
+}
+
+function getRecurringTotalCost(measure: MeasureItem): number {
+  const costPerEvent = getRecurringCostPerEvent(measure);
+  return getRecurringOccurrenceYears(measure).length * costPerEvent;
+}
+
+function getTaxSuggestion(measure: MeasureItem): { classification: TaxClassification; reason: string; isWarning: boolean } {
+  const project = projectStore.currentProject;
+  if (!project?.purchase?.purchaseDate || !measure.scheduledDate) {
+    return { classification: 'MaintenanceExpense', reason: t('capex.taxHint.afterThreeYears'), isWarning: false };
+  }
+
+  const pd = project.purchase.purchaseDate;
+  const md = measure.scheduledDate;
+  const purchaseMonths = pd.year * 12 + (pd.month || 1);
+  const measureMonths = md.year * 12 + (md.month || 1);
+  const monthsSince = measureMonths - purchaseMonths;
+
+  // Before purchase → likely acquisition cost
+  if (monthsSince < 0) {
+    return {
+      classification: 'AcquisitionCost',
+      reason: t('capex.taxHint.beforePurchase'),
+      isWarning: false,
+    };
+  }
+
+  // Within 3 years of purchase → §6 Abs. 1 Nr. 1a EStG (15% rule)
+  // Bemessungsgrundlage: Anschaffungskosten des Gebäudes inkl. anteiliger Nebenkosten (ohne Grundstück)
+  // Ref: BMF-Schreiben 26.01.2026, Haufe: https://www.haufe.de/steuern/steuerwissen-tipps/anschaffungsnahe-herstellungskosten-bei-gebaeuden_170_275760.html
+  if (monthsSince <= 36) {
+    const landPercent = project.purchase.landValuePercent || 20;
+    const purchasePrice = project.purchase.purchasePrice.amount;
+    // Anteilige Anschaffungsnebenkosten (Grunderwerbsteuer, Notar, Makler etc.)
+    const acquisitionCosts = (project.purchase.costs || [])
+      .filter(c => c.taxClassification === 'AcquisitionCost')
+      .reduce((sum, c) => {
+        const mode = (c as any).mode;
+        if (mode === 'percent') return sum + purchasePrice * c.amount.amount / 100;
+        return sum + c.amount.amount;
+      }, 0);
+    const buildingValue = (purchasePrice + acquisitionCosts) * (1 - landPercent / 100);
+    const threshold = buildingValue * 0.15;
+
+    // Sum all measure amounts within 3 years (excluding current measure)
+    let totalIn3Y = 0;
+    for (const m of measures.value) {
+      if (m.id === measure.id) continue;
+      if (!m.scheduledDate) continue;
+      const mMonths = m.scheduledDate.year * 12 + (m.scheduledDate.month || 1);
+      const mSince = mMonths - purchaseMonths;
+      if (mSince >= 0 && mSince <= 36) {
+        totalIn3Y += m.amount || 0;
+      }
+    }
+
+    const totalWithCurrent = totalIn3Y + (measure.amount || 0);
+
+    if (totalWithCurrent > threshold) {
+      return {
+        classification: 'AcquisitionCost',
+        reason: t('capex.taxHint.rule15Exceeded', { threshold: formatCurrency(threshold), total: formatCurrency(totalWithCurrent) }),
+        isWarning: true,
+      };
+    }
+
+    return {
+      classification: 'MaintenanceExpense',
+      reason: t('capex.taxHint.within3Years', { threshold: formatCurrency(threshold), remaining: formatCurrency(threshold - totalIn3Y) }),
+      isWarning: false,
+    };
+  }
+
+  // After 3 years
+  return { classification: 'MaintenanceExpense', reason: t('capex.taxHint.afterThreeYears'), isWarning: false };
+}
+
+function applyTaxSuggestion(measure: MeasureItem) {
+  // Only auto-manage between MaintenanceExpense and AcquisitionCost.
+  // Don't override manual ImprovementCost or NotDeductible.
+  if (measure.taxClassification === 'ImprovementCost' || measure.taxClassification === 'NotDeductible') {
+    return;
+  }
+  const suggestion = getTaxSuggestion(measure);
+  measure.taxClassification = suggestion.classification;
+}
+
 function addMeasure() {
   measures.value.push({
     id: crypto.randomUUID(),
@@ -294,7 +494,12 @@ function addMeasure() {
     amount: 0,
     taxClassification: 'MaintenanceExpense',
     impactExpanded: false,
-    impact: emptyImpact()
+    impact: emptyImpact(),
+    isOneTime: true,
+    isRecurring: false,
+    recurringIntervalPercent: 40,
+    recurringCostPercent: 25,
+    recurringCycleExtensionPercent: 40,
   });
 }
 
@@ -340,7 +545,7 @@ function acceptSuggestion(index: number) {
   const suggestion = suggestions.value[index];
   if (!suggestion) return;
 
-  measures.value.push({
+  const measure: MeasureItem = {
     id: crypto.randomUUID(),
     name: suggestion.name,
     category: suggestion.category,
@@ -348,8 +553,15 @@ function acceptSuggestion(index: number) {
     scheduledDate: { year: suggestion.plannedYear, month: suggestion.plannedMonth },
     taxClassification: 'MaintenanceExpense',
     impactExpanded: false,
-    impact: suggestionToImpact(suggestion)
-  });
+    impact: suggestionToImpact(suggestion),
+    isOneTime: true,
+    isRecurring: false,
+    recurringIntervalPercent: 40,
+    recurringCostPercent: 25,
+    recurringCycleExtensionPercent: 40,
+  };
+  measures.value.push(measure);
+  applyTaxSuggestion(measure);
 
   suggestions.value.splice(index, 1);
 }
@@ -360,7 +572,7 @@ function dismissSuggestion(index: number) {
 
 function acceptAllSuggestions() {
   for (const suggestion of suggestions.value) {
-    measures.value.push({
+    const measure: MeasureItem = {
       id: crypto.randomUUID(),
       name: suggestion.name,
       category: suggestion.category,
@@ -368,8 +580,15 @@ function acceptAllSuggestions() {
       scheduledDate: { year: suggestion.plannedYear, month: suggestion.plannedMonth },
       taxClassification: 'MaintenanceExpense',
       impactExpanded: false,
-      impact: suggestionToImpact(suggestion)
-    });
+      impact: suggestionToImpact(suggestion),
+      isOneTime: true,
+      isRecurring: false,
+      recurringIntervalPercent: 40,
+      recurringCostPercent: 25,
+      recurringCycleExtensionPercent: 40,
+    };
+    measures.value.push(measure);
+    applyTaxSuggestion(measure);
   }
   suggestions.value = [];
 }
@@ -390,7 +609,12 @@ onMounted(() => {
         rentIncreaseMonthly: m.impact?.rentIncreaseMonthly?.amount ?? 0,
         rentIncreasePercent: m.impact?.rentIncreasePercent ?? 0,
         delayMonths: m.impact?.delayMonths ?? 0,
-      }
+      },
+      isOneTime: m.amount.amount > 0 || !m.isRecurring,
+      isRecurring: m.isRecurring || false,
+      recurringIntervalPercent: m.recurringConfig?.intervalPercent ?? 40,
+      recurringCostPercent: m.recurringConfig?.costPercent ?? 25,
+      recurringCycleExtensionPercent: m.recurringConfig?.cycleExtensionPercent ?? 40,
     }));
   } else {
     // No existing measures → show the initial prompt
@@ -419,8 +643,8 @@ watch(
           id: m.id,
           name: m.name,
           category: m.category,
-          amount: { amount: m.amount, currency: currency.value },
-          scheduledDate: m.scheduledDate || projectStore.currentProject!.startPeriod,
+          amount: { amount: m.isOneTime ? m.amount : 0, currency: currency.value },
+          scheduledDate: (m.isOneTime && m.scheduledDate) ? m.scheduledDate : projectStore.currentProject!.startPeriod,
           taxClassification: m.taxClassification,
           impact: hasImpact ? {
             costSavingsMonthly: m.impact.costSavingsMonthly > 0
@@ -430,6 +654,12 @@ watch(
             rentIncreasePercent: m.impact.rentIncreasePercent > 0
               ? m.impact.rentIncreasePercent : undefined,
             delayMonths: m.impact.delayMonths > 0 ? m.impact.delayMonths : undefined,
+          } : undefined,
+          isRecurring: m.isRecurring || undefined,
+          recurringConfig: m.isRecurring ? {
+            intervalPercent: m.recurringIntervalPercent,
+            costPercent: m.recurringCostPercent,
+            cycleExtensionPercent: m.recurringCycleExtensionPercent,
           } : undefined,
         };
       })
@@ -905,5 +1135,139 @@ watch(
 .capex-summary strong {
   color: #ffffff;
   font-variant-numeric: tabular-nums;
+}
+
+/* Recurring measure section */
+.recurring-section {
+  margin-top: var(--kalk-space-3);
+  border-top: 1px solid var(--kalk-gray-100);
+  padding-top: var(--kalk-space-3);
+}
+
+.recurring-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kalk-space-2);
+  cursor: pointer;
+  user-select: none;
+  padding: var(--kalk-space-1) 0;
+}
+
+.recurring-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.recurring-checkbox-visual {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--kalk-gray-300);
+  border-radius: var(--kalk-radius-sm);
+  background: #fff;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.recurring-checkbox:checked + .recurring-checkbox-visual {
+  background: var(--kalk-accent-500);
+  border-color: var(--kalk-accent-500);
+}
+
+.recurring-checkbox:checked + .recurring-checkbox-visual::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 6px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.recurring-toggle-text {
+  font-size: var(--kalk-text-sm);
+  font-weight: 600;
+  color: var(--kalk-gray-700);
+}
+
+.onetime-fields {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--kalk-space-4);
+  margin-top: var(--kalk-space-3);
+  padding: var(--kalk-space-4);
+  background: var(--kalk-gray-50);
+  border: 1px solid var(--kalk-gray-200);
+  border-radius: var(--kalk-radius-md);
+}
+
+.recurring-fields {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--kalk-space-4);
+  margin-top: var(--kalk-space-3);
+  padding: var(--kalk-space-4);
+  background: var(--kalk-accent-50, #f0fdf4);
+  border: 1px solid var(--kalk-accent-200, #bbf7d0);
+  border-radius: var(--kalk-radius-md);
+}
+
+.recurring-hints {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: var(--kalk-space-4);
+  flex-wrap: wrap;
+}
+
+.recurring-hint {
+  font-size: var(--kalk-text-xs);
+  color: var(--kalk-gray-500);
+  font-style: italic;
+  font-variant-numeric: tabular-nums;
+}
+
+.recurring-hint--warn {
+  color: var(--kalk-warning, #b45309);
+}
+
+/* Tax classification hint */
+.tax-hint {
+  grid-column: 1 / -1;
+  font-size: var(--kalk-text-xs);
+  color: var(--kalk-gray-500);
+  font-style: italic;
+  padding: var(--kalk-space-2) var(--kalk-space-3);
+  background: var(--kalk-gray-50);
+  border-radius: var(--kalk-radius-sm);
+  border-left: 2px solid var(--kalk-gray-300);
+  line-height: 1.4;
+}
+
+.tax-hint--warning {
+  border-left-color: var(--kalk-warning, #b45309);
+  background: #fffbeb;
+  color: #92400e;
+  font-weight: 500;
+}
+
+.tax-hint {
+    font-size: smaller;
+    font-style: italic;
+    color: gray;
+}
+
+@media (max-width: 768px) {
+  .onetime-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .recurring-fields {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

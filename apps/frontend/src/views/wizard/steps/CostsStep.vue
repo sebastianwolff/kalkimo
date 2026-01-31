@@ -1,5 +1,26 @@
 <template>
   <KalkCard :title="t('costs.title')">
+    <!-- Maintenance Reserve Section -->
+    <div class="reserve-section">
+      <h4 class="section-label">{{ t('costs.maintenanceReserve.title') }}</h4>
+      <p class="reserve-hint">{{ t('costs.maintenanceReserve.hint') }}</p>
+      <div class="reserve-fields">
+        <KalkCurrency
+          v-model="maintenanceReserveMonthly"
+          :label="t('costs.maintenanceReserve.monthlyAmount')"
+          :currency="currency"
+        />
+        <KalkCurrency
+          :model-value="maintenanceReserveMonthly * 12"
+          :label="t('costs.maintenanceReserve.yearly')"
+          :currency="currency"
+          disabled
+        />
+      </div>
+    </div>
+
+    <div class="section-divider"></div>
+
     <div class="section-header">
       <h4 class="section-label">{{ t('costs.items') }}</h4>
       <button type="button" class="btn btn-outline btn-sm" @click="addCostItem">
@@ -79,6 +100,15 @@
         <span>{{ t('costs.nonTransferable') }}:</span>
         <span class="highlight">{{ formatCurrency(nonTransferableTotal) }}</span>
       </div>
+      <div v-if="maintenanceReserveMonthly > 0" class="summary-divider"></div>
+      <div v-if="maintenanceReserveMonthly > 0" class="summary-row">
+        <span>{{ t('costs.maintenanceReserve.title') }}:</span>
+        <span class="highlight-warn">{{ formatCurrency(maintenanceReserveMonthly) }}</span>
+      </div>
+      <div v-if="maintenanceReserveMonthly > 0" class="summary-row summary-total">
+        <span>{{ t('costs.totalWithReserve') }}:</span>
+        <strong>{{ formatCurrency(totalMonthly + maintenanceReserveMonthly) }}</strong>
+      </div>
     </div>
   </KalkCard>
 </template>
@@ -105,6 +135,8 @@ const { t, locale } = useI18n();
 const projectStore = useProjectStore();
 
 const costItems = ref<CostItemData[]>([]);
+const maintenanceReserveMonthly = ref<number>(0);
+const maintenanceReserveIncrease = ref<number>(2);
 
 const currency = computed(() => projectStore.currentProject?.currency || 'EUR');
 
@@ -163,6 +195,8 @@ onMounted(() => {
       isTransferable: c.isTransferable,
       annualIncreasePercent: c.annualIncreasePercent
     }));
+    maintenanceReserveMonthly.value = costs.maintenanceReserveMonthly?.amount || 0;
+    maintenanceReserveIncrease.value = costs.maintenanceReserveAnnualIncreasePercent ?? 2;
   }
 });
 
@@ -172,25 +206,26 @@ watch(isValid, (valid) => {
   emit('validation-change', valid);
 }, { immediate: true });
 
-watch(
-  costItems,
-  () => {
-    if (!projectStore.currentProject) return;
+function syncCostsToStore() {
+  if (!projectStore.currentProject) return;
 
-    projectStore.updateProject({
-      costs: {
-        items: costItems.value.map(c => ({
-          id: c.id,
-          name: c.name,
-          monthlyAmount: { amount: c.monthlyAmount, currency: currency.value },
-          isTransferable: c.isTransferable,
-          annualIncreasePercent: c.annualIncreasePercent
-        }))
-      }
-    });
-  },
-  { deep: true }
-);
+  projectStore.updateProject({
+    costs: {
+      items: costItems.value.map(c => ({
+        id: c.id,
+        name: c.name,
+        monthlyAmount: { amount: c.monthlyAmount, currency: currency.value },
+        isTransferable: c.isTransferable,
+        annualIncreasePercent: c.annualIncreasePercent
+      })),
+      maintenanceReserveMonthly: { amount: maintenanceReserveMonthly.value, currency: currency.value },
+      maintenanceReserveAnnualIncreasePercent: maintenanceReserveIncrease.value
+    }
+  });
+}
+
+watch(costItems, syncCostsToStore, { deep: true });
+watch([maintenanceReserveMonthly, maintenanceReserveIncrease], syncCostsToStore);
 </script>
 
 <style scoped>
@@ -447,5 +482,49 @@ watch(
   color: var(--kalk-accent-600);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+.highlight-warn {
+  color: var(--kalk-warning, #b45309);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.reserve-section {
+  margin-bottom: var(--kalk-space-6);
+}
+
+.reserve-hint {
+  font-size: var(--kalk-text-xs);
+  color: var(--kalk-gray-500);
+  margin: var(--kalk-space-1) 0 var(--kalk-space-4);
+}
+
+.reserve-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--kalk-space-4);
+}
+
+@media (max-width: 600px) {
+  .reserve-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+.section-divider {
+  height: 1px;
+  background: var(--kalk-gray-200);
+  margin: var(--kalk-space-6) 0;
+}
+
+.summary-divider {
+  height: 1px;
+  background: var(--kalk-gray-200);
+  margin: var(--kalk-space-2) 0;
+}
+
+.summary-total {
+  padding-top: var(--kalk-space-2);
 }
 </style>

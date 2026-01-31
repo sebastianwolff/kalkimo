@@ -105,7 +105,7 @@
   --ion-background-color: #ffffff;
   --ion-background-color-rgb: 255, 255, 255;
 
-  --ion-text-color: var(--kalk-gray-900);
+  --ion-text-color: var(--kalk-gray-900) !important;
   --ion-text-color-rgb: 17, 24, 39;
 
   /* Toolbar - Dark header for contrast */

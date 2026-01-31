@@ -32,7 +32,9 @@ export default {
     perYear: 'pro Jahr',
     sqm: 'm²',
     undo: 'Rückgängig',
-    redo: 'Wiederholen'
+    redo: 'Wiederholen',
+    calculate: 'Berechnen',
+    closeProject: 'Projekt schließen'
   },
 
   auth: {
@@ -74,7 +76,7 @@ export default {
       costs: 'Kosten',
       tax: 'Steuern',
       capex: 'Maßnahmen',
-      summary: 'Zusammenfassung'
+      summary: 'Ergebnis'
     }
   },
 
@@ -138,8 +140,17 @@ export default {
         Electrical: 'Elektrik',
         Plumbing: 'Sanitär',
         Interior: 'Innenausbau',
+        Exterior: 'Außenanlagen',
+        Other: 'Sonstiges',
         Energy: 'Energetische Sanierung'
       }
+    },
+    marketReference: {
+      title: 'Regionale Marktpreise',
+      hint: 'Optional. Ermöglicht den Vergleich des Kaufpreises mit dem regionalen Marktwert.',
+      pricePerSqm: 'Regionaler Quadratmeterpreis',
+      fairValue: 'Errechneter Marktwert',
+      hintEmpty: 'Geben Sie den regionalen qm-Preis ein um den Marktwert zu berechnen'
     }
   },
 
@@ -219,7 +230,15 @@ export default {
     },
     totalMonthly: 'Monatl. Kosten gesamt',
     transferable: 'Davon umlagefähig',
-    nonTransferable: 'Nicht umlagefähig'
+    nonTransferable: 'Nicht umlagefähig',
+    maintenanceReserve: {
+      title: 'Instandhaltungsrücklage',
+      monthlyAmount: 'Rücklage/Monat',
+      annualIncrease: 'Jährl. Steigerung',
+      hint: 'Reduziert den Cashflow, ist aber steuerlich nicht sofort absetzbar.',
+      yearly: 'Rücklage/Jahr',
+    },
+    totalWithReserve: 'Gesamt inkl. Rücklage'
   },
 
   tax: {
@@ -307,6 +326,25 @@ export default {
         Low: 'Niedrig'
       },
       empty: 'Keine Maßnahmen im Analysezeitraum empfohlen'
+    },
+    oneTime: {
+      toggle: 'Einmalige Investition',
+    },
+    recurring: {
+      toggle: 'Regelmäßige Maßnahme',
+      intervalPercent: 'Intervall (% der Zykluszeit)',
+      costPercent: 'Kosten (% der Erneuerungskosten)',
+      cycleExtension: 'Zyklusverlängerung (%)',
+      calculatedInterval: 'Intervall: {years} Jahre',
+      calculatedCost: 'Kosten je Durchführung: {cost}',
+      occurrences: '{count}× im Zeitraum: {years}',
+      noOccurrences: 'Keine Durchführungen im Analysezeitraum',
+    },
+    taxHint: {
+      beforePurchase: 'Vor dem Erwerb: Kosten werden als Anschaffungskosten eingestuft (§255 HGB).',
+      rule15Exceeded: '15%-Grenze überschritten: Erhaltungsaufwendungen ({total}) in 3 Jahren übersteigen 15% des Gebäudewerts ({threshold}) → anschaffungsnahe Herstellungskosten (§6 Abs. 1 Nr. 1a EStG).',
+      within3Years: 'Innerhalb der 3-Jahres-Frist nach Erwerb. 15%-Grenze des Gebäudewerts: {threshold} (verbleibend: {remaining}).',
+      afterThreeYears: 'Erhaltungsaufwand: Sofort absetzbar oder Verteilung nach §82b EStDV (2–5 Jahre).',
     }
   },
 
@@ -348,11 +386,14 @@ export default {
       vacancy: 'Leerstand',
       effectiveRent: 'Nettomiete',
       operatingCosts: 'Betriebskosten',
+      maintenanceReserve: 'Rücklage',
       noi: 'NOI',
       debtService: 'Schuldendienst',
       interest: 'Zinsen',
       principal: 'Tilgung',
       capex: 'Investitionen',
+      capexNet: 'Invest. (netto)',
+      reserveBalance: 'Rücklagenstand',
       beforeTax: 'CF vor Steuern',
       tax: 'Steuern',
       afterTax: 'CF nach Steuern',
@@ -372,6 +413,7 @@ export default {
       totalTax: 'Gesamte Steuerlast',
       totalSavings: 'Steuerersparnis durch Abzüge',
       effectiveRate: 'Effektiver Steuersatz',
+      totalMaintenanceReserve: 'Instandhaltungsrücklage (nicht absetzbar)',
       rule15: '15%-Regel',
       rule15Triggered: '15%-Regel ausgelöst',
       rule15NotTriggered: '15%-Regel nicht ausgelöst',
@@ -382,6 +424,7 @@ export default {
         interest: 'Schuldzinsen',
         maintenance: 'Erhaltungsaufwand',
         operating: 'Betriebskosten',
+        reserve: 'Rücklage (n. absetzb.)',
         taxableIncome: 'Zu verst. Einkommen',
         taxPayment: 'Steuerzahlung'
       }
@@ -398,6 +441,110 @@ export default {
       totalEquity: 'Eingesetztes Eigenkapital',
       totalCashflowBefore: 'Gesamter Cashflow vor Steuern',
       totalCashflowAfter: 'Gesamter Cashflow nach Steuern'
+    },
+    propertyValue: {
+      title: 'Immobilienwertprognose',
+      subtitle: 'Geschätzter Marktwert unter Berücksichtigung von Zustand, Investitionen und Marktentwicklung',
+      purchasePrice: 'Kaufpreis',
+      marketValue: 'Marktwert (reine Preisentwicklung)',
+      improvementUplift: 'Wertsteigerung durch Investitionen',
+      conditionFactor: 'Zustandsfaktor',
+      estimatedValue: 'Geschätzter Wert',
+      initialCondition: 'Zustandsfaktor bei Kauf',
+      improvementFactor: 'Wertübertragung Investitionen',
+      scenario: {
+        conservative: 'Konservativ',
+        base: 'Basis',
+        optimistic: 'Optimistisch',
+      },
+      appreciation: 'Marktentwicklung p.a.',
+      year: 'Jahr',
+      finalValue: 'Endwert',
+      vs: 'vs. Kaufpreis',
+      marketAppreciationRow: 'Marktentwicklung',
+      conditionAdjustment: 'Zustandsanpassung',
+      investmentRow: 'Investitionen',
+      meanReversionRow: 'Marktkonvergenz',
+      regionalPrice: 'Regionaler qm-Preis',
+      fairMarketValue: 'Errechneter Marktwert',
+      purchaseVsMarket: 'Kaufpreis vs. Markt',
+      assessment: {
+        below: 'Unter Marktwert',
+        at: 'Marktniveau',
+        above: 'Über Marktwert',
+      },
+      endConditionFactor: 'Zustandsfaktor am Ende',
+      explanationTitle: 'Erläuterung',
+      driver: {
+        initialCondition: 'Gebäude Baujahr {constructionYear}, Zustand {condition}, {componentCount} Bauteile erfasst. Ausgangsfaktor: {factor}%.',
+        overdueComponents: '{count} Bauteile überfällig ({names}) — durchschnittlich {avgOverdueYears} Jahre über Erneuerungszyklus. Dies drückt den Zustandsfaktor.',
+        degradation: 'Zustandsfaktor sinkt von {startFactor}% auf {endFactor}% über {years} Jahre (−{totalDecline} Prozentpunkte) durch natürliche Alterung.',
+        componentDeterioration: '{uncoveredCount} Bauteile werden im Haltezeitraum fällig und sind nicht durch Maßnahmen abgedeckt. Geschätzte Wertminderung: {uncoveredAmount} €.',
+        investments: '{measureCount} Maßnahmen geplant ({totalAmount} €). Wertbeitrag: {valueUplift} € (70% Übertragung). Zustandsverbesserung: +{conditionBoost} Prozentpunkte.',
+        marketAppreciation: 'Marktentwicklung {rate}% p.a. über {years} Jahre ergibt +{appreciationPercent}% reine Preissteigerung ({appreciationAmount} €).',
+        meanReversion: 'Kaufpreis {gapPercent}% {assessment} regionalem Marktwert — {direction} von {adjustmentAmount} € (Halbwertszeit 7 Jahre).',
+        summary: 'Geschätzter Wert nach {years} Jahren (Basis-Szenario): {finalValue} € ({changeDirection}{changePercent}% bzw. {changeDirection}{changeAbsolute} € ggü. Kaufpreis).',
+      },
+      componentDeterioration: {
+        title: 'Bauteil-Zustandsentwicklung',
+        subtitle: 'Zustandsverschlechterung durch fällige Erneuerungen im Haltezeitraum',
+        component: 'Bauteil',
+        age: 'Alter (Ende)',
+        cycleYears: 'Zyklus',
+        dueYear: 'Fällig',
+        renewalCost: 'Erneuerungskosten',
+        valueImpact: 'Werteinfluss',
+        statusAtEnd: 'Status',
+        totalUncovered: 'Nicht abgedeckte Wertminderung',
+        totalCovered: 'Durch Maßnahmen abgedeckt',
+        statusLabels: {
+          OK: 'OK',
+          Overdue: 'Überfällig',
+          OverdueAtPurchase: 'Überf. bei Kauf',
+          Renewed: 'Erneuert',
+        },
+        pricedIn: 'eingepreist',
+        yearsShort: 'J.',
+        recurringExplanation: 'Regelmäßig: {name} alle {interval} J. ({count}× im Zeitraum, je {cost}, gesamt {total}). Eff. Zyklus: {effectiveCycle} J. (+{extensionPercent}%). Wertverbesserung: +{improvement}',
+        recurringLabel: 'Regelmäßig',
+      },
+    },
+    exit: {
+      title: 'Ertragsprognose bei Verkauf',
+      subtitle: 'Gesamtrentabilität über die Haltedauer inkl. Veräußerung',
+      holdingPeriod: 'Haltedauer',
+      years: 'Jahre',
+      speculationPeriod: 'Spekulationsfrist (§23 EStG)',
+      withinPeriod: 'Innerhalb der 10-Jahres-Frist',
+      outsidePeriod: 'Außerhalb der Frist (steuerfrei)',
+      pnlTitle: 'Gewinn- und Verlustrechnung (Laufzeit)',
+      totalGrossIncome: 'Gesamte Mieteinnahmen',
+      totalOperatingCosts: 'Betriebskosten',
+      totalDebtService: 'Schuldendienst',
+      totalCapex: 'Investitionsmaßnahmen',
+      totalTaxPaid: 'Einkommensteuer',
+      totalMaintenanceReserve: 'Instandhaltungsrücklage',
+      finalReserveBalance: 'Rücklagenstand bei Verkauf',
+      netCashflow: 'Netto-Cashflow (nach Steuern)',
+      scenarioTitle: 'Szenarien bei Verkauf',
+      scenario: {
+        conservative: 'Konservativ',
+        base: 'Basis',
+        optimistic: 'Optimistisch',
+      },
+      appreciation: 'Wertsteigerung p.a.',
+      propertyValue: 'Immobilienwert bei Verkauf',
+      saleCosts: 'Verkaufsnebenkosten',
+      capitalGain: 'Veräußerungsgewinn',
+      capitalGainsTax: 'Spekulationssteuer',
+      outstandingDebt: 'Restschuld',
+      netSaleProceeds: 'Netto-Verkaufserlös',
+      plusCashflow: 'Kumulierter Cashflow',
+      minusEquity: 'Eingesetztes Eigenkapital',
+      totalReturn: 'Gesamtertrag',
+      totalReturnPercent: 'Gesamtrendite',
+      annualizedReturn: 'Rendite p.a.',
+      noTax: 'steuerfrei',
     }
   },
 

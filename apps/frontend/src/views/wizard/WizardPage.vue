@@ -7,7 +7,19 @@
       :back-href="backHref"
       :show-undo-redo="true"
       :show-progress="true"
-    />
+    >
+      <template #actions>
+        <ion-button
+          fill="clear"
+          :disabled="isLoading"
+          @click="handleCloseProject"
+          class="close-project-btn"
+        >
+          <ion-icon slot="start" :icon="saveOutline" />
+          {{ t('common.closeProject') }}
+        </ion-button>
+      </template>
+    </AppHeader>
 
     <ion-content>
       <WizardStepper />
@@ -15,6 +27,7 @@
       <div class="wizard-content">
         <component
           :is="currentStepComponent"
+          ref="stepRef"
           @validation-change="handleValidationChange"
         />
       </div>
@@ -23,7 +36,7 @@
     <WizardNavigation
       :can-proceed="isStepValid"
       :loading="isLoading"
-      @finish="handleFinish"
+      @calculate="handleCalculate"
     />
   </ion-page>
 </template>
@@ -32,7 +45,8 @@
 import { ref, computed, onMounted, markRaw, type Component } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { IonPage, IonContent } from '@ionic/vue';
+import { IonPage, IonContent, IonButton, IonIcon } from '@ionic/vue';
+import { saveOutline } from 'ionicons/icons';
 import { AppHeader, WizardStepper, WizardNavigation } from '@/components';
 import { useAuthStore } from '@/stores/authStore';
 import { useProjectStore } from '@/stores/projectStore';
@@ -46,7 +60,7 @@ import FinancingStep from './steps/FinancingStep.vue';
 import RentStep from './steps/RentStep.vue';
 import CostsStep from './steps/CostsStep.vue';
 import TaxStep from './steps/TaxStep.vue';
-import CapexStep from './steps/CapexStep.vue';
+import CapexStep from './steps/CapExStep.vue';
 import SummaryStep from './steps/SummaryStep.vue';
 
 const { t } = useI18n();
@@ -55,6 +69,7 @@ const authStore = useAuthStore();
 const projectStore = useProjectStore();
 const uiStore = useUiStore();
 
+const stepRef = ref<any>(null);
 const isStepValid = ref(true);
 const isLoading = ref(false);
 
@@ -93,7 +108,15 @@ function handleValidationChange(valid: boolean) {
   isStepValid.value = valid;
 }
 
-async function handleFinish() {
+function handleCalculate() {
+  if (!projectStore.currentProject) return;
+  // Delegate to SummaryStep's exposed calculate function
+  if (stepRef.value?.calculate) {
+    stepRef.value.calculate();
+  }
+}
+
+async function handleCloseProject() {
   if (!projectStore.currentProject) return;
 
   // Save project locally (to localStorage)
@@ -127,8 +150,16 @@ async function handleFinish() {
 
 @media (min-width: 768px) {
   .wizard-content {
-    max-width: 800px;
+    max-width: 1024px;
     margin: 0 auto;
   }
+}
+
+.close-project-btn {
+  --color: rgba(255, 255, 255, 0.85);
+  font-size: var(--kalk-text-xs);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
 }
 </style>

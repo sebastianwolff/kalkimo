@@ -24,7 +24,12 @@
       "Bash(python:*)",
       "Bash(printf:*)",
       "Bash(python3 -c \"import urllib.request,json; req=urllib.request.Request\\(''http://localhost:5000/api/auth/login'',data=json.dumps\\({''email'':''sw@leondo-media.de'',''password'':''Test1234!''}\\).encode\\(\\),headers={''Content-Type'':''application/json''}\\); resp=urllib.request.urlopen\\(req\\); print\\(resp.read\\(\\).decode\\(\\)\\)\")",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(cmd /c \"dir c:\\\\Users\\\\swolf\\\\source\\\\repos\\\\kalkimo\\\\apps\\\\frontend\\\\src\\\\views\\\\wizard\\\\steps\\\\Cap*\")",
+      "Bash(cmd /c \"dir /b c:\\\\Users\\\\swolf\\\\source\\\\repos\\\\kalkimo\\\\apps\\\\frontend\\\\src\\\\views\\\\wizard\\\\steps\"\")",
+      "Bash(git mv:*)",
+      "WebFetch(domain:www.haufe.de)",
+      "WebFetch(domain:www.juhn.com)"
     ]
   }
 }

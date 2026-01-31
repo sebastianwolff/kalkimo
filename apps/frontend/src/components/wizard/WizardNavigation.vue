@@ -31,14 +31,14 @@
     <button
       v-else
       type="button"
-      class="nav-button nav-button-success"
+      class="nav-button nav-button-accent"
       :disabled="!canProceed || loading"
-      @click="handleFinish"
+      @click="handleCalculate"
     >
       <svg class="button-icon" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+        <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 000 2h6a1 1 0 100-2H7zm6 7a1 1 0 011 1v3a1 1 0 11-2 0v-3a1 1 0 011-1zm-3 3a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm-2-2a1 1 0 01.993.883L9 13v3a1 1 0 01-1.993.117L7 16v-3a1 1 0 011-1zm6-6a1 1 0 100 2h.01a1 1 0 100-2H13zm-3 0a1 1 0 100 2h.01a1 1 0 100-2H10zM7 8a1 1 0 100 2h.01a1 1 0 100-2H7z" clip-rule="evenodd" />
       </svg>
-      {{ t('common.finish') }}
+      {{ t('common.calculate') }}
     </button>
   </div>
 </template>
@@ -59,7 +59,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   'back': [];
   'next': [];
-  'finish': [];
+  'calculate': [];
 }>();
 
 const { t } = useI18n();
@@ -78,8 +78,8 @@ function handleNext() {
   emit('next');
 }
 
-function handleFinish() {
-  emit('finish');
+function handleCalculate() {
+  emit('calculate');
 }
 </script>
 
@@ -142,14 +142,14 @@ function handleFinish() {
   background: var(--kalk-primary-800);
 }
 
-.nav-button-success {
+.nav-button-accent {
   background: var(--kalk-accent-600);
   border: none;
   color: #ffffff;
   box-shadow: var(--kalk-shadow-sm);
 }
 
-.nav-button-success:hover:not(:disabled) {
+.nav-button-accent:hover:not(:disabled) {
   background: var(--kalk-accent-700);
 }
 
