@@ -1,4 +1,7 @@
+import helpTexts from './helpTexts.en.json';
+
 export default {
+  helpTexts,
   common: {
     appName: 'Kalkimo Planner',
     save: 'Save',
@@ -115,7 +118,6 @@ export default {
     livingArea: 'Living Area',
     landArea: 'Land Area',
     unitCount: 'Number of Units',
-    units: 'Units',
     addUnit: 'Add Unit',
     weg: {
       title: 'WEG Configuration',
@@ -140,8 +142,33 @@ export default {
         Interior: 'Interior',
         Exterior: 'Exterior',
         Other: 'Other',
-        Energy: 'Energy Renovation'
+        Energy: 'Energy Renovation',
+        Kitchen: 'Fitted Kitchen',
+        Bathroom: 'Sanitary Installation',
+        UnitRenovation: 'Basic Renovation',
+        UnitOther: 'Other (Unit)'
       }
+    },
+    units: {
+      title: 'Rental Units',
+      hint: 'Define the individual rental units of the property.',
+      addUnit: 'Add Unit',
+      name: 'Name',
+      area: 'Area',
+      type: 'Type',
+      removeUnit: 'Remove Unit',
+      components: 'Fixtures',
+      componentsHint: 'Condition of unit-level building components.',
+      types: {
+        Residential: 'Residential',
+        Commercial: 'Commercial',
+        Parking: 'Parking',
+        Storage: 'Storage'
+      }
+    },
+    unitComponents: {
+      title: 'Unit Fixtures',
+      hint: 'Optional. Record the condition of unit-level components per rental unit.',
     },
     marketReference: {
       title: 'Regional Market Prices',
@@ -197,6 +224,7 @@ export default {
     title: 'Rental Income',
     units: 'Rental Units',
     addUnit: 'Add Rental Unit',
+    selectUnit: 'Assign Unit',
     unit: {
       name: 'Name',
       monthlyRent: 'Base Rent',
@@ -292,7 +320,11 @@ export default {
       Plumbing: 'Plumbing',
       Interior: 'Interior',
       Exterior: 'Exterior',
-      Other: 'Other'
+      Other: 'Other',
+      Kitchen: 'Fitted Kitchen',
+      Bathroom: 'Sanitary Installation',
+      UnitRenovation: 'Basic Renovation',
+      UnitOther: 'Other (Unit)'
     },
     taxClassifications: {
       MaintenanceExpense: 'Maintenance Expense',
@@ -363,6 +395,12 @@ export default {
     warnings: 'Notes & Warnings',
     returnMetrics: 'Return Metrics',
     bankMetrics: 'Bank Metrics',
+    tabs: {
+      overview: 'Overview',
+      cashflow: 'Cashflow',
+      tax: 'Taxes',
+      property: 'Property',
+    },
     metrics: {
       irrBeforeTax: 'IRR before Tax',
       irrAfterTax: 'IRR after Tax',
@@ -457,7 +495,7 @@ export default {
       },
       appreciation: 'Market Development p.a.',
       year: 'Year',
-      finalValue: 'Final Value',
+      finalValue: 'Estimated sale price',
       vs: 'vs. Purchase Price',
       marketAppreciationRow: 'Market Appreciation',
       conditionAdjustment: 'Condition Adjustment',
@@ -502,6 +540,7 @@ export default {
           Renewed: 'Renewed',
         },
         pricedIn: 'priced in',
+        pricedInHint: 'The renewal need was already known at purchase and reflected in the purchase price — no additional value deduction is applied.',
         yearsShort: 'yr.',
         recurringExplanation: 'Recurring: {name} every {interval} yr. ({count}× in period, {cost} each, total {total}). Eff. cycle: {effectiveCycle} yr. (+{extensionPercent}%). Value improvement: +{improvement}',
         recurringLabel: 'Recurring',
@@ -562,7 +601,23 @@ export default {
     title: 'Help',
     glossary: 'Glossary',
     faq: 'FAQ',
-    contact: 'Contact'
+    contact: 'Contact',
+    relatedTopics: 'Related Topics',
+    gettingStarted: 'Getting Started',
+    welcome: 'Welcome to Kalkimo Planner, the professional real estate investment calculator.',
+    howToStart: 'How to get started:',
+    step1: 'Click "New Project" to create an investment project',
+    step2: 'Follow the wizard through all input steps',
+    step3: 'View your key metrics and cashflow projections',
+    step4: 'Export reports for your bank or tax advisor',
+    contactText: 'For questions or issues, please contact us:',
+    contactEmail: 'support@kalkimo.de',
+    faqTopics: {
+      afa: 'tax.depreciation',
+      rule15: 'summary.tax.rule15',
+      section23: 'tax.section23',
+      section82b: 'tax.section82b'
+    }
   },
 
   admin: {

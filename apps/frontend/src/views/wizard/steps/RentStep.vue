@@ -22,12 +22,30 @@
           class="unit-card"
         >
           <div class="unit-header">
-            <input
-              v-model="unit.name"
-              type="text"
-              class="unit-name-input"
-              :placeholder="`Einheit ${index + 1}`"
-            />
+            <template v-if="propertyUnits.length > 0">
+              <select
+                :value="unit.unitId"
+                @change="assignPropertyUnit(unit, ($event.target as HTMLSelectElement).value)"
+                class="unit-name-input unit-select"
+              >
+                <option value="" disabled>{{ t('rent.selectUnit') }}</option>
+                <option
+                  v-for="pu in availablePropertyUnits(unit.unitId)"
+                  :key="pu.id"
+                  :value="pu.id"
+                >
+                  {{ pu.name }} ({{ pu.area }} {{ t('common.sqm') }})
+                </option>
+              </select>
+            </template>
+            <template v-else>
+              <input
+                v-model="unit.name"
+                type="text"
+                class="unit-name-input"
+                :placeholder="`Einheit ${index + 1}`"
+              />
+            </template>
             <button
               type="button"
               class="delete-btn"
@@ -45,11 +63,13 @@
               v-model="unit.monthlyRent"
               :label="t('rent.unit.monthlyRent')"
               :currency="currency"
+              help-key="rent.monthlyRent"
             />
             <KalkCurrency
               v-model="unit.serviceCharge"
               :label="t('rent.unit.serviceCharge')"
               :currency="currency"
+              help-key="rent.serviceCharge"
             />
           </div>
 
@@ -77,6 +97,7 @@
                 :label="'Jährliche Mietsteigerung'"
                 :min="0"
                 :max="10"
+                help-key="rent.annualIncrease"
               />
             </div>
 
@@ -160,6 +181,7 @@
         :label="t('rent.rentLossReserve')"
         type="number"
         :min="0"
+        help-key="rent.rentLossReserve"
         :max="12"
         :suffix="t('common.months')"
       />
@@ -211,6 +233,23 @@ const vacancyRate = ref<number>(2);
 const rentLossReserve = ref<number>(3);
 
 const currency = computed(() => projectStore.currentProject?.currency || 'EUR');
+
+const propertyUnits = computed(() =>
+  projectStore.currentProject?.property.units ?? []
+);
+
+function availablePropertyUnits(currentUnitId: string) {
+  const assignedIds = new Set(rentUnits.value.map(u => u.unitId).filter(id => id !== currentUnitId));
+  return propertyUnits.value.filter(pu => !assignedIds.has(pu.id));
+}
+
+function assignPropertyUnit(unit: RentUnitItem, propertyUnitId: string) {
+  const pu = propertyUnits.value.find(u => u.id === propertyUnitId);
+  if (pu) {
+    unit.unitId = pu.id;
+    unit.name = pu.name;
+  }
+}
 
 const totalMonthlyRent = computed(() =>
   rentUnits.value.reduce((sum, u) => sum + (u.monthlyRent || 0), 0)
@@ -422,6 +461,17 @@ watch(
 .unit-name-input::placeholder {
   color: var(--kalk-gray-400);
   font-weight: 500;
+}
+
+.unit-select {
+  cursor: pointer;
+  border: 1px solid var(--kalk-gray-300);
+  border-radius: var(--kalk-radius-sm);
+  padding: var(--kalk-space-2) var(--kalk-space-3);
+}
+
+.unit-select:focus {
+  border-color: var(--kalk-accent-500);
 }
 
 .delete-btn {

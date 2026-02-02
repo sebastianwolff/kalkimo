@@ -168,24 +168,34 @@ textarea.invalid {
 /* ---------- Article Styling ---------- */
 .km-article-header {
   margin-bottom: var(--km-space-xl);
+  position: relative;
 }
 
 .km-article-header h1 {
-  margin-bottom: var(--km-space-sm);
+  margin-bottom: var(--km-space-md);
+  font-size: var(--km-h1);
+  line-height: 1.2;
 }
 
 .km-article-mascot {
   float: right;
-  max-width: 150px;
-  margin: 0 0 var(--km-space-md) var(--km-space-lg);
+  max-width: 160px;
+  margin: 0 0 var(--km-space-lg) var(--km-space-xl);
+  shape-outside: margin-box;
 }
 
-@media (max-width: 767px) {
+@media (min-width: 768px) {
+  .km-article-mascot {
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 639px) {
   .km-article-mascot {
     float: none;
     display: block;
-    margin: var(--km-space-md) auto;
-    max-width: 120px;
+    margin: var(--km-space-md) auto var(--km-space-lg);
+    max-width: 140px;
   }
 }
 
@@ -195,12 +205,25 @@ textarea.invalid {
 
 .km-article-body h2 {
   margin-top: var(--km-space-2xl);
+  clear: both;
+}
+
+/* Numbered section headings (content articles) */
+.km-article-body h2 strong:first-child {
+  color: var(--km-teal);
+}
+
+.km-article-meta {
+  margin-top: var(--km-space-xl);
+  text-align: right;
+  clear: both;
 }
 
 .km-article-back {
-  margin-top: var(--km-space-2xl);
+  margin-top: var(--km-space-lg);
   padding-top: var(--km-space-lg);
   border-top: 1px solid var(--km-gray-200);
+  clear: both;
 }
 
 /* ---------- Content Mascot (default template) ---------- */
@@ -208,9 +231,10 @@ textarea.invalid {
   float: right;
   max-width: 180px;
   margin: 0 0 var(--km-space-md) var(--km-space-lg);
+  shape-outside: margin-box;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 639px) {
   .km-content-mascot {
     float: none;
     display: block;

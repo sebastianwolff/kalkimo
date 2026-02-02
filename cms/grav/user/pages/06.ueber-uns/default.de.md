@@ -3,10 +3,8 @@ title: Über uns
 slug: ueber-uns
 metadata:
     description: "Erfahren Sie mehr über das Kalkimo-Team und unsere Mission."
-mascot_image: kalkimo.png
+mascot_image: kalkimo_f.png
 ---
-
-# Über uns
 
 ## Unsere Mission
 

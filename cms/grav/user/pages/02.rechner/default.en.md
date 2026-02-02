@@ -9,8 +9,6 @@ metadata:
         type: website
 ---
 
-# Real Estate Investment Calculator
-
 Calculate your real estate investment with bank-standard accuracy.
 
 <km-planner lang="en"></km-planner>

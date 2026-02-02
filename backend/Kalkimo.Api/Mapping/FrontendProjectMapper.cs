@@ -106,7 +106,8 @@ public static class FrontendProjectMapper
         Area = dto.Area,
         Rooms = dto.Rooms,
         Floor = dto.Floor,
-        Status = ParseEnum<UnitStatus>(dto.Status)
+        Status = ParseEnum<UnitStatus>(dto.Status),
+        Components = dto.Components?.Select(c => MapComponentCondition(c)).ToList() ?? []
     };
 
     private static ComponentCondition MapComponentCondition(ComponentConditionDto dto) => new()
@@ -281,6 +282,7 @@ public static class FrontendProjectMapper
                 IsNecessary = false,
                 Priority = MeasurePriority.Medium,
                 IsRecurring = m.IsRecurring,
+                UnitId = m.UnitId,
                 RecurringConfig = m.RecurringConfig != null
                     ? new RecurringMeasureConfig
                     {

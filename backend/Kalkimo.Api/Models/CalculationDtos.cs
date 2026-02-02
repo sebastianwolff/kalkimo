@@ -238,6 +238,7 @@ public record ComponentDeteriorationRowDto
     public decimal ValueImpact { get; init; }
     public required string StatusAtEnd { get; init; }
     public RecurringMaintenanceInfoDto? RecurringMaintenance { get; init; }
+    public string? UnitId { get; init; }
 }
 
 public record RecurringMaintenanceInfoDto

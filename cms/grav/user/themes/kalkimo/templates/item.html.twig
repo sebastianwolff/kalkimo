@@ -3,31 +3,30 @@
 {% set lang = grav.language.getActive|default('de') %}
 
 {% block content %}
+{# Page Hero with title + optional mascot #}
+<section class="km-page-hero">
+  <div class="km-page-hero-inner">
+    {% if page.header.mascot_image %}
+    <img src="{{ page.media[page.header.mascot_image].url|default(url('theme://images/' ~ page.header.mascot_image)) }}"
+         alt="" class="km-page-hero-mascot" loading="lazy">
+    {% endif %}
+    <h1>{{ page.title }}</h1>
+    {% if page.header.reading_time %}
+    <span class="reading-time">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polyline points="12 6 12 12 16 14"></polyline>
+      </svg>
+      {{ page.header.reading_time }} {{ lang == 'de' ? 'lesen' : 'read' }}
+    </span>
+    {% endif %}
+  </div>
+</section>
+
+{# Article Body #}
 <article class="km-section">
   <div class="container">
     <div class="km-content-page">
-
-      {# Article Header #}
-      <header class="km-article-header">
-        <h1>{{ page.title }}</h1>
-        {% if page.header.reading_time %}
-        <span class="reading-time">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
-          {{ page.header.reading_time }} {{ lang == 'de' ? 'lesen' : 'read' }}
-        </span>
-        {% endif %}
-      </header>
-
-      {# Optional Mascot #}
-      {% if page.header.mascot_image %}
-      <img src="{{ page.media[page.header.mascot_image].url|default(url('theme://images/' ~ page.header.mascot_image)) }}"
-           alt="" class="km-article-mascot" loading="lazy">
-      {% endif %}
-
-      {# Article Content #}
       <div class="km-article-body">
         {{ page.content|raw }}
       </div>
@@ -38,7 +37,6 @@
           {{ lang == 'de' ? 'Zurück zur Übersicht' : 'Back to overview' }}
         </a>
       </div>
-
     </div>
   </div>
 </article>

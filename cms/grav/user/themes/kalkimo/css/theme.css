@@ -27,6 +27,19 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ---------- Main Content Wrapper ---------- */
+#main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: var(--km-white);
+}
+
+@media (min-width: 1344px) {
+  #main-content {
+    box-shadow: 0 0 24px rgba(30, 58, 95, 0.07);
+  }
+}
+
 body.menu-open {
   overflow: hidden;
 }
@@ -233,7 +246,19 @@ img {
 .km-content-page {
   max-width: 760px;
   margin: 0 auto;
-  padding: var(--km-space-2xl) 0;
+  padding: var(--km-space-xl) 0 var(--km-space-2xl);
+}
+
+@media (min-width: 768px) {
+  .km-content-page {
+    padding: var(--km-space-2xl) 0 var(--km-space-3xl);
+  }
+}
+
+.km-content-page h1 {
+  font-size: var(--km-h1);
+  line-height: 1.15;
+  margin-bottom: var(--km-space-lg);
 }
 
 .km-content-page h2 {
@@ -248,6 +273,11 @@ img {
 
 .km-content-page li {
   margin-bottom: var(--km-space-sm);
+}
+
+/* Bold text in lists (e.g. feature lists on Funktionen page) */
+.km-content-page li strong {
+  color: var(--km-navy);
 }
 
 /* ---------- Lists ---------- */

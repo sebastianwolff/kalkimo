@@ -9,6 +9,6 @@ metadata:
 content:
     items: '@self.modular'
     order:
-        by: default
+        by: header.ordering
         dir: asc
 ---

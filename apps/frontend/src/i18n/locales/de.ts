@@ -1,4 +1,7 @@
+import helpTexts from './helpTexts.de.json';
+
 export default {
+  helpTexts,
   common: {
     appName: 'Kalkimo Planner',
     save: 'Speichern',
@@ -117,7 +120,6 @@ export default {
     livingArea: 'Wohnfläche',
     landArea: 'Grundstücksfläche',
     unitCount: 'Anzahl Einheiten',
-    units: 'Einheiten',
     addUnit: 'Einheit hinzufügen',
     weg: {
       title: 'WEG-Konfiguration',
@@ -142,8 +144,33 @@ export default {
         Interior: 'Innenausbau',
         Exterior: 'Außenanlagen',
         Other: 'Sonstiges',
-        Energy: 'Energetische Sanierung'
+        Energy: 'Energetische Sanierung',
+        Kitchen: 'Einbauküche',
+        Bathroom: 'Sanitärinstallation',
+        UnitRenovation: 'Grundlegende Renovierung',
+        UnitOther: 'Sonstiges (Wohnung)'
       }
+    },
+    units: {
+      title: 'Mieteinheiten',
+      hint: 'Definieren Sie die einzelnen Mieteinheiten des Objekts.',
+      addUnit: 'Einheit hinzufügen',
+      name: 'Bezeichnung',
+      area: 'Fläche',
+      type: 'Typ',
+      removeUnit: 'Einheit entfernen',
+      components: 'Ausstattung',
+      componentsHint: 'Zustand der wohnungsbezogenen Bauteile.',
+      types: {
+        Residential: 'Wohnung',
+        Commercial: 'Gewerbe',
+        Parking: 'Stellplatz',
+        Storage: 'Lager/Keller'
+      }
+    },
+    unitComponents: {
+      title: 'Ausstattung der Mieteinheiten',
+      hint: 'Optional. Erfassen Sie den Zustand der wohnungsbezogenen Bauteile pro Einheit.',
     },
     marketReference: {
       title: 'Regionale Marktpreise',
@@ -199,6 +226,7 @@ export default {
     title: 'Mieteinnahmen',
     units: 'Mieteinheiten',
     addUnit: 'Mieteinheit hinzufügen',
+    selectUnit: 'Einheit zuordnen',
     unit: {
       name: 'Bezeichnung',
       monthlyRent: 'Kaltmiete',
@@ -294,7 +322,11 @@ export default {
       Plumbing: 'Sanitär',
       Interior: 'Innenausbau',
       Exterior: 'Außenanlagen',
-      Other: 'Sonstiges'
+      Other: 'Sonstiges',
+      Kitchen: 'Einbauküche',
+      Bathroom: 'Sanitärinstallation',
+      UnitRenovation: 'Grundlegende Renovierung',
+      UnitOther: 'Sonstiges (Wohnung)'
     },
     taxClassifications: {
       MaintenanceExpense: 'Erhaltungsaufwand',
@@ -365,6 +397,12 @@ export default {
     warnings: 'Hinweise & Warnungen',
     returnMetrics: 'Renditekennzahlen',
     bankMetrics: 'Bankkennzahlen',
+    tabs: {
+      overview: 'Übersicht',
+      cashflow: 'Cashflow',
+      tax: 'Steuern',
+      property: 'Immobilie',
+    },
     metrics: {
       irrBeforeTax: 'IRR vor Steuern',
       irrAfterTax: 'IRR nach Steuern',
@@ -459,7 +497,7 @@ export default {
       },
       appreciation: 'Marktentwicklung p.a.',
       year: 'Jahr',
-      finalValue: 'Endwert',
+      finalValue: 'Kalkulierter Verkaufspreis',
       vs: 'vs. Kaufpreis',
       marketAppreciationRow: 'Marktentwicklung',
       conditionAdjustment: 'Zustandsanpassung',
@@ -504,6 +542,7 @@ export default {
           Renewed: 'Erneuert',
         },
         pricedIn: 'eingepreist',
+        pricedInHint: 'Der Erneuerungsbedarf war beim Kauf bereits bekannt und ist im Kaufpreis berücksichtigt — daher kein zusätzlicher Wertabschlag.',
         yearsShort: 'J.',
         recurringExplanation: 'Regelmäßig: {name} alle {interval} J. ({count}× im Zeitraum, je {cost}, gesamt {total}). Eff. Zyklus: {effectiveCycle} J. (+{extensionPercent}%). Wertverbesserung: +{improvement}',
         recurringLabel: 'Regelmäßig',
@@ -564,7 +603,23 @@ export default {
     title: 'Hilfe',
     glossary: 'Glossar',
     faq: 'Häufige Fragen',
-    contact: 'Kontakt'
+    contact: 'Kontakt',
+    relatedTopics: 'Verwandte Themen',
+    gettingStarted: 'Erste Schritte',
+    welcome: 'Willkommen bei Kalkimo Planner, dem professionellen Immobilien-Investitionsrechner.',
+    howToStart: 'So starten Sie:',
+    step1: 'Klicken Sie auf "Neues Projekt" um ein Investitionsprojekt anzulegen',
+    step2: 'Folgen Sie dem Assistenten durch alle Eingabeschritte',
+    step3: 'Sehen Sie Ihre Kennzahlen und Cashflow-Prognosen',
+    step4: 'Exportieren Sie Berichte für Ihre Bank oder Steuerberater',
+    contactText: 'Bei Fragen oder Problemen kontaktieren Sie uns:',
+    contactEmail: 'support@kalkimo.de',
+    faqTopics: {
+      afa: 'tax.depreciation',
+      rule15: 'summary.tax.rule15',
+      section23: 'tax.section23',
+      section82b: 'tax.section82b'
+    }
   },
 
   admin: {

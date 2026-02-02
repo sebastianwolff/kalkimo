@@ -14,6 +14,7 @@
       :min-year="2020"
       :max-year="2040"
       required
+      help-key="purchase.date"
     />
 
     <KalkAmountInput
@@ -31,7 +32,7 @@
     <!-- Purchase Costs Section -->
     <div class="costs-section">
       <div class="section-header">
-        <h4 class="section-label">{{ t('purchase.costs') }}</h4>
+        <h4 class="section-label">{{ t('purchase.costs') }} <HelpIcon help-key="purchase.costs" /></h4>
         <button type="button" class="btn btn-outline btn-sm" @click="addCostItem">
           <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
@@ -94,7 +95,7 @@
 
     <!-- Total Investment -->
     <div class="investment-summary">
-      <span>{{ t('purchase.totalInvestment') }}:</span>
+      <span>{{ t('purchase.totalInvestment') }}: <HelpIcon help-key="purchase.totalInvestment" /></span>
       <strong class="total-amount">{{ formatCurrency(totalInvestment) }}</strong>
     </div>
   </KalkCard>
@@ -103,7 +104,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { KalkCard, KalkCurrency, KalkDatePicker, KalkAmountInput } from '@/components';
+import { KalkCard, KalkCurrency, KalkDatePicker, KalkAmountInput, HelpIcon } from '@/components';
 import { useProjectStore } from '@/stores/projectStore';
 import type { YearMonth, TaxClassification, AmountMode } from '@/stores/types';
 

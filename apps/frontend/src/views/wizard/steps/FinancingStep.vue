@@ -55,6 +55,7 @@
               :label="t('financing.loan.principal')"
               :currency="currency"
               required
+              help-key="financing.principal"
             />
             <KalkPercent
               v-model="loan.interestRate"
@@ -62,6 +63,7 @@
               :min="0"
               :max="15"
               :decimals="2"
+              help-key="financing.interestRate"
             />
             <KalkPercent
               v-model="loan.initialRepayment"
@@ -69,6 +71,7 @@
               :min="0"
               :max="10"
               :decimals="2"
+              help-key="financing.initialRepayment"
             />
             <KalkInput
               v-model="loan.fixedInterestYears"
@@ -77,6 +80,7 @@
               :min="1"
               :max="30"
               :suffix="t('common.years')"
+              help-key="financing.fixedInterestYears"
             />
           </div>
         </div>
@@ -86,7 +90,7 @@
     <!-- Summary -->
     <div class="financing-summary">
       <div class="summary-row">
-        <span>Gesamtkapitalbedarf:</span>
+        <span>Gesamtkapitalbedarf: <HelpIcon help-key="financing.totalCapitalNeed" /></span>
         <strong>{{ formatCurrency(totalCapitalNeed) }}</strong>
       </div>
       <div v-if="totalCapexAmount > 0" class="summary-row sub">
@@ -110,7 +114,7 @@
         <strong>{{ formatCurrency(totalFinancing) }}</strong>
       </div>
       <div :class="['summary-row', 'highlight', { 'highlight-error': !isFinancingCovered }]">
-        <span>{{ isFinancingCovered ? 'Finanzierung gedeckt' : 'Finanzierungslücke' }}:</span>
+        <span>{{ isFinancingCovered ? 'Finanzierung gedeckt' : 'Finanzierungslücke' }}: <HelpIcon help-key="financing.gap" /></span>
         <strong>{{ formatCurrency(financingGap) }}</strong>
       </div>
     </div>
@@ -132,7 +136,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { KalkCard, KalkCurrency, KalkPercent, KalkInput } from '@/components';
+import { KalkCard, KalkCurrency, KalkPercent, KalkInput, HelpIcon } from '@/components';
 import { useProjectStore } from '@/stores/projectStore';
 
 interface LoanItem {

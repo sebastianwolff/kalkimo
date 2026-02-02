@@ -3,9 +3,17 @@
    ========================================================================== */
 
 .km-footer {
-  background-color: var(--km-navy);
-  color: var(--km-white);
-  padding: var(--km-space-2xl) 0 var(--km-space-xl);
+  background-color: var(--km-white);
+  color: var(--km-navy);
+  padding-bottom: 5px;
+  box-shadow: 0px -6px 6px 0px rgba(30, 58, 95, 0.07);
+}
+
+
+@media (min-width: 768px) {
+  .km-footer {
+    padding-bottom: 10px;
+  }
 }
 
 .km-footer-inner {
@@ -14,28 +22,17 @@
   padding: 0 var(--km-space-md);
 }
 
-@media (min-width: 768px) {
-  .km-footer-inner {
-    padding: 0 var(--km-space-lg);
-  }
-}
 
 /* ---------- Footer Top ---------- */
 .km-footer-top {
   display: flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
   gap: var(--km-space-lg);
   padding-bottom: var(--km-space-lg);
 }
 
-@media (min-width: 768px) {
-  .km-footer-top {
-    flex-direction: row;
-    justify-content: space-between;
-    padding-bottom: var(--km-space-xl);
-  }
-}
 
 /* ---------- Footer Logo ---------- */
 .km-footer-logo img {
@@ -47,20 +44,13 @@
 /* ---------- Footer Navigation ---------- */
 .km-footer-nav {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--km-space-sm);
-}
-
-@media (min-width: 768px) {
-  .km-footer-nav {
-    flex-direction: row;
-    gap: var(--km-space-lg);
-  }
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--km-space-sm) var(--km-space-lg);
 }
 
 .km-footer-nav a {
-  color: var(--km-gray-400);
+  color: var(--km-teal);
   font-size: var(--km-body);
   font-weight: 500;
   text-decoration: none;
@@ -73,14 +63,14 @@
 
 /* ---------- Footer Bottom ---------- */
 .km-footer-bottom {
-  border-top: 1px solid var(--km-navy-light);
-  padding-top: var(--km-space-lg);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 5px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--km-space-sm);
   font-size: var(--km-small);
-  color: var(--km-gray-400);
+  color: var(--km-gray-600);
 }
 
 @media (min-width: 768px) {

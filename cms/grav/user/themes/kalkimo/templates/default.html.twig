@@ -1,13 +1,20 @@
 {% extends 'partials/base.html.twig' %}
 
 {% block content %}
-<div class="container">
-  <div class="km-content-page">
+{# Page Hero with title + optional mascot #}
+<section class="km-page-hero">
+  <div class="km-page-hero-inner">
     {% if page.header.mascot_image %}
     <img src="{{ page.media[page.header.mascot_image].url|default(url('theme://images/' ~ page.header.mascot_image)) }}"
-         alt="" class="km-content-mascot" loading="lazy">
+         alt="" class="km-page-hero-mascot" loading="lazy">
     {% endif %}
+    <h1>{{ page.title }}</h1>
+  </div>
+</section>
 
+{# Page Content #}
+<div class="container">
+  <div class="km-content-page">
     {{ page.content|raw }}
   </div>
 </div>

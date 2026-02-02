@@ -9,8 +9,6 @@ metadata:
         type: website
 ---
 
-# Immobilien-Investitionsrechner
-
 Kalkulieren Sie Ihre Immobilien-Investition mit bankstandardnaher Genauigkeit.
 
 <km-planner lang="de"></km-planner>

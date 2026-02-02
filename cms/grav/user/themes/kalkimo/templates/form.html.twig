@@ -2,10 +2,17 @@
 {% extends 'partials/base.html.twig' %}
 
 {% block content %}
+{# Page Hero with title #}
+<section class="km-page-hero">
+  <div class="km-page-hero-inner">
+    <h1>{{ page.title }}</h1>
+  </div>
+</section>
+
+{# Form Content #}
 <section class="km-section">
   <div class="container">
     <div class="km-form-page">
-
       {{ page.content|raw }}
 
       {% if config.plugins.form.enabled %}
@@ -16,7 +23,6 @@
           : 'The contact form is currently unavailable. Please try again later.' }}
         </p>
       {% endif %}
-
     </div>
   </div>
 </section>

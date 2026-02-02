@@ -3,7 +3,7 @@ title: "10 Things to Consider in Real Estate Calculations"
 slug: property-buying-guide
 date: "2026-01-15"
 reading_time: "4 min"
-mascot_image: kalkimo.png
+mascot_image: kalkimo_f.png
 metadata:
     description: "The most important points when calculating a real estate investment."
 taxonomy:

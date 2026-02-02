@@ -14,10 +14,11 @@
       :min="0"
       :max="9"
       :hint="'Optional - 8% oder 9% je nach Bundesland'"
+      help-key="tax.churchTax"
     />
 
     <div class="toggle-row">
-      <span class="toggle-label">{{ t('tax.isCorporate') }}</span>
+      <span class="toggle-label">{{ t('tax.isCorporate') }} <HelpIcon help-key="tax.isCorporate" /></span>
       <label class="toggle-switch">
         <input type="checkbox" v-model="isCorporate" />
         <span class="toggle-slider"></span>
@@ -26,7 +27,7 @@
 
     <!-- Depreciation Section -->
     <div class="section">
-      <h4 class="section-label">{{ t('tax.depreciation.title') }}</h4>
+      <h4 class="section-label">{{ t('tax.depreciation.title') }} <HelpIcon help-key="tax.depreciation" /></h4>
 
       <div class="info-box">
         <div class="info-row">
@@ -47,7 +48,7 @@
 
     <!-- Section 82b -->
     <div class="section">
-      <h4 class="section-label">{{ t('tax.section82b.title') }}</h4>
+      <h4 class="section-label">{{ t('tax.section82b.title') }} <HelpIcon help-key="tax.section82b" /></h4>
 
       <div class="toggle-row">
         <span class="toggle-label">{{ t('tax.section82b.enabled') }}</span>
@@ -65,6 +66,7 @@
         :min="2"
         :max="5"
         :suffix="t('common.years')"
+        help-key="tax.distributionYears"
       />
 
       <p class="section-hint">{{ t('tax.section82b.info') }}</p>
@@ -72,7 +74,7 @@
 
     <!-- Section 23 Info -->
     <div class="section">
-      <h4 class="section-label">{{ t('tax.section23.title') }}</h4>
+      <h4 class="section-label">{{ t('tax.section23.title') }} <HelpIcon help-key="tax.section23" /></h4>
 
       <div class="info-box">
         <div class="info-row">
@@ -88,7 +90,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { KalkCard, KalkPercent, KalkInput } from '@/components';
+import { KalkCard, KalkPercent, KalkInput, HelpIcon } from '@/components';
 import { useProjectStore } from '@/stores/projectStore';
 
 const emit = defineEmits<{

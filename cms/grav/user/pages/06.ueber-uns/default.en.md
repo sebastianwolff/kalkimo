@@ -3,10 +3,8 @@ title: About Us
 slug: about
 metadata:
     description: "Learn more about the Kalkimo team and our mission."
-mascot_image: kalkimo.png
+mascot_image: kalkimo_f.png
 ---
-
-# About Us
 
 ## Our Mission
 

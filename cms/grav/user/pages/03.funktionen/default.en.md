@@ -3,10 +3,8 @@ title: Features
 slug: features
 metadata:
     description: "All features of Kalkimo Planner: purchase calculation, financing, tax logic, cashflow, scenarios and more."
-mascot_image: kalkimo.png
+mascot_image: kalkimo_f.png
 ---
-
-# Features
 
 Kalkimo Planner provides bank-standard real estate investment calculations with complete German tax logic.
 

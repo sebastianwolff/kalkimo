@@ -65,6 +65,9 @@ public record CapExMeasure
 
     /// <summary>Konfiguration für wiederkehrende Maßnahmen</summary>
     public RecurringMeasureConfig? RecurringConfig { get; init; }
+
+    /// <summary>Zugehörige Mieteinheit (null = Gebäudeebene)</summary>
+    public string? UnitId { get; init; }
 }
 
 /// <summary>
@@ -106,6 +109,8 @@ public static class DefaultComponentCycles
 {
     /// <remarks>
     /// Kosten auf Basis deutscher Marktpreise 2024/2025 (netto, ohne MwSt.).
+    ///
+    /// === Gebäudeebene ===
     /// Heizung: Gas-Brennwert 10–18k€, Wärmepumpe 18–40k€ → 80–250 €/m² WFL
     /// Dach: Neueindeckung inkl. Dämmung/Lattung → 150–350 €/m² Dachfläche
     /// Fassade: WDVS + Putz/Anstrich → 120–300 €/m² Fassadenfläche
@@ -114,9 +119,16 @@ public static class DefaultComponentCycles
     /// Sanitär: Steigleitungen + Bäder → 100–220 €/m² WFL
     /// Innenausbau: Böden, Wände, Türen, Decken → 60–150 €/m² WFL
     /// Energetisch: Solarthermie/PV, Dämmpaket → 150–400 €/m² Gebäudefläche
+    ///
+    /// === Mieteinheit-Ebene (pro m² Einheitsfläche) ===
+    /// Küche: Einbauküche komplett (Korpus, Geräte, Arbeitsplatte) → 80–250 €/m²
+    /// Bad: Sanitärausstattung (Keramik, Armaturen, Fliesen, Wanne/Dusche) → 120–350 €/m²
+    /// Grundrenovierung: Wände, Decken, Böden, Malerarbeiten, Türen → 40–150 €/m²
+    /// Sonstiges: Sonstige wohnungsbezogene Ausstattung → 20–80 €/m²
     /// </remarks>
     public static (int MinYears, int MaxYears, Money CostPerSqmMin, Money CostPerSqmMax) GetCycle(CapExCategory category) => category switch
     {
+        // Gebäudeebene
         CapExCategory.Heating => (15, 25, Money.Euro(80), Money.Euro(250)),
         CapExCategory.Roof => (30, 60, Money.Euro(150), Money.Euro(350)),
         CapExCategory.Facade => (25, 50, Money.Euro(120), Money.Euro(300)),
@@ -125,6 +137,13 @@ public static class DefaultComponentCycles
         CapExCategory.Plumbing => (30, 50, Money.Euro(100), Money.Euro(220)),
         CapExCategory.Interior => (15, 30, Money.Euro(60), Money.Euro(150)),
         CapExCategory.Energy => (20, 40, Money.Euro(150), Money.Euro(400)),
+
+        // Mieteinheit-Ebene (pro m² Einheitsfläche)
+        CapExCategory.Kitchen => (15, 25, Money.Euro(80), Money.Euro(250)),
+        CapExCategory.Bathroom => (20, 30, Money.Euro(120), Money.Euro(350)),
+        CapExCategory.UnitRenovation => (10, 20, Money.Euro(40), Money.Euro(150)),
+        CapExCategory.UnitOther => (15, 30, Money.Euro(20), Money.Euro(80)),
+
         _ => (20, 40, Money.Euro(80), Money.Euro(200))
     };
 }

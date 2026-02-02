@@ -38,6 +38,8 @@
       :loading="isLoading"
       @calculate="handleCalculate"
     />
+
+    <HelpPanel />
   </ion-page>
 </template>
 
@@ -47,7 +49,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { IonPage, IonContent, IonButton, IonIcon } from '@ionic/vue';
 import { saveOutline } from 'ionicons/icons';
-import { AppHeader, WizardStepper, WizardNavigation } from '@/components';
+import { AppHeader, WizardStepper, WizardNavigation, HelpPanel } from '@/components';
 import { useAuthStore } from '@/stores/authStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUiStore } from '@/stores/uiStore';

@@ -5,8 +5,6 @@ metadata:
     description: "Kalkimo Planner Preise und Lizenzmodelle. Kostenlos starten, professionell kalkulieren."
 ---
 
-# Preise
-
 Finden Sie den passenden Plan für Ihre Immobilien-Investitionen.
 
 ## Kostenlos

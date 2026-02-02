@@ -1,0 +1,482 @@
+{
+  "project": {
+    "name": {
+      "title": "Project Name",
+      "summary": "A unique name helps you distinguish between multiple investment projects.",
+      "detail": "Give your project a descriptive name, e.g. the address or a short identifier.<br><br><b>Tips:</b><ul><li>Use the address or a combination of location and property type</li><li>With multiple projects, a clear name makes comparison easier</li><li>The name appears in reports and PDF exports</li></ul>"
+    },
+    "description": {
+      "title": "Description",
+      "summary": "Optional notes for your own project documentation.",
+      "detail": "Record additional information that doesn't fit into the input fields.<br><br><b>Examples:</b><ul><li>Special negotiation conditions</li><li>Contact details of the broker or seller</li><li>Reasons for or against the purchase</li><li>The description is included in PDF exports</li></ul>"
+    },
+    "currency": {
+      "title": "Currency",
+      "summary": "All amounts and results are displayed in the selected currency.",
+      "detail": "The default currency is Euro (EUR). All input fields and calculation results use this currency.<br><br><b>Note:</b> The tax calculation is based on German tax law and is designed for EUR regardless of the selected currency."
+    },
+    "startDate": {
+      "title": "Start Date",
+      "summary": "Start of the investment analysis – usually the planned purchase month.",
+      "detail": "The start date determines the beginning of all cashflow calculations.<br><br><b>Impact:</b><ul><li>First month of rental income and loan payments</li><li>Start of depreciation (AfA) calculation</li><li>Reference point for the 10-year speculation period (§23 EStG)</li><li>Reference point for the 3-year/15% rule for acquisition-related costs</li></ul>"
+    },
+    "duration": {
+      "title": "Analysis Period",
+      "summary": "Projection horizon in years – affects IRR, NPV and all long-term forecasts.",
+      "detail": "The analysis period determines how many years the investment is simulated.<br><br><b>Typical values:</b><ul><li>10 years: Minimum holding period for tax-free sale</li><li>15–20 years: Common planning horizon for property investors</li><li>30 years: Long-term analysis until full repayment</li></ul><b>Impact:</b><ul><li>IRR and NPV refer to this period</li><li>Longer periods show wealth accumulation through repayment</li><li>Renovation cycles and component aging are calculated over the full period</li></ul>"
+    },
+    "endDate": {
+      "title": "End Date",
+      "summary": "Alternative to duration – the end date is automatically calculated from the analysis period.",
+      "detail": "The end date marks the end of the investment simulation. It is automatically calculated from start date and analysis period.<br><br>Alternatively, you can set the end date directly, and the analysis period will be adjusted accordingly."
+    }
+  },
+  "property": {
+    "type": {
+      "title": "Property Type",
+      "summary": "Determines tax treatment, WEG options and default values for calculations.",
+      "detail": "The property type affects several aspects of the investment analysis:<br><br><b>Available types:</b><ul><li><b>Single Family:</b> Single property, no WEG</li><li><b>Condominium:</b> WEG configuration becomes visible (MEA, reserves)</li><li><b>Multi-Family:</b> Multiple units, unit management</li><li><b>Mixed Use:</b> Residential and commercial use</li></ul><b>Impact:</b><ul><li>WEG fields are only shown for condominiums</li><li>Unit management for multi-family and mixed use</li><li>Default values for operating costs and maintenance</li></ul>"
+    },
+    "constructionYear": {
+      "title": "Construction Year",
+      "summary": "Determines the depreciation rate and the age of building components.",
+      "detail": "The construction year is central to tax treatment and maintenance forecasting.<br><br><b>Depreciation rates by year:</b><ul><li><b>From 2023:</b> 3.0% linear depreciation (new builds)</li><li><b>1925–2022:</b> 2.0% linear depreciation</li><li><b>Before 1925:</b> 2.5% linear depreciation</li></ul><b>Further impact:</b><ul><li>Component age calculation for renovation forecasts</li><li>Renewal cycles are based on construction year</li><li>Condition factor in value forecast</li></ul>"
+    },
+    "condition": {
+      "title": "Condition",
+      "summary": "Affects the condition factor in value forecasting and renovation suggestions.",
+      "detail": "The building condition impacts valuation and maintenance planning.<br><br><b>Condition levels:</b><ul><li><b>Like New:</b> Condition factor ~100%</li><li><b>Good:</b> Condition factor ~90%</li><li><b>Fair:</b> Condition factor ~75%</li><li><b>Needs Renovation:</b> Condition factor ~55%</li><li><b>Major Renovation:</b> Condition factor ~35%</li></ul>The condition factor reduces the theoretical market value and influences the value forecast in the Property tab."
+    },
+    "totalArea": {
+      "title": "Total Area",
+      "summary": "Total building area in m² – basis for renovation cost estimates.",
+      "detail": "The total area includes all usable areas of the building (incl. commercial space, basement, etc.).<br><br><b>Usage:</b><ul><li>Renovation costs are often estimated in EUR/m²</li><li>Comparison metric for maintenance costs</li><li>Differs from living area for mixed-use properties</li></ul>"
+    },
+    "livingArea": {
+      "title": "Living Area",
+      "summary": "Rentable living area in m² – basis for rent comparisons and market value.",
+      "detail": "The living area is calculated according to the German Living Space Ordinance (WoFlV).<br><br><b>Impact:</b><ul><li>Rent per m² calculation for market comparisons</li><li>Market value estimate via regional m² price × living area</li><li>Basis for rent control and rent index comparison</li></ul>"
+    },
+    "landArea": {
+      "title": "Land Area",
+      "summary": "Land area in m² – relevant for separating building and land value.",
+      "detail": "The land area is needed for value allocation.<br><br><b>Tax relevance:</b><ul><li>Land value is <b>not depreciable</b> (no depreciation on land)</li><li>Higher land portion = lower depreciation basis</li><li>Tax authorities accept allocation based on land value × area</li></ul>"
+    },
+    "unitCount": {
+      "title": "Number of Units",
+      "summary": "Multi-family and mixed-use only – enables per-unit calculations.",
+      "detail": "The number of rental units is relevant for multi-family and mixed-use properties.<br><br><b>Impact:</b><ul><li>Rent and costs can be tracked per unit</li><li>Vacancy risk is diversified</li><li>Key metrics are also shown per unit</li></ul>"
+    },
+    "regionalPrice": {
+      "title": "Regional Price/m²",
+      "summary": "Average purchase price per m² in the region – for market value comparison and forecast.",
+      "detail": "The regional m² price serves as a reference for valuation.<br><br><b>Impact:</b><ul><li>Comparison: Your purchase price/m² vs. regional average</li><li>Mean-reversion in value forecast: Long-term convergence to market average</li><li>Assessment in Property tab: underpaid / fair / overpaid</li></ul><b>Sources:</b> Property portals, expert committees, local rent indices."
+    },
+    "components": {
+      "title": "Building Components",
+      "summary": "Table of building components with age and renewal cycles for maintenance forecasting.",
+      "detail": "Each building component (roof, windows, heating, etc.) has a renewal cycle.<br><br><b>How it works:</b><ul><li>Age is automatically calculated from construction year</li><li>Renewal cycle: typical lifespan (e.g. roof: 50 years, heating: 25 years)</li><li>Components exceeding their cycle are marked as due for renewal</li><li>Renovation status feeds into maintenance risk and value forecast</li></ul><b>Tip:</b> Adjust the age if components have already been renewed."
+    }
+  },
+  "weg": {
+    "mea": {
+      "title": "Co-ownership Share (MEA)",
+      "summary": "Your share of common property – determines your cost allocation in the WEG.",
+      "detail": "The MEA is usually expressed in thousandths and is recorded in the declaration of division.<br><br><b>Impact:</b><ul><li>Share of maintenance reserve and house charges</li><li>Share of special assessments</li><li>Voting rights in owners' meetings (depending on agreement)</li></ul><b>Example:</b> MEA 85/1000 means 8.5% share of community costs."
+    },
+    "totalMea": {
+      "title": "Total MEA",
+      "summary": "Total MEA sum of the building – usually 1,000 or 10,000.",
+      "detail": "The total MEA is recorded in the declaration of division and is the sum of all co-ownership shares.<br><br>Common values are 1,000 (thousandths) or 10,000 (ten-thousandths). Your percentage share is calculated as: Your MEA / Total MEA × 100."
+    },
+    "reserveBalance": {
+      "title": "Reserve Balance",
+      "summary": "Current balance of the WEG maintenance reserve fund.",
+      "detail": "The maintenance reserve is a communal savings fund for future renovations.<br><br><b>Relevance:</b><ul><li>High reserves reduce the risk of special assessments</li><li>Appropriate: approx. 7–10 EUR/m² living area per year × building age</li><li>When buying: Low reserves may indicate upcoming special assessments</li></ul>"
+    }
+  },
+  "purchase": {
+    "price": {
+      "title": "Purchase Price",
+      "summary": "The agreed purchase price – basis for all return calculations.",
+      "detail": "The purchase price is the central starting value for the entire investment analysis.<br><br><b>Impact:</b><ul><li>Basis for acquisition cost calculations</li><li>Depreciation basis (minus land portion)</li><li>Reference value for value forecast</li><li>Determines total capital requirement together with costs and CapEx</li></ul>"
+    },
+    "date": {
+      "title": "Purchase Date",
+      "summary": "Date of notarial deed – relevant for speculation period and 15% rule.",
+      "detail": "The purchase date has important tax consequences:<br><br><b>Tax deadlines:</b><ul><li><b>10-year period (§23 EStG):</b> Capital gains are tax-free after 10 years</li><li><b>3-year period (15% rule):</b> Renovation costs within 3 years of purchase exceeding 15% of building value are treated as acquisition-related costs</li></ul>"
+    },
+    "landValue": {
+      "title": "Land Value Portion",
+      "summary": "The non-depreciable portion of the purchase price – reduces the depreciation basis.",
+      "detail": "Land does not depreciate and therefore cannot be written off for tax purposes.<br><br><b>Determination:</b><ul><li>Land reference value × land area = land value</li><li>Alternative: Percentage of purchase price (typically 20–40% in cities)</li><li>The tax office may review the allocation – a well-founded calculation is recommended</li></ul><b>Impact:</b> The lower the land portion, the higher the annual depreciation tax savings."
+    },
+    "costs": {
+      "title": "Acquisition Costs",
+      "summary": "Additional costs when purchasing property – vary by federal state.",
+      "detail": "Acquisition costs increase the total capital requirement and are partially tax-relevant.<br><br><b>Typical costs in Germany:</b><ul><li><b>Real estate transfer tax:</b> 3.5%–6.5% depending on state</li><li><b>Notary:</b> approx. 1.5% of purchase price</li><li><b>Land registry:</b> approx. 0.5% of purchase price</li><li><b>Broker:</b> 3%–7% (depending on region and agreement)</li></ul><b>Tax treatment:</b> Transfer tax and notary/land registry increase the depreciation basis. Broker fees are deductible expenses."
+    },
+    "totalInvestment": {
+      "title": "Total Investment",
+      "summary": "Purchase price plus all ancillary costs – the actual capital requirement for acquisition.",
+      "detail": "The total investment shows the complete capital requirement:<br><br><b>Calculation:</b><br>Purchase price + transfer tax + notary + land registry + broker = Total investment<br><br>This value is matched against equity and loans in the financing step."
+    }
+  },
+  "capex": {
+    "category": {
+      "title": "Category",
+      "summary": "Assignment of the investment to a building component with standard renewal cycle.",
+      "detail": "The category assigns the investment to a component and determines the standard renewal cycle.<br><br><b>Impact:</b><ul><li>Link to component aging calculation</li><li>Standard cycle for recurring maintenance</li><li>Maintenance risk assessment per component</li></ul>"
+    },
+    "amount": {
+      "title": "Investment Amount",
+      "summary": "Cost of the planned measure – flows into total capital requirement.",
+      "detail": "The investment amount is recorded as an expense in the cashflow at the planned date.<br><br><b>Impact:</b><ul><li>Increases total capital requirement (financing gap)</li><li>Tax treatment depends on classification</li><li>For the 15% rule, all CapEx amounts within the first 3 years are summed</li></ul>"
+    },
+    "scheduledDate": {
+      "title": "Scheduled Date",
+      "summary": "Timing of the measure – relevant for cashflow timing and 15% rule.",
+      "detail": "The scheduled date determines when the investment appears in the cashflow.<br><br><b>Tax relevance:</b><ul><li>Measures within 3 years of purchase: Check 15% rule</li><li>§82b distribution: Start of distribution period</li><li>Modernization surcharge: Takes effect only after completion</li></ul>"
+    },
+    "taxClassification": {
+      "title": "Tax Classification",
+      "summary": "Determines how the investment is treated for tax purposes – immediately deductible, distributed, or capitalized.",
+      "detail": "The tax classification significantly impacts the after-tax cashflow:<br><br><b>Classifications:</b><ul><li><b>Immediately deductible:</b> Full deduction as expenses in the year of payment</li><li><b>§82b distribution:</b> Distribution over 2–5 years (for larger maintenance expenses)</li><li><b>Capitalization (modernization):</b> Depreciation over remaining useful life</li><li><b>Acquisition-related:</b> Mandatory capitalization when 15% threshold exceeded</li></ul>"
+    },
+    "costSavings": {
+      "title": "Operating Cost Savings",
+      "summary": "Monthly savings from the measure – improves NOI.",
+      "detail": "Energy retrofits or modernizations can reduce ongoing operating costs.<br><br><b>Examples:</b><ul><li>New heating: Reduced energy costs</li><li>Insulation: Lower heating costs</li><li>LED lighting: Less electricity costs</li></ul>Savings are included in the monthly cashflow from completion (after construction time)."
+    },
+    "rentIncrease": {
+      "title": "Rent Increase per Month",
+      "summary": "Possible rent increase through modernization surcharge under §559 BGB.",
+      "detail": "After modernization, up to 8% of costs can be allocated annually to rent (§559 BGB).<br><br><b>Legal limits:</b><ul><li>Max. 8% of modernization costs per year</li><li>Max. 3 EUR/m² increase within 6 years</li><li>Max. 2 EUR/m² for rents below 7 EUR/m²</li><li>Hardship check if more than 30% of household income</li></ul>The rent increase takes effect only after construction time."
+    },
+    "rentIncreasePercent": {
+      "title": "Rent Increase (%)",
+      "summary": "Percentage rent increase as an alternative to the absolute amount.",
+      "detail": "Instead of an absolute rent increase, you can specify the increase as a percentage of current rent.<br><br>The same legal limits as for the absolute amount apply."
+    },
+    "delayMonths": {
+      "title": "Construction Time / Delay",
+      "summary": "Months until the measure is completed and rent increase/savings take effect.",
+      "detail": "During construction, costs already occur but rent increases and savings only take effect after completion.<br><br><b>Impact:</b><ul><li>Rent increase takes effect only after construction time</li><li>Operating cost savings begin after completion</li><li>For major renovations: Potentially no rental income during construction</li></ul>"
+    },
+    "recurringInterval": {
+      "title": "Maintenance Interval (% of Cycle)",
+      "summary": "Regular maintenance as a percentage of the component's renewal cycle.",
+      "detail": "Regular maintenance can extend the lifespan of a component.<br><br><b>Example:</b> Heating maintenance every 5% of the 25-year cycle = every 1.25 years<br><br>Maintenance costs appear regularly in the cashflow and influence the component's condition."
+    },
+    "recurringCost": {
+      "title": "Maintenance Cost (% of Renewal)",
+      "summary": "Cost per maintenance occurrence as a percentage of total renewal costs.",
+      "detail": "Maintenance costs are calculated as a share of renewal costs.<br><br><b>Example:</b> Renewal cost 50,000 EUR, maintenance cost 2% = 1,000 EUR per occurrence<br><br>Regular maintenance is immediately tax-deductible as maintenance expense."
+    },
+    "cycleExtension": {
+      "title": "Cycle Extension",
+      "summary": "How much regular maintenance extends the component's renewal cycle.",
+      "detail": "Regular maintenance can extend the renewal cycle and thus reduce total costs.<br><br><b>Example:</b> 20% extension on a 25-year cycle = effective 30 years<br><br>The extension positively impacts the value forecast and maintenance risk."
+    }
+  },
+  "financing": {
+    "equity": {
+      "title": "Equity",
+      "summary": "Your invested capital – determines the leverage effect and equity return.",
+      "detail": "Equity is your personal capital contribution to the investment.<br><br><b>Impact:</b><ul><li><b>Leverage effect:</b> Less equity = higher return on equity (with positive total return), but also higher risk</li><li><b>LTV:</b> Equity determines the loan-to-value ratio</li><li><b>Cash-on-Cash:</b> Annual cashflow relative to invested equity</li><li><b>Bank conditions:</b> More equity = better interest rates (typical: min. 20% equity)</li></ul>"
+    },
+    "principal": {
+      "title": "Loan Amount",
+      "summary": "Amount of the bank loan – together with equity equals the total capital requirement.",
+      "detail": "The loan amount determines the monthly burden and interest expense.<br><br><b>Rules of thumb:</b><ul><li>Total capital requirement = purchase price + costs + planned CapEx</li><li>Loan amount = total capital requirement − equity</li><li>Interest is tax-deductible as income-related expenses</li><li>Principal repayment is not deductible but builds equity</li></ul>"
+    },
+    "interestRate": {
+      "title": "Interest Rate",
+      "summary": "Annual nominal interest rate – tax-deductible as income-related expenses.",
+      "detail": "The interest rate determines interest costs and thus a significant part of the cashflow.<br><br><b>Impact:</b><ul><li>Interest is fully deductible as income-related expenses</li><li>Higher rate = higher tax savings, but lower cashflow</li><li>The effective rate (including fees) may be higher than the nominal rate</li></ul><b>Reference values:</b> Depend on fixed interest period, LTV and creditworthiness."
+    },
+    "initialRepayment": {
+      "title": "Initial Repayment Rate",
+      "summary": "Repayment rate in the first year – typically 1–3%, affects term and monthly payment.",
+      "detail": "The initial repayment rate together with the interest rate determines the monthly payment (annuity).<br><br><b>Typical values:</b><ul><li><b>1%:</b> Low payment, very long term (~45 years)</li><li><b>2%:</b> Balanced, term approx. 30 years</li><li><b>3%:</b> Faster deleveraging, approx. 25 years</li></ul><b>Note:</b> With an annuity loan, the repayment portion increases automatically as the interest portion decreases with declining debt."
+    },
+    "fixedInterestYears": {
+      "title": "Fixed Interest Period",
+      "summary": "Period with fixed interest rate – refinancing risk after expiry.",
+      "detail": "After the fixed interest period expires, the loan must be extended at then-current conditions.<br><br><b>Common terms:</b><ul><li><b>5 years:</b> Lowest rate, highest refinancing risk</li><li><b>10 years:</b> Standard, good compromise</li><li><b>15–20 years:</b> Higher rate, maximum planning security</li></ul><b>Risk:</b> After expiry, rates may have changed significantly. The calculation assumes the same rate after expiry."
+    },
+    "totalCapitalNeed": {
+      "title": "Total Capital Requirement",
+      "summary": "Sum of purchase price, ancillary costs and planned investments.",
+      "detail": "Total capital requirement shows how much capital you need in total:<br><br><b>Calculation:</b><br>Purchase price + acquisition costs + planned CapEx measures = Total capital requirement<br><br>This amount must be covered by equity and loans."
+    },
+    "gap": {
+      "title": "Financing Gap",
+      "summary": "Difference between total capital requirement and available financing (equity + loans).",
+      "detail": "The financing gap shows whether your financing is complete:<br><br><ul><li><b>Gap = 0:</b> Financing matches exactly</li><li><b>Gap > 0:</b> You need more equity or a higher loan</li><li><b>Gap < 0:</b> You have more capital than needed – the surplus could be invested elsewhere</li></ul>"
+    }
+  },
+  "rent": {
+    "monthlyRent": {
+      "title": "Base Rent (Cold)",
+      "summary": "Monthly net cold rent – basis for the entire income calculation.",
+      "detail": "The cold rent (net rent without utilities) is the most important income component.<br><br><b>Impact:</b><ul><li>Basis for NOI (Net Operating Income)</li><li>Determines gross rental yield and cash-on-cash return</li><li>Taxable gross income from letting</li></ul><b>Tip:</b> Use the local rent index for a realistic assessment."
+    },
+    "serviceCharge": {
+      "title": "Service Charge",
+      "summary": "Monthly allocable operating costs – pass-through item, not return-enhancing.",
+      "detail": "Service charges are borne by the tenant and are a pass-through item for the landlord.<br><br><b>Typical components:</b><ul><li>Heating and hot water</li><li>Water and sewage</li><li>Waste collection and street cleaning</li><li>Property management</li><li>Insurance</li></ul>Non-allocable costs (e.g. maintenance, management) are borne by the landlord."
+    },
+    "annualIncrease": {
+      "title": "Annual Rent Increase",
+      "summary": "Expected annual rent increase in percent – affects long-term income projection.",
+      "detail": "The rent increase determines the growth of rental income over the analysis period.<br><br><b>Reference values:</b><ul><li><b>1–2%:</b> Conservative, aligned with inflation</li><li><b>2–3%:</b> Realistic in growth regions</li><li><b>0%:</b> Stagnation, e.g. under rent control</li></ul><b>Note:</b> For existing leases, legal limits apply (cap of 20% in 3 years, or 15% in tight markets)."
+    },
+    "vacancy": {
+      "title": "Vacancy Rate",
+      "summary": "Expected portion of unrented time – reduces effective rental income.",
+      "detail": "The vacancy rate accounts for tenant changes and unrented periods.<br><br><b>Typical values:</b><ul><li><b>2–3%:</b> Good locations, high demand</li><li><b>5%:</b> Average value</li><li><b>8–10%:</b> Weaker locations or specialty properties</li></ul><b>Calculation:</b> Effective rent = Cold rent × (1 − vacancy rate)"
+    },
+    "rentLossReserve": {
+      "title": "Rent Loss Reserve",
+      "summary": "Liquidity buffer in months of rent – for unexpected losses and vacancy periods.",
+      "detail": "The rent loss reserve is a liquidity buffer for unforeseen rental losses.<br><br><b>Recommendation:</b><ul><li><b>3 months:</b> Minimum for a single unit</li><li><b>6 months:</b> Recommended for single properties</li><li><b>2 months:</b> Sufficient for multi-family with good diversification</li></ul>This value feeds into the liquidity risk calculation."
+    }
+  },
+  "costs": {
+    "maintenanceReserve": {
+      "title": "Maintenance Reserve",
+      "summary": "Monthly maintenance reserve – reduces cashflow but is only tax-deductible when actually used.",
+      "detail": "The maintenance reserve is savings for future repairs and renovations.<br><br><b>Important:</b><ul><li>Reduces monthly cashflow</li><li><b>Not</b> tax-deductible as expenses (only when actually used)</li><li>Creates a buffer for unplanned expenses</li><li>For WEG: Collected via house charges</li></ul><b>Guideline:</b> approx. 7–12 EUR/m² living area per year."
+    },
+    "monthlyAmount": {
+      "title": "Monthly Costs",
+      "summary": "Individual operating cost item per month – reduces NOI.",
+      "detail": "Each cost item reduces the Net Operating Income (NOI).<br><br><b>Typical items:</b><ul><li>Management costs</li><li>Insurance</li><li>Property tax</li><li>Maintenance contracts</li></ul>Whether costs are allocable affects tax treatment and net income."
+    },
+    "isTransferable": {
+      "title": "Transferable to Tenant",
+      "summary": "Whether these costs can be passed on to the tenant (per German BetrKV).",
+      "detail": "Transferable costs can be passed to the tenant via the operating cost statement.<br><br><b>Transferable (BetrKV):</b><ul><li>Property tax, water, sewage</li><li>Heating, hot water</li><li>Elevator, street cleaning, waste</li><li>Gardening, insurance</li></ul><b>Not transferable:</b><ul><li>Management costs</li><li>Maintenance and repairs</li><li>Reserves for repairs</li></ul>"
+    }
+  },
+  "tax": {
+    "marginalRate": {
+      "title": "Marginal Tax Rate",
+      "summary": "Your personal top tax rate – not the effective rate, but the marginal rate.",
+      "detail": "The marginal tax rate determines how strongly tax deductions (depreciation, interest) impact your cashflow.<br><br><b>Typical values:</b><ul><li><b>42%:</b> From approx. 62,810 EUR taxable income (2024)</li><li><b>45%:</b> From approx. 277,826 EUR (top rate)</li><li><b>25–35%:</b> Middle incomes</li></ul><b>Note:</b> This is <b>not</b> the average tax rate, but the rate on the last euro earned. Rental income is taxed at this rate."
+    },
+    "churchTax": {
+      "title": "Church Tax",
+      "summary": "In addition to income tax – 8% or 9% depending on federal state.",
+      "detail": "Church tax is levied as a surcharge on income tax.<br><br><b>Rates:</b><ul><li><b>8%:</b> Bavaria and Baden-Württemberg</li><li><b>9%:</b> All other federal states</li><li><b>0%:</b> If not subject to church tax</li></ul>Church tax increases the effective tax burden on rental income by approx. 3–4 percentage points."
+    },
+    "isCorporate": {
+      "title": "Corporate Entity",
+      "summary": "GmbH or other corporation – fundamentally different taxation than individuals.",
+      "detail": "Taxation differs fundamentally between natural and legal persons:<br><br><b>Individual (income tax):</b><ul><li>Marginal rate 0–45% + solidarity surcharge + church tax</li><li>§23 EStG: Tax-free sale after 10 years</li><li>Depreciation, §82b available</li></ul><b>Corporation:</b><ul><li>Corporate tax: 15% + 5.5% solidarity = 15.825%</li><li>Trade tax: approx. 14–17% (multiplier-dependent)</li><li>Total: approx. 30%</li><li>No tax-free sale after 10 years</li></ul>"
+    },
+    "depreciation": {
+      "title": "Depreciation (AfA)",
+      "summary": "Tax building depreciation – the rate depends on the construction year.",
+      "detail": "Depreciation is one of the most important tax advantages for real estate:<br><br><b>Depreciation rates:</b><ul><li><b>3.0% p.a.:</b> New builds from 01.01.2023</li><li><b>2.0% p.a.:</b> Buildings 1925–2022</li><li><b>2.5% p.a.:</b> Buildings before 1925</li></ul><b>Depreciation basis:</b> Purchase price + acquisition costs − land portion<br><br><b>Example:</b> Purchase price 300,000 EUR, land portion 30% → Basis 210,000 EUR × 2% = 4,200 EUR/year. Tax savings at 42% rate: 1,764 EUR."
+    },
+    "section82b": {
+      "title": "§82b EStDV – Distribution",
+      "summary": "Larger maintenance expenses can be distributed over 2–5 years.",
+      "detail": "§82b EStDV allows distributing larger maintenance expenses over 2–5 years:<br><br><b>Requirements:</b><ul><li>Only for buildings primarily used for residential purposes</li><li>Only maintenance expenses (not construction costs)</li><li>Voluntary choice of distribution period</li></ul><b>Advantage:</b> Avoidance of tax spikes. With even distribution over 5 years, tax progression is smoothed."
+    },
+    "distributionYears": {
+      "title": "Distribution Period",
+      "summary": "Number of years for §82b distribution – 2 to 5 years selectable.",
+      "detail": "Choose the optimal distribution period based on your tax situation:<br><br><b>Optimization:</b><ul><li><b>2 years:</b> Faster tax effect, useful with high and steady income</li><li><b>3–4 years:</b> Good compromise</li><li><b>5 years:</b> Maximum smoothing, useful with fluctuating income</li></ul>"
+    },
+    "section23": {
+      "title": "§23 EStG – Speculation Period",
+      "summary": "Capital gains for individuals: Tax-free after 10 years holding period.",
+      "detail": "§23 EStG regulates the taxation of property sales for individuals:<br><br><b>Rules:</b><ul><li><b>Holding period > 10 years:</b> Capital gains completely tax-free</li><li><b>Holding period ≤ 10 years:</b> Gains taxed at personal tax rate</li><li><b>Exemption threshold:</b> 1,000 EUR per year (since 2024) – if exceeded, the entire gain is taxed</li></ul><b>Calculation:</b> Gain = Sale price − acquisition costs − selling costs + already claimed depreciation"
+    }
+  },
+  "summary": {
+    "irrAfterTax": {
+      "title": "IRR After Tax",
+      "summary": "Internal rate of return including all tax effects – the key return metric.",
+      "detail": "The after-tax IRR shows the actual return on your invested equity:<br><br><b>Calculation:</b> The rate at which the present value of all cashflows (after tax) equals the invested equity.<br><br><b>Interpretation:</b><ul><li><b>> 5%:</b> Good return for real estate</li><li><b>3–5%:</b> Acceptable</li><li><b>< 3%:</b> Questionable – check alternatives</li></ul><b>Comparison:</b> Compare with alternative investments (fixed deposits, ETFs) considering risk."
+    },
+    "irrBeforeTax": {
+      "title": "IRR Before Tax",
+      "summary": "Internal rate of return without tax effects – shows operational return.",
+      "detail": "The before-tax IRR shows the project return independent of personal tax situation.<br><br><b>Use:</b><ul><li>Compare different projects independent of tax effects</li><li>Objective assessment of property quality</li><li>Difference to after-tax IRR shows the tax effect</li></ul>"
+    },
+    "npvAfterTax": {
+      "title": "Net Present Value (NPV)",
+      "summary": "Present value of all future cashflows minus invested equity.",
+      "detail": "The NPV answers: How much is this investment worth today?<br><br><b>Interpretation:</b><ul><li><b>NPV > 0:</b> Investment creates value – worthwhile</li><li><b>NPV = 0:</b> Investment exactly meets target return</li><li><b>NPV < 0:</b> Investment falls short of target return – review critically</li></ul><b>Discount rate:</b> The NPV uses the loan interest rate as discount rate."
+    },
+    "cashOnCash": {
+      "title": "Cash-on-Cash Return",
+      "summary": "Ratio of annual cashflow to invested equity in the first year.",
+      "detail": "Cash-on-Cash shows the direct yield on your equity in year one:<br><br><b>Calculation:</b> Annual cashflow (after debt service) / equity × 100<br><br><b>Interpretation:</b><ul><li><b>> 6%:</b> Very good</li><li><b>3–6%:</b> Good</li><li><b>< 3%:</b> Low, but may be offset by appreciation</li></ul><b>Note:</b> This metric does not account for principal repayment (wealth building) or appreciation."
+    },
+    "equityMultiple": {
+      "title": "Equity Multiple",
+      "summary": "How many times you receive your invested equity back over the analysis period.",
+      "detail": "The equity multiple shows total return relative to your capital contribution:<br><br><b>Calculation:</b> (Cumulative cashflow + sale proceeds) / invested equity<br><br><b>Interpretation:</b><ul><li><b>> 2.0x:</b> Doubling of equity</li><li><b>1.5–2.0x:</b> Good wealth building</li><li><b>< 1.0x:</b> Capital loss</li></ul>"
+    },
+    "roi": {
+      "title": "Return on Investment (ROI)",
+      "summary": "Annualized return on invested equity over the full analysis period.",
+      "detail": "ROI shows the average annual return on your equity:<br><br><b>Calculation:</b> Annualized return based on total return and invested equity.<br><br>Unlike IRR, ROI does not consider the timing of cashflows, only the total return."
+    },
+    "dscrMin": {
+      "title": "DSCR (Minimum)",
+      "summary": "Debt service coverage ratio in the weakest year – key banking metric.",
+      "detail": "DSCR shows how well rental income covers debt service:<br><br><b>Calculation:</b> NOI / debt service (interest + principal)<br><br><b>Interpretation:</b><ul><li><b>> 1.4:</b> Comfortable</li><li><b>1.2–1.4:</b> Acceptable for banks</li><li><b>< 1.2:</b> Critical – bank may decline</li><li><b>< 1.0:</b> Rental income doesn't cover loan payments</li></ul>The minimum DSCR shows the weakest year and is the most conservative indicator."
+    },
+    "dscrAvg": {
+      "title": "DSCR (Average)",
+      "summary": "Average debt service coverage ratio over the analysis period.",
+      "detail": "The average DSCR gives an overall picture of debt service capability:<br><br>An average above 1.3 indicates solid financing. However, consider the minimum DSCR for the worst-case view."
+    },
+    "icrMin": {
+      "title": "ICR (Minimum)",
+      "summary": "Minimum interest coverage ratio – NOI divided by interest payments only.",
+      "detail": "ICR (Interest Coverage Ratio) considers only interest payments (without principal):<br><br><b>Calculation:</b> NOI / interest payments<br><br><b>Interpretation:</b><ul><li><b>> 2.0:</b> Comfortable</li><li><b>1.5–2.0:</b> Acceptable</li><li><b>< 1.5:</b> Elevated risk</li></ul>ICR is less strict than DSCR as it excludes principal repayment."
+    },
+    "ltvInitial": {
+      "title": "LTV (Initial)",
+      "summary": "Loan-to-value at purchase – ratio of loan to property value.",
+      "detail": "The initial LTV shows the leverage at acquisition:<br><br><b>Calculation:</b> Loan amount / property value × 100<br><br><b>Typical values:</b><ul><li><b>60%:</b> Conservative, best interest rates</li><li><b>70–80%:</b> Common, acceptable conditions</li><li><b>> 80%:</b> Interest rate premium</li><li><b>> 100%:</b> Full financing incl. costs</li></ul>"
+    },
+    "ltvFinal": {
+      "title": "LTV (Final)",
+      "summary": "Loan-to-value at end of analysis period – shows deleveraging progress.",
+      "detail": "The final LTV shows how far deleveraging has progressed:<br><br><b>Drivers:</b><ul><li>Repayment reduces outstanding debt</li><li>Property appreciation additionally reduces LTV</li></ul>A declining LTV shows wealth building through repayment and appreciation."
+    },
+    "breakEvenRent": {
+      "title": "Break-Even Rent",
+      "summary": "Minimum rent to cover all ongoing costs (debt service + operating costs).",
+      "detail": "The break-even rent shows the minimum monthly rent for a balanced cashflow:<br><br><b>Calculation:</b> (Debt service + non-allocable operating costs + maintenance) / 12<br><br>If your actual rent exceeds the break-even rent, you have a positive monthly cashflow."
+    },
+    "riskMaintenance": {
+      "title": "Maintenance Risk",
+      "summary": "Risk score 0–100 based on age and condition of building components.",
+      "detail": "The maintenance risk evaluates the probability of major unplanned maintenance:<br><br><b>Factors:</b><ul><li>Component age relative to renewal cycle</li><li>Number of overdue components</li><li>Estimated renewal costs</li></ul><b>Scale:</b><ul><li><b>0–30:</b> Low risk (green)</li><li><b>30–60:</b> Medium risk (yellow)</li><li><b>60–100:</b> High risk (red)</li></ul>"
+    },
+    "riskLiquidity": {
+      "title": "Liquidity Risk",
+      "summary": "Risk score 0–100 based on DSCR, reserves and vacancy rate.",
+      "detail": "The liquidity risk evaluates the probability of payment difficulties:<br><br><b>Factors:</b><ul><li>DSCR level (lower = higher risk)</li><li>Rent loss reserve amount</li><li>Vacancy rate</li><li>Financing gap</li></ul><b>Scale:</b><ul><li><b>0–30:</b> Low risk (green)</li><li><b>30–60:</b> Medium risk (yellow)</li><li><b>60–100:</b> High risk (red)</li></ul>"
+    },
+    "cf": {
+      "effectiveRent": {
+        "title": "Effective Net Rent",
+        "summary": "Gross rent minus vacancy – the actually achievable rental income.",
+        "detail": "The effective net rent accounts for expected vacancy:<br><br><b>Calculation:</b> Cold rent × (1 − vacancy rate) × 12 months<br><br>This is the realistic rental income that flows into all further calculations."
+      },
+      "noi": {
+        "title": "NOI (Net Operating Income)",
+        "summary": "Net operating result: effective rent minus all operating costs.",
+        "detail": "NOI is the central income metric for real estate:<br><br><b>Calculation:</b> Effective rent − non-allocable operating costs − maintenance reserve<br><br><b>Significance:</b><ul><li>Basis for DSCR calculation</li><li>Shows operational earning power independent of financing</li><li>Comparable between different properties</li></ul>"
+      },
+      "beforeTax": {
+        "title": "Cashflow Before Tax",
+        "summary": "NOI minus debt service and CapEx – the cashflow before income tax.",
+        "detail": "The before-tax cashflow shows the operational surplus after financing:<br><br><b>Calculation:</b> NOI − interest − principal − CapEx payments<br><br>A negative value means: You need to contribute funds. A positive value: The property is self-sustaining."
+      },
+      "afterTax": {
+        "title": "Cashflow After Tax",
+        "summary": "The final available cashflow after income tax.",
+        "detail": "The after-tax cashflow is the actually available amount:<br><br><b>Calculation:</b> Cashflow before tax − income tax on rental income<br><br><b>Note:</b> Through depreciation and interest deduction, the tax loss can be higher than the actual cashflow loss – this leads to a tax refund."
+      },
+      "cumulative": {
+        "title": "Cumulative Cashflow",
+        "summary": "Running total of all after-tax cashflows since project start.",
+        "detail": "The cumulative cashflow shows when the investment has paid for itself:<br><br>When cumulative cashflow turns positive, your running costs have been covered by rental income. This point is called the break-even point."
+      }
+    },
+    "tax": {
+      "bridge": {
+        "title": "Tax Bridge",
+        "summary": "Derivation from gross income to taxable income from letting.",
+        "detail": "The tax bridge shows individual deduction items:<br><br><b>Gross rental income</b><br>− Depreciation (AfA)<br>− Loan interest<br>− Operating costs (non-allocable)<br>− Maintenance expenses / §82b<br>= <b>Taxable income</b><br><br>With negative taxable income, a tax loss occurs that can be offset against other income."
+      },
+      "effectiveRate": {
+        "title": "Effective Tax Rate",
+        "summary": "Actual tax paid relative to gross rental income.",
+        "detail": "The effective tax rate shows the real tax burden:<br><br><b>Calculation:</b> Actual tax payment / gross rental income × 100<br><br>Through depreciation and interest deduction, the effective rate is often much lower than the marginal rate. In the early years, it can even be negative (tax refund) due to tax losses."
+      },
+      "rule15": {
+        "title": "15% Rule (Acquisition-Related Costs)",
+        "summary": "If renovation costs within 3 years exceed 15% of building value, they are capitalized.",
+        "detail": "The 15% rule is an important tax trap when buying property with renovation:<br><br><b>Rule:</b> Renovation costs within 3 years of purchase exceeding 15% of building value (net, excl. land) are treated as acquisition-related construction costs.<br><br><b>Consequence:</b><ul><li>No immediate deduction as maintenance expense</li><li>Instead capitalization and depreciation over remaining useful life</li><li>Significantly lower annual tax effect</li></ul><b>Tip:</b> Consider postponing renovations to after the 3-year period."
+      },
+      "totalSavings": {
+        "title": "Total Tax Savings",
+        "summary": "Total tax savings through all deductions over the analysis period.",
+        "detail": "The total savings show the cumulative tax advantage of your property investment:<br><br><b>Deduction items:</b><ul><li>Depreciation (AfA)</li><li>Loan interest</li><li>Non-allocable operating costs</li><li>Maintenance expenses / §82b distribution</li></ul>Tax savings are a significant return factor in real estate investments."
+      }
+    },
+    "property": {
+      "forecast": {
+        "title": "Value Forecast",
+        "summary": "Multi-dimensional estimate of value development over the analysis period.",
+        "detail": "The value forecast considers multiple factors:<br><br><b>Methodology:</b><ul><li><b>Market appreciation:</b> Annual value increase (scenarios: conservative/base/optimistic)</li><li><b>Condition factor:</b> Value reduction through component aging</li><li><b>Investment effect:</b> Value increase through CapEx measures</li><li><b>Mean-reversion:</b> Long-term convergence to regional market price</li></ul>The forecast is shown in three scenarios to display the range of possible developments."
+      },
+      "conditionFactor": {
+        "title": "Condition Factor",
+        "summary": "Percentage value factor based on building condition (0–100%).",
+        "detail": "The condition factor acts as a multiplier on the theoretical market value:<br><br><b>Calculation:</b> Based on selected building condition and component age.<br><br>A condition factor of 80% means: The property is worth only 80% of theoretical market value because components are outdated or in need of renovation.<br><br>Through investments (CapEx), the condition factor can be improved."
+      },
+      "componentDeterioration": {
+        "title": "Component Deterioration",
+        "summary": "Detailed overview of individual building component aging and their value impact.",
+        "detail": "Component deterioration shows for each component:<br><br><b>Information:</b><ul><li>Current age vs. renewal cycle</li><li>Status: OK, Renewed, Overdue, Already overdue at purchase</li><li>Value reduction through aging</li><li>Estimated renewal costs</li><li>Effect of regular maintenance on the cycle</li></ul>Components already overdue at purchase are considered priced in and don't additionally burden the value forecast."
+      }
+    },
+    "exit": {
+      "totalReturn": {
+        "title": "Total Return",
+        "summary": "Complete return: sale proceeds + cumulative cashflow − invested equity.",
+        "detail": "Total return shows the complete financial result of the investment:<br><br><b>Calculation:</b><br>Net sale proceeds (after costs and any taxes)<br>+ Cumulative cashflow after tax<br>− Invested equity<br>= <b>Total return</b><br><br>A positive total return means: You received more than you invested."
+      },
+      "annualizedReturn": {
+        "title": "Annualized Return (CAGR)",
+        "summary": "Average annual growth rate of invested equity including sale.",
+        "detail": "The annualized return (CAGR) shows the average annual return:<br><br><b>Calculation:</b> (End value / Start value)^(1/years) − 1<br><br>Where end value = equity + total return and start value = invested equity.<br><br>This metric enables comparison with other investments across different time periods."
+      }
+    }
+  },
+  "glossary": {
+    "irr": {
+      "title": "IRR (Internal Rate of Return)",
+      "summary": "The internal rate of return is the yield at which the present value of all cashflows equals zero.",
+      "detail": "The IRR is the central return metric for real estate investments:<br><br><b>Definition:</b> The interest rate at which the present value of all future cashflows exactly equals the invested equity.<br><br><b>Interpretation:</b><ul><li>The higher the IRR, the more profitable the investment</li><li>Comparable to the yield of a fixed deposit</li><li>Considers the timing of cashflows (earlier payments are more valuable)</li></ul><b>Limitation:</b> With unusual cashflow patterns (multiple sign changes), the IRR can be ambiguous."
+    },
+    "npv": {
+      "title": "NPV (Net Present Value)",
+      "summary": "The net present value is the sum of all discounted future cashflows minus the initial investment.",
+      "detail": "The NPV answers: How much additional value does this investment create?<br><br><b>Calculation:</b> Sum of all cashflows, discounted at the discount rate, minus equity contribution.<br><br><b>Interpretation:</b><ul><li><b>NPV > 0:</b> Investment creates value beyond the target return</li><li><b>NPV = 0:</b> Investment exactly meets the target return</li><li><b>NPV < 0:</b> Investment falls short of the target return</li></ul>"
+    },
+    "dscr": {
+      "title": "DSCR (Debt Service Coverage Ratio)",
+      "summary": "Ratio between available cashflow and debt service. Banks often require at least 1.2.",
+      "detail": "DSCR is the most important metric for creditworthiness:<br><br><b>Calculation:</b> NOI / (interest + principal per year)<br><br><b>Bank standards:</b><ul><li><b>> 1.4:</b> Very solid financing</li><li><b>1.2–1.4:</b> Standard requirement of most banks</li><li><b>< 1.2:</b> Increased requirements (more equity, collateral)</li><li><b>< 1.0:</b> Rental income doesn't cover debt service</li></ul>"
+    },
+    "ltv": {
+      "title": "LTV (Loan-to-Value)",
+      "summary": "Ratio between loan amount and property value. The lower, the safer for the bank.",
+      "detail": "LTV shows the leverage relative to property value:<br><br><b>Calculation:</b> Loan amount / market value × 100%<br><br><b>Impact on conditions:</b><ul><li><b>< 60%:</b> Best interest rates, low risk</li><li><b>60–80%:</b> Standard, good conditions</li><li><b>80–90%:</b> Interest premium, elevated risk</li><li><b>> 90%:</b> Full financing, significant premium</li></ul>"
+    },
+    "afa": {
+      "title": "AfA (Depreciation)",
+      "summary": "Tax depreciation of building value. The rate depends on construction year: 2%, 2.5% or 3%.",
+      "detail": "Depreciation (AfA) is the most important tax advantage for real estate:<br><br><b>Rates:</b><ul><li><b>3.0% p.a.:</b> New builds from 01.01.2023 (§7 para. 4 EStG)</li><li><b>2.0% p.a.:</b> Buildings 1925–2022 (50 years useful life)</li><li><b>2.5% p.a.:</b> Buildings before 1925 (40 years useful life)</li></ul><b>Basis:</b> Purchase price + capitalizable costs − land value<br><br><b>Important:</b> Land is not depreciated as it doesn't wear out."
+    },
+    "mea": {
+      "title": "MEA (Co-ownership Share)",
+      "summary": "Share of common property in condominiums, usually expressed in thousandths.",
+      "detail": "The MEA determines your share in the homeowner association (WEG):<br><br><b>Relevance:</b><ul><li>Share of community costs (house charges, reserves)</li><li>Share of special assessments for renovations</li><li>Voting rights in owners' meetings</li></ul><b>Determination:</b> The MEA is set in the declaration of division and can only be changed by notarial agreement of all owners."
+    }
+  }
+}

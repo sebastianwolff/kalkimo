@@ -278,6 +278,7 @@ public static class CalculationResultMapper
             CapexAddressedYear = c.CapexAddressedYear,
             ValueImpact = c.ValueImpact,
             StatusAtEnd = c.StatusAtEnd,
+            UnitId = c.UnitId,
             RecurringMaintenance = c.RecurringMaintenance != null
                 ? new RecurringMaintenanceInfoDto
                 {

@@ -19,6 +19,7 @@ export type TaxClassification =
   | 'NotDeductible';        // Nicht absetzbar
 
 export type CapExCategory =
+  // Gebäudeebene
   | 'Roof'                  // Dach
   | 'Facade'                // Fassade
   | 'Windows'               // Fenster
@@ -27,7 +28,21 @@ export type CapExCategory =
   | 'Plumbing'              // Sanitär
   | 'Interior'              // Innenausbau
   | 'Exterior'              // Außenanlagen
-  | 'Other';                // Sonstiges
+  | 'Other'                 // Sonstiges
+  // Mieteinheit-Ebene
+  | 'Kitchen'               // Einbauküche
+  | 'Bathroom'              // Sanitärausstattung / Bad
+  | 'UnitRenovation'        // Grundlegende Renovierung
+  | 'UnitOther';            // Sonstiges (Wohnung)
+
+export const BUILDING_LEVEL_CATEGORIES: CapExCategory[] = [
+  'Heating', 'Roof', 'Facade', 'Windows', 'Electrical',
+  'Plumbing', 'Interior', 'Exterior', 'Other'
+];
+
+export const UNIT_LEVEL_CATEGORIES: CapExCategory[] = [
+  'Kitchen', 'Bathroom', 'UnitRenovation', 'UnitOther'
+];
 
 export type DistributionKeyType =
   | 'Mea'           // Nach MEA
@@ -58,6 +73,7 @@ export interface Unit {
   rooms?: number;
   floor?: string;
   status: UnitStatus;
+  components: ComponentCondition[];
 }
 
 export interface ComponentCondition {
@@ -217,6 +233,7 @@ export interface CapExMeasure {
   impact?: MeasureImpact;
   isRecurring?: boolean;
   recurringConfig?: RecurringMeasureConfig;
+  unitId?: string;
 }
 
 // Tax profile
@@ -374,6 +391,7 @@ export interface ComponentDeteriorationRow {
   valueImpact: number;
   statusAtEnd: 'OK' | 'Overdue' | 'OverdueAtPurchase' | 'Renewed';
   recurringMaintenance?: RecurringMaintenanceInfo;
+  unitId?: string;
 }
 
 export interface ComponentDeteriorationSummary {

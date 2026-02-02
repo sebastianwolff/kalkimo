@@ -66,6 +66,7 @@ public record UnitDto
     public int? Rooms { get; init; }
     public string? Floor { get; init; }
     public required string Status { get; init; }
+    public IReadOnlyList<ComponentConditionDto>? Components { get; init; }
 }
 
 public record ComponentConditionDto
@@ -208,6 +209,7 @@ public record CapExMeasureDto
     public MeasureImpactDto? Impact { get; init; }
     public bool IsRecurring { get; init; }
     public RecurringMeasureConfigDto? RecurringConfig { get; init; }
+    public string? UnitId { get; init; }
 }
 
 public record MeasureImpactDto

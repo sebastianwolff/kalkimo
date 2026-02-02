@@ -844,6 +844,172 @@ public class FrontendProjectMapperTests
 
     #endregion
 
+    #region Unit Components Mapping
+
+    [Fact]
+    public void MapToProject_MapsUnitComponents()
+    {
+        var request = CreateValidRequest();
+        request = request with
+        {
+            Property = request.Property with
+            {
+                Units = new[]
+                {
+                    new UnitDto
+                    {
+                        Id = "unit-1",
+                        Name = "WE 1",
+                        Type = "Residential",
+                        Area = 85m,
+                        Status = "Rented",
+                        Components = new[]
+                        {
+                            new ComponentConditionDto { Category = "Kitchen", Condition = "Fair", LastRenovationYear = 2010, ExpectedCycleYears = 20 },
+                            new ComponentConditionDto { Category = "Bathroom", Condition = "Good", LastRenovationYear = 2005, ExpectedCycleYears = 25 }
+                        }
+                    }
+                }
+            }
+        };
+
+        var project = FrontendProjectMapper.MapToProject(request);
+
+        project.Property.Units.Should().HaveCount(1);
+        var unit = project.Property.Units[0];
+        unit.Id.Should().Be("unit-1");
+        unit.Name.Should().Be("WE 1");
+        unit.Area.Should().Be(85m);
+        unit.Components.Should().HaveCount(2);
+        unit.Components[0].Category.Should().Be(CapExCategory.Kitchen);
+        unit.Components[0].Condition.Should().Be(Condition.Fair);
+        unit.Components[0].LastRenovationYear.Should().Be(2010);
+        unit.Components[0].ExpectedCycleYears.Should().Be(20);
+        unit.Components[1].Category.Should().Be(CapExCategory.Bathroom);
+    }
+
+    [Fact]
+    public void MapToProject_MapsUnitWithNullComponents_ReturnsEmptyList()
+    {
+        var request = CreateValidRequest();
+        request = request with
+        {
+            Property = request.Property with
+            {
+                Units = new[]
+                {
+                    new UnitDto
+                    {
+                        Id = "unit-1",
+                        Name = "WE 1",
+                        Type = "Residential",
+                        Area = 85m,
+                        Status = "Rented",
+                        Components = null
+                    }
+                }
+            }
+        };
+
+        var project = FrontendProjectMapper.MapToProject(request);
+
+        project.Property.Units[0].Components.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void MapToProject_MapsCapExMeasure_WithUnitId()
+    {
+        var request = CreateValidRequest();
+        request = request with
+        {
+            Capex = new[]
+            {
+                new CapExMeasureDto
+                {
+                    Id = "kitchen-1",
+                    Name = "Küchenerneuerung WE 1",
+                    Category = "Kitchen",
+                    Amount = new MoneyInputDto { Amount = 15_000m },
+                    ScheduledDate = new YearMonthDto { Year = 2028, Month = 1 },
+                    TaxClassification = "MaintenanceExpense",
+                    UnitId = "unit-1"
+                }
+            }
+        };
+
+        var project = FrontendProjectMapper.MapToProject(request);
+
+        var measure = project.CapEx!.Measures[0];
+        measure.Category.Should().Be(CapExCategory.Kitchen);
+        measure.UnitId.Should().Be("unit-1");
+    }
+
+    [Fact]
+    public void MapToProject_MapsCapExMeasure_WithoutUnitId_IsNull()
+    {
+        var request = CreateValidRequest();
+        request = request with
+        {
+            Capex = new[]
+            {
+                new CapExMeasureDto
+                {
+                    Id = "heat-1",
+                    Name = "Heizungserneuerung",
+                    Category = "Heating",
+                    Amount = new MoneyInputDto { Amount = 25_000m },
+                    ScheduledDate = new YearMonthDto { Year = 2027, Month = 6 },
+                    TaxClassification = "MaintenanceExpense"
+                }
+            }
+        };
+
+        var project = FrontendProjectMapper.MapToProject(request);
+
+        project.CapEx!.Measures[0].UnitId.Should().BeNull();
+    }
+
+    [Fact]
+    public void MapToProject_MapsUnitLevelCategories()
+    {
+        var request = CreateValidRequest();
+        request = request with
+        {
+            Property = request.Property with
+            {
+                Units = new[]
+                {
+                    new UnitDto
+                    {
+                        Id = "u1",
+                        Name = "WE 1",
+                        Type = "Residential",
+                        Area = 80m,
+                        Status = "Rented",
+                        Components = new[]
+                        {
+                            new ComponentConditionDto { Category = "Kitchen", Condition = "Good", ExpectedCycleYears = 20 },
+                            new ComponentConditionDto { Category = "Bathroom", Condition = "Fair", ExpectedCycleYears = 25 },
+                            new ComponentConditionDto { Category = "UnitRenovation", Condition = "Poor", ExpectedCycleYears = 15 },
+                            new ComponentConditionDto { Category = "UnitOther", Condition = "Fair", ExpectedCycleYears = 20 }
+                        }
+                    }
+                }
+            }
+        };
+
+        var project = FrontendProjectMapper.MapToProject(request);
+
+        var comps = project.Property.Units[0].Components;
+        comps.Should().HaveCount(4);
+        comps[0].Category.Should().Be(CapExCategory.Kitchen);
+        comps[1].Category.Should().Be(CapExCategory.Bathroom);
+        comps[2].Category.Should().Be(CapExCategory.UnitRenovation);
+        comps[3].Category.Should().Be(CapExCategory.UnitOther);
+    }
+
+    #endregion
+
     #region End-to-End: Mapped Project kann berechnet werden
 
     [Fact]

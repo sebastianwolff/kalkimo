@@ -63,16 +63,45 @@ public enum TaxClassification
 /// </summary>
 public enum CapExCategory
 {
-    Heating,      // Heizung
-    Roof,         // Dach
-    Facade,       // Fassade
-    Windows,      // Fenster
-    Electrical,   // Elektrik
-    Plumbing,     // Sanitär
-    Interior,     // Innenausbau
-    Energy,       // Energetische Sanierung
-    Exterior,     // Außenanlagen
-    Other         // Sonstiges
+    // === Gebäudeebene ===
+    Heating,          // Heizung
+    Roof,             // Dach
+    Facade,           // Fassade
+    Windows,          // Fenster
+    Electrical,       // Elektrik
+    Plumbing,         // Sanitär
+    Interior,         // Innenausbau
+    Energy,           // Energetische Sanierung
+    Exterior,         // Außenanlagen
+    Other,            // Sonstiges
+
+    // === Mieteinheit-Ebene ===
+    Kitchen,          // Einbauküche
+    Bathroom,         // Sanitärausstattung / Bad
+    UnitRenovation,   // Grundlegende Renovierung (Wände, Decken, Böden, Malerarbeiten)
+    UnitOther         // Sonstiges (Wohnung)
+}
+
+/// <summary>
+/// Hilfsklasse zur Unterscheidung von Gebäude- und Einheit-Bauteilen
+/// </summary>
+public static class CapExCategoryExtensions
+{
+    private static readonly HashSet<CapExCategory> UnitLevelCategories =
+    [
+        CapExCategory.Kitchen,
+        CapExCategory.Bathroom,
+        CapExCategory.UnitRenovation,
+        CapExCategory.UnitOther
+    ];
+
+    /// <summary>Gehört diese Kategorie zur Mieteinheit-Ebene?</summary>
+    public static bool IsUnitLevel(this CapExCategory category)
+        => UnitLevelCategories.Contains(category);
+
+    /// <summary>Gehört diese Kategorie zur Gebäudeebene?</summary>
+    public static bool IsBuildingLevel(this CapExCategory category)
+        => !UnitLevelCategories.Contains(category);
 }
 
 /// <summary>

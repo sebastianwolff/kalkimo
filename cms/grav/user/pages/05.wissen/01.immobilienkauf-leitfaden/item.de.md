@@ -4,7 +4,7 @@ slug: immobilienkauf-leitfaden
 date: "2026-01-15"
 template: item
 reading_time: "4 min"
-mascot_image: kalkimo.png
+mascot_image: kalkimo_f.png
 metadata:
     description: "Die wichtigsten Punkte bei der Kalkulation eines Immobilien-Investments."
 taxonomy:

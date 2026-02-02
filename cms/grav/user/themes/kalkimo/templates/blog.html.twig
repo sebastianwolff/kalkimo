@@ -3,10 +3,9 @@
 {% set lang = grav.language.getActive|default('de') %}
 
 {% block content %}
-<section class="km-section">
-  <div class="container">
-
-    {# Page Title #}
+{# Page Hero with title, subtitle, search bar #}
+<section class="km-page-hero">
+  <div class="km-page-hero-inner km-page-hero-inner--wide">
     <div class="km-blog-header">
       <h1>{{ page.title }}</h1>
       {% if page.content|trim %}
@@ -29,6 +28,12 @@
         </button>
       </div>
     </div>
+  </div>
+</section>
+
+{# Content below hero #}
+<section class="km-section">
+  <div class="container">
 
     {# Top Topics Box #}
     {% if page.header.top_topics %}

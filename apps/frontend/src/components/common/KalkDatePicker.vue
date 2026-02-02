@@ -3,6 +3,16 @@
     <label v-if="label" class="form-label">
       {{ label }}
       <span v-if="required" class="required-mark">*</span>
+      <button
+        v-if="helpKey"
+        type="button"
+        class="help-button"
+        @click.stop="showHelp"
+      >
+        <svg class="help-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+        </svg>
+      </button>
     </label>
 
     <div class="date-inputs">
@@ -54,6 +64,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useUiStore } from '@/stores/uiStore';
 import type { YearMonth } from '@/stores/types';
 
 const props = withDefaults(defineProps<{
@@ -63,11 +74,14 @@ const props = withDefaults(defineProps<{
   maxYear?: number;
   required?: boolean;
   errorMessage?: string;
+  helpKey?: string;
 }>(), {
   minYear: 2000,
   maxYear: 2050,
   required: false
 });
+
+const uiStore = useUiStore();
 
 const emit = defineEmits<{
   'update:modelValue': [value: YearMonth | undefined];
@@ -115,6 +129,12 @@ function handleChange() {
     emit('update:modelValue', undefined);
   }
 }
+
+function showHelp() {
+  if (props.helpKey) {
+    uiStore.openHelp(props.helpKey);
+  }
+}
 </script>
 
 <style scoped>
@@ -134,6 +154,27 @@ function handleChange() {
 
 .required-mark {
   color: var(--kalk-error);
+}
+
+.help-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--kalk-gray-400);
+  transition: color 0.15s;
+}
+
+.help-button:hover {
+  color: var(--kalk-accent-500);
+}
+
+.help-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .date-inputs {

@@ -120,7 +120,12 @@
         "area": { "type": "number", "minimum": 0 },
         "rooms": { "type": "integer", "minimum": 0 },
         "floor": { "type": "string" },
-        "status": { "enum": ["Rented", "Vacant", "OwnerOccupied", "Renovation"], "default": "Rented" }
+        "status": { "enum": ["Rented", "Vacant", "OwnerOccupied", "Renovation"], "default": "Rented" },
+        "components": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/componentCondition" },
+          "description": "Einheit-gebundene Bauteile (Küche, Bad, Renovierung etc.)"
+        }
       }
     },
 
@@ -128,7 +133,7 @@
       "type": "object",
       "required": ["category", "condition", "expectedCycleYears"],
       "properties": {
-        "category": { "enum": ["Heating", "Roof", "Facade", "Windows", "Electrical", "Plumbing", "Interior", "Energy", "Other"] },
+        "category": { "enum": ["Heating", "Roof", "Facade", "Windows", "Electrical", "Plumbing", "Interior", "Energy", "Other", "Kitchen", "Bathroom", "UnitRenovation", "UnitOther"] },
         "condition": { "enum": ["Good", "Medium", "Poor"] },
         "lastRenovationYear": { "type": "integer" },
         "expectedCycleYears": { "type": "integer", "minimum": 1 }
@@ -371,7 +376,8 @@
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
-        "category": { "enum": ["Heating", "Roof", "Facade", "Windows", "Electrical", "Plumbing", "Interior", "Energy", "Other"] },
+        "category": { "enum": ["Heating", "Roof", "Facade", "Windows", "Electrical", "Plumbing", "Interior", "Energy", "Other", "Kitchen", "Bathroom", "UnitRenovation", "UnitOther"] },
+        "unitId": { "type": "string", "description": "Zugehörige Mieteinheit-ID (null/absent = Gebäudeebene)" },
         "plannedPeriod": { "$ref": "#/$defs/yearMonth" },
         "estimatedCost": { "$ref": "#/$defs/money" },
         "riskBufferPercent": { "type": "number", "default": 0 },

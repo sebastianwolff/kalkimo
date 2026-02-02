@@ -5,8 +5,6 @@ metadata:
     robots: "noindex, follow"
 ---
 
-# Impressum
-
 Angaben gemäß § 5 TMG
 
 **[Firmenname eintragen]**

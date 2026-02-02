@@ -129,6 +129,7 @@
             v-model="measure.category"
             :label="t('capex.measure.category')"
             :options="categoryOptions"
+            help-key="capex.category"
           />
         </div>
 
@@ -149,12 +150,14 @@
               v-model="measure.amount"
               :label="t('capex.measure.amount')"
               :currency="currency"
+              help-key="capex.amount"
             />
             <KalkDatePicker
               v-model="measure.scheduledDate"
               :label="t('capex.measure.scheduledDate')"
               :min-year="startYear"
               :max-year="endYear"
+              help-key="capex.scheduledDate"
               @update:modelValue="applyTaxSuggestion(measure)"
             />
             <KalkSelect
@@ -186,14 +189,17 @@
             <KalkPercent
               v-model="measure.recurringIntervalPercent"
               :label="t('capex.recurring.intervalPercent')"
+              help-key="capex.recurringInterval"
             />
             <KalkPercent
               v-model="measure.recurringCostPercent"
               :label="t('capex.recurring.costPercent')"
+              help-key="capex.recurringCost"
             />
             <KalkPercent
               v-model="measure.recurringCycleExtensionPercent"
               :label="t('capex.recurring.cycleExtension')"
+              help-key="capex.cycleExtension"
             />
             <div class="recurring-hints">
               <span class="recurring-hint">{{ t('capex.recurring.calculatedInterval', { years: getRecurringIntervalYears(measure) }) }}</span>
@@ -233,16 +239,19 @@
               :label="t('capex.measure.costSavings')"
               :currency="currency"
               :placeholder="t('capex.measure.costSavingsHint')"
+              help-key="capex.costSavings"
             />
             <KalkCurrency
               v-model="measure.impact.rentIncreaseMonthly"
               :label="t('capex.measure.rentIncrease')"
               :currency="currency"
               :placeholder="t('capex.measure.rentIncreaseHint')"
+              help-key="capex.rentIncrease"
             />
             <KalkPercent
               v-model="measure.impact.rentIncreasePercent"
               :label="t('capex.measure.rentIncreasePercent')"
+              help-key="capex.rentIncreasePercent"
             />
             <KalkInput
               v-model="measure.impact.delayMonths"
@@ -251,6 +260,7 @@
               :min="0"
               :max="36"
               :placeholder="t('capex.measure.delayMonthsHint')"
+              help-key="capex.delayMonths"
             />
           </div>
         </div>
@@ -294,6 +304,7 @@ interface MeasureItem {
   recurringIntervalPercent: number;
   recurringCostPercent: number;
   recurringCycleExtensionPercent: number;
+  unitId?: string;
 }
 
 const emit = defineEmits<{
@@ -328,7 +339,11 @@ const categoryOptions = computed(() => [
   { value: 'Plumbing', label: t('capex.categories.Plumbing') },
   { value: 'Interior', label: t('capex.categories.Interior') },
   { value: 'Exterior', label: t('capex.categories.Exterior') },
-  { value: 'Other', label: t('capex.categories.Other') }
+  { value: 'Other', label: t('capex.categories.Other') },
+  { value: 'Kitchen', label: t('capex.categories.Kitchen') },
+  { value: 'Bathroom', label: t('capex.categories.Bathroom') },
+  { value: 'UnitRenovation', label: t('capex.categories.UnitRenovation') },
+  { value: 'UnitOther', label: t('capex.categories.UnitOther') }
 ]);
 
 const taxClassificationOptions = computed(() => [
@@ -526,9 +541,9 @@ function runForecast() {
     currency.value
   );
 
-  // Filter out suggestions for categories that already have a measure
-  const existingCategories = new Set(measures.value.map(m => m.category));
-  suggestions.value = forecasted.filter(f => !existingCategories.has(f.category));
+  // Filter out suggestions for (category, unitId) tuples that already have a measure
+  const existingKeys = new Set(measures.value.map(m => `${m.category}:${m.unitId || ''}`));
+  suggestions.value = forecasted.filter(f => !existingKeys.has(`${f.category}:${f.unitId || ''}`));
 }
 
 function suggestionToImpact(suggestion: ForecastedMeasure): MeasureImpactLocal {
@@ -559,6 +574,7 @@ function acceptSuggestion(index: number) {
     recurringIntervalPercent: 40,
     recurringCostPercent: 25,
     recurringCycleExtensionPercent: 40,
+    unitId: suggestion.unitId,
   };
   measures.value.push(measure);
   applyTaxSuggestion(measure);
@@ -586,6 +602,7 @@ function acceptAllSuggestions() {
       recurringIntervalPercent: 40,
       recurringCostPercent: 25,
       recurringCycleExtensionPercent: 40,
+      unitId: suggestion.unitId,
     };
     measures.value.push(measure);
     applyTaxSuggestion(measure);
@@ -615,6 +632,7 @@ onMounted(() => {
       recurringIntervalPercent: m.recurringConfig?.intervalPercent ?? 40,
       recurringCostPercent: m.recurringConfig?.costPercent ?? 25,
       recurringCycleExtensionPercent: m.recurringConfig?.cycleExtensionPercent ?? 40,
+      unitId: m.unitId,
     }));
   } else {
     // No existing measures → show the initial prompt
@@ -661,6 +679,7 @@ watch(
             costPercent: m.recurringCostPercent,
             cycleExtensionPercent: m.recurringCycleExtensionPercent,
           } : undefined,
+          unitId: m.unitId,
         };
       })
     });

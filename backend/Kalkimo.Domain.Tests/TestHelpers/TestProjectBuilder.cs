@@ -200,6 +200,80 @@ public static class TestProjectBuilder
     }
 
     /// <summary>
+    /// Projekt mit Unit-Level-Bauteilen (2 Wohneinheiten mit je 3 Komponenten)
+    /// </summary>
+    public static Project WithUnitComponents(this Project project)
+    {
+        var units = new[]
+        {
+            new Unit
+            {
+                Id = "unit-1",
+                Name = "WE 1",
+                Type = UnitType.Residential,
+                Area = 85m,
+                Rooms = 3,
+                Floor = "EG",
+                Status = UnitStatus.Rented,
+                Components = new[]
+                {
+                    new ComponentCondition { Category = CapExCategory.Kitchen, Condition = Condition.Fair, ExpectedCycleYears = 20, LastRenovationYear = 2010 },
+                    new ComponentCondition { Category = CapExCategory.Bathroom, Condition = Condition.Good, ExpectedCycleYears = 25, LastRenovationYear = 2005 },
+                    new ComponentCondition { Category = CapExCategory.UnitRenovation, Condition = Condition.Poor, ExpectedCycleYears = 15, LastRenovationYear = 2008 }
+                }
+            },
+            new Unit
+            {
+                Id = "unit-2",
+                Name = "WE 2",
+                Type = UnitType.Residential,
+                Area = 65m,
+                Rooms = 2,
+                Floor = "OG",
+                Status = UnitStatus.Rented,
+                Components = new[]
+                {
+                    new ComponentCondition { Category = CapExCategory.Kitchen, Condition = Condition.Good, ExpectedCycleYears = 20, LastRenovationYear = 2015 },
+                    new ComponentCondition { Category = CapExCategory.Bathroom, Condition = Condition.Fair, ExpectedCycleYears = 25, LastRenovationYear = 2010 },
+                    new ComponentCondition { Category = CapExCategory.UnitOther, Condition = Condition.Fair, ExpectedCycleYears = 20, LastRenovationYear = 2012 }
+                }
+            }
+        };
+
+        return project with
+        {
+            Property = project.Property with { Units = units }
+        };
+    }
+
+    /// <summary>
+    /// Standard-CapEx-Maßnahme auf Einheit-Ebene
+    /// </summary>
+    public static CapExMeasure CreateUnitMeasure(
+        string id = "unit-measure-1",
+        CapExCategory category = CapExCategory.Kitchen,
+        decimal cost = 15_000m,
+        int year = 2028,
+        int month = 1,
+        string unitId = "unit-1",
+        TaxClassification taxClass = TaxClassification.MaintenanceExpense)
+    {
+        return new CapExMeasure
+        {
+            Id = id,
+            Name = $"Test-{category}",
+            Category = category,
+            PlannedPeriod = new YearMonth(year, month),
+            EstimatedCost = Money.Euro(cost),
+            TaxClassification = taxClass,
+            IsExecuted = true,
+            IsNecessary = false,
+            Priority = MeasurePriority.Medium,
+            UnitId = unitId
+        };
+    }
+
+    /// <summary>
     /// Wiederkehrende CapEx-Maßnahme
     /// </summary>
     public static CapExMeasure CreateRecurringMeasure(

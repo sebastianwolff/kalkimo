@@ -3,10 +3,8 @@ title: Funktionen
 slug: funktionen
 metadata:
     description: "Alle Funktionen des Kalkimo Planners: Kaufkalkulation, Finanzierung, Steuerlogik, Cashflow, Szenarien und mehr."
-mascot_image: kalkimo.png
+mascot_image: kalkimo_f.png
 ---
-
-# Funktionen
 
 Der Kalkimo Planner bietet bankstandardnahe Immobilien-Investitionskalkulationen mit vollständiger deutscher Steuerlogik.
 

@@ -50,6 +50,4 @@ form:
         - display: /contact
 ---
 
-# Contact
-
 Have questions about Kalkimo Planner? Write to us – we'll get back to you as soon as possible.

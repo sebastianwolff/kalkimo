@@ -58,6 +58,9 @@ public record Unit
     public int? Rooms { get; init; }
     public string? Floor { get; init; }
     public UnitStatus Status { get; init; } = UnitStatus.Rented;
+
+    /// <summary>Bauteilzustände der Einheit (Küche, Bad, Böden etc.)</summary>
+    public IReadOnlyList<ComponentCondition> Components { get; init; } = [];
 }
 
 public enum UnitType

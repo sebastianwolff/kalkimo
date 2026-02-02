@@ -31,7 +31,12 @@
       "WebFetch(domain:www.haufe.de)",
       "WebFetch(domain:www.juhn.com)",
       "Bash(docker exec:*)",
-      "Bash(docker ps:*)"
+      "Bash(docker ps:*)",
+      "Bash(npx vite build)",
+      "Bash(for f in \"02.rechner/default.de.md\" \"02.rechner/default.en.md\" \"03.funktionen/default.de.md\" \"03.funktionen/default.en.md\" \"04.preise/default.de.md\" \"04.preise/default.en.md\" \"06.ueber-uns/default.de.md\" \"06.ueber-uns/default.en.md\" \"07.kontakt/form.de.md\" \"07.kontakt/form.en.md\" \"datenschutz/default.de.md\" \"datenschutz/default.en.md\" \"impressum/default.de.md\")",
+      "Bash(do sed -i '/^---$/{n;/^$/{ n;/^$/{d}}}' \"$f\")",
+      "Bash(done)",
+      "Bash(ls -la \"c:\\\\Users\\\\swolf\\\\source\\\\repos\\\\kalkimo\\\\backend\"\" 2>/dev/null || echo \"backend dir not found \")"
     ]
   }
 }

@@ -1,0 +1,482 @@
+{
+  "project": {
+    "name": {
+      "title": "Projektname",
+      "summary": "Ein eindeutiger Name hilft Ihnen, mehrere Investitionsprojekte zu unterscheiden.",
+      "detail": "Geben Sie Ihrem Projekt einen aussagekräftigen Namen, z.B. die Adresse oder eine Kurzbezeichnung.<br><br><b>Tipps:</b><ul><li>Verwenden Sie die Adresse oder eine Kombination aus Ort und Objekttyp</li><li>Bei mehreren Projekten erleichtert ein klarer Name den Vergleich</li><li>Der Name erscheint in Berichten und PDF-Exporten</li></ul>"
+    },
+    "description": {
+      "title": "Beschreibung",
+      "summary": "Optionale Notizen zum Projekt für Ihre eigene Dokumentation.",
+      "detail": "Halten Sie hier zusätzliche Informationen fest, die nicht in die Eingabefelder passen.<br><br><b>Beispiele:</b><ul><li>Besondere Verhandlungsbedingungen</li><li>Kontaktdaten des Maklers oder Verkäufers</li><li>Gründe für oder gegen den Kauf</li><li>Die Beschreibung wird im PDF-Export mit ausgegeben</li></ul>"
+    },
+    "currency": {
+      "title": "Währung",
+      "summary": "Alle Beträge und Ergebnisse werden in der gewählten Währung angezeigt.",
+      "detail": "Die Standardwährung ist Euro (EUR). Alle Eingabefelder und Berechnungsergebnisse verwenden diese Währung.<br><br><b>Hinweis:</b> Die Steuerberechnung basiert auf deutschem Steuerrecht und ist unabhängig von der gewählten Währung auf EUR ausgelegt."
+    },
+    "startDate": {
+      "title": "Startdatum",
+      "summary": "Beginn der Investitionsanalyse – in der Regel der geplante Kaufmonat.",
+      "detail": "Das Startdatum bestimmt den Beginn aller Cashflow-Berechnungen.<br><br><b>Auswirkungen:</b><ul><li>Erster Monat der Mieteinnahmen und Kreditraten</li><li>Beginn der AfA-Berechnung</li><li>Referenzpunkt für die 10-Jahres-Spekulationsfrist (§23 EStG)</li><li>Referenzpunkt für die 3-Jahres-/15%-Regel bei anschaffungsnahen HK</li></ul>"
+    },
+    "duration": {
+      "title": "Analysezeitraum",
+      "summary": "Projektionshorizont in Jahren – beeinflusst IRR, NPV und alle Langzeitprognosen.",
+      "detail": "Der Analysezeitraum bestimmt, über wie viele Jahre die Investition simuliert wird.<br><br><b>Typische Werte:</b><ul><li>10 Jahre: Mindesthaltedauer für steuerfreien Verkauf</li><li>15–20 Jahre: Üblicher Planungshorizont für Immobilieninvestoren</li><li>30 Jahre: Langfristanalyse bis zur Volltilgung</li></ul><b>Auswirkungen:</b><ul><li>IRR und NPV beziehen sich auf diesen Zeitraum</li><li>Längere Zeiträume zeigen den Vermögensaufbau durch Tilgung</li><li>Sanierungszyklen und Bauteilalterung werden über den gesamten Zeitraum berechnet</li></ul>"
+    },
+    "endDate": {
+      "title": "Enddatum",
+      "summary": "Alternative zur Laufzeitangabe – das Enddatum wird automatisch aus dem Analysezeitraum berechnet.",
+      "detail": "Das Enddatum markiert das Ende der Investitionssimulation. Es wird automatisch aus Startdatum und Analysezeitraum berechnet.<br><br>Alternativ können Sie das Enddatum direkt setzen, und der Analysezeitraum wird entsprechend angepasst."
+    }
+  },
+  "property": {
+    "type": {
+      "title": "Objekttyp",
+      "summary": "Bestimmt steuerliche Behandlung, WEG-Optionen und Standardwerte für die Berechnung.",
+      "detail": "Der Objekttyp beeinflusst mehrere Aspekte der Investitionsanalyse:<br><br><b>Verfügbare Typen:</b><ul><li><b>Einfamilienhaus:</b> Einzelobjekt, keine WEG</li><li><b>Eigentumswohnung:</b> WEG-Konfiguration wird sichtbar (MEA, Rücklage)</li><li><b>Mehrfamilienhaus:</b> Mehrere Einheiten, Einheitenverwaltung</li><li><b>Gemischt:</b> Wohn- und Gewerbenutzung</li></ul><b>Auswirkungen:</b><ul><li>WEG-Felder werden nur bei Eigentumswohnungen angezeigt</li><li>Einheitenverwaltung bei MFH und Gemischt</li><li>Standardwerte für Betriebskosten und Instandhaltung</li></ul>"
+    },
+    "constructionYear": {
+      "title": "Baujahr",
+      "summary": "Bestimmt den AfA-Satz und das Alter der Gebäudebestandteile.",
+      "detail": "Das Baujahr ist zentral für die steuerliche Behandlung und die Instandhaltungsprognose.<br><br><b>AfA-Sätze nach Baujahr:</b><ul><li><b>Ab 2023:</b> 3,0% lineare AfA (Neubau)</li><li><b>1925–2022:</b> 2,0% lineare AfA</li><li><b>Vor 1925:</b> 2,5% lineare AfA</li></ul><b>Weitere Auswirkungen:</b><ul><li>Berechnung des Bauteilalters für Sanierungsprognosen</li><li>Erneuerungszyklen basieren auf dem Baujahr</li><li>Zustandsfaktor in der Wertprognose</li></ul>"
+    },
+    "condition": {
+      "title": "Zustand",
+      "summary": "Beeinflusst den Zustandsfaktor in der Wertprognose und Sanierungsvorschläge.",
+      "detail": "Der Gebäudezustand wirkt sich auf die Wertermittlung und Instandhaltungsplanung aus.<br><br><b>Zustandsstufen:</b><ul><li><b>Neuwertig:</b> Zustandsfaktor ~100%</li><li><b>Gut:</b> Zustandsfaktor ~90%</li><li><b>Befriedigend:</b> Zustandsfaktor ~75%</li><li><b>Sanierungsbedürftig:</b> Zustandsfaktor ~55%</li><li><b>Kernsanierung nötig:</b> Zustandsfaktor ~35%</li></ul>Der Zustandsfaktor reduziert den theoretischen Marktwert und beeinflusst die Wertprognose im Property-Tab der Ergebnisse."
+    },
+    "totalArea": {
+      "title": "Gesamtfläche",
+      "summary": "Gesamte Gebäudefläche in m² – Basis für Sanierungskosten-Schätzungen.",
+      "detail": "Die Gesamtfläche umfasst alle Nutzflächen des Gebäudes (inkl. Gewerbeflächen, Keller, etc.).<br><br><b>Verwendung:</b><ul><li>Sanierungskosten werden häufig in EUR/m² geschätzt</li><li>Vergleichskennzahl für Instandhaltungskosten</li><li>Unterscheidet sich von der Wohnfläche bei gemischter Nutzung</li></ul>"
+    },
+    "livingArea": {
+      "title": "Wohnfläche",
+      "summary": "Vermietbare Wohnfläche in m² – Basis für Mietvergleiche und Marktwert.",
+      "detail": "Die Wohnfläche ist die nach Wohnflächenverordnung (WoFlV) berechnete Fläche.<br><br><b>Auswirkungen:</b><ul><li>Berechnung der Miete pro m² für Marktvergleiche</li><li>Marktwert-Schätzung über regionalen m²-Preis × Wohnfläche</li><li>Grundlage für Mietpreisbremse und Mietspiegelvergleich</li></ul>"
+    },
+    "landArea": {
+      "title": "Grundstücksfläche",
+      "summary": "Fläche des Grundstücks in m² – relevant für die Trennung von Gebäude- und Grundstückswert.",
+      "detail": "Die Grundstücksfläche wird für die Wertaufteilung benötigt.<br><br><b>Steuerliche Relevanz:</b><ul><li>Grundstückswert ist <b>nicht abschreibbar</b> (keine AfA auf Grund und Boden)</li><li>Je höher der Grundstücksanteil, desto geringer die AfA-Basis</li><li>Finanzamt akzeptiert die Aufteilung nach Bodenrichtwert × Fläche</li></ul>"
+    },
+    "unitCount": {
+      "title": "Anzahl Einheiten",
+      "summary": "Nur bei MFH und Gemischt – ermöglicht Pro-Einheit-Berechnungen.",
+      "detail": "Die Anzahl der Mieteinheiten ist relevant für Mehrfamilienhäuser und gemischt genutzte Objekte.<br><br><b>Auswirkungen:</b><ul><li>Miete und Kosten können pro Einheit erfasst werden</li><li>Leerstandsrisiko wird diversifiziert</li><li>Kennzahlen werden auch pro Einheit ausgewiesen</li></ul>"
+    },
+    "regionalPrice": {
+      "title": "Regionaler m²-Preis",
+      "summary": "Durchschnittlicher Kaufpreis pro m² in der Region – für Marktwertvergleich und Wertprognose.",
+      "detail": "Der regionale m²-Preis dient als Referenzwert für die Bewertung.<br><br><b>Auswirkungen:</b><ul><li>Vergleich: Ihr Kaufpreis/m² vs. regionaler Durchschnitt</li><li>Mean-Reversion in der Wertprognose: Langfristig nähert sich der Wert dem Marktdurchschnitt an</li><li>Bewertung im Property-Tab: unterbezahlt / fair / überbezahlt</li></ul><b>Quellen:</b> Immobilienportale, Gutachterausschüsse, lokaler Mietspiegel."
+    },
+    "components": {
+      "title": "Gebäudebestandteile",
+      "summary": "Tabelle der Bauteile mit Alter und Erneuerungszyklen für die Sanierungsprognose.",
+      "detail": "Jeder Gebäudebestandteil (Dach, Fenster, Heizung, etc.) hat einen Erneuerungszyklus.<br><br><b>Funktionsweise:</b><ul><li>Alter wird automatisch aus Baujahr berechnet</li><li>Erneuerungszyklus: typische Lebensdauer (z.B. Dach: 50 Jahre, Heizung: 25 Jahre)</li><li>Bauteile, deren Alter den Zyklus überschreitet, werden als sanierungsbedürftig markiert</li><li>Der Sanierungsstatus fließt in das Sanierungsrisiko und die Wertprognose ein</li></ul><b>Tipp:</b> Passen Sie das Alter an, wenn Bauteile bereits erneuert wurden."
+    }
+  },
+  "weg": {
+    "mea": {
+      "title": "Miteigentumsanteil (MEA)",
+      "summary": "Ihr Anteil am Gemeinschaftseigentum – bestimmt Ihren Kostenanteil in der WEG.",
+      "detail": "Der MEA wird üblicherweise in Tausendstel angegeben und steht in der Teilungserklärung.<br><br><b>Auswirkungen:</b><ul><li>Anteil an Instandhaltungsrücklage und Hausgeld</li><li>Anteil an Sonderumlagen</li><li>Stimmrecht in der Eigentümerversammlung (abhängig von Vereinbarung)</li></ul><b>Beispiel:</b> MEA 85/1000 bedeutet 8,5% Anteil an Gemeinschaftskosten."
+    },
+    "totalMea": {
+      "title": "Gesamt-MEA",
+      "summary": "Gesamte MEA-Summe des Gebäudes – in der Regel 1.000 oder 10.000.",
+      "detail": "Die Gesamt-MEA steht in der Teilungserklärung und ist die Summe aller Miteigentumsanteile des Gebäudes.<br><br>Übliche Werte sind 1.000 (Tausendstel) oder 10.000 (Zehntausendstel). Ihr prozentualer Anteil berechnet sich als: Ihr MEA / Gesamt-MEA × 100."
+    },
+    "reserveBalance": {
+      "title": "Rücklagenstand",
+      "summary": "Aktueller Stand der Instandhaltungsrücklage der WEG.",
+      "detail": "Die Instandhaltungsrücklage ist ein gemeinschaftliches Sparguthaben der WEG für zukünftige Sanierungen.<br><br><b>Relevanz:</b><ul><li>Hohe Rücklage reduziert das Risiko von Sonderumlagen</li><li>Angemessen: ca. 7–10 EUR/m² Wohnfläche pro Jahr × Gebäudealter</li><li>Bei Kauf prüfen: Niedrige Rücklage kann auf bevorstehende Sonderumlagen hindeuten</li></ul>"
+    }
+  },
+  "purchase": {
+    "price": {
+      "title": "Kaufpreis",
+      "summary": "Der vereinbarte Kaufpreis der Immobilie – Basis aller Renditeberechnungen.",
+      "detail": "Der Kaufpreis ist der zentrale Ausgangswert für die gesamte Investitionsanalyse.<br><br><b>Auswirkungen:</b><ul><li>Basis für die Berechnung der Kaufnebenkosten</li><li>AfA-Bemessungsgrundlage (abzüglich Grundstücksanteil)</li><li>Referenzwert für die Wertprognose</li><li>Bestimmt den Gesamtkapitalbedarf zusammen mit Nebenkosten und CapEx</li></ul>"
+    },
+    "date": {
+      "title": "Kaufdatum",
+      "summary": "Datum der notariellen Beurkundung – relevant für Spekulationsfrist und 15%-Regel.",
+      "detail": "Das Kaufdatum hat wichtige steuerliche Konsequenzen:<br><br><b>Steuerliche Fristen:</b><ul><li><b>10-Jahres-Frist (§23 EStG):</b> Verkaufsgewinn ist nach 10 Jahren steuerfrei</li><li><b>3-Jahres-Frist (15%-Regel):</b> Modernisierungskosten innerhalb von 3 Jahren nach Kauf, die 15% des Gebäudewerts überschreiten, gelten als anschaffungsnahe HK</li></ul>"
+    },
+    "landValue": {
+      "title": "Grundstücksanteil",
+      "summary": "Der nicht abschreibbare Anteil des Kaufpreises – reduziert die AfA-Basis.",
+      "detail": "Grund und Boden unterliegen keiner Abnutzung und können daher nicht abgeschrieben werden.<br><br><b>Ermittlung:</b><ul><li>Bodenrichtwert × Grundstücksfläche = Bodenwert</li><li>Alternativ: Prozentualer Anteil am Kaufpreis (typisch 20–40% in Städten)</li><li>Das Finanzamt kann die Aufteilung prüfen – eine fundierte Berechnung ist empfehlenswert</li></ul><b>Auswirkung:</b> Je geringer der Grundstücksanteil, desto höher die jährliche AfA-Ersparnis."
+    },
+    "costs": {
+      "title": "Kaufnebenkosten",
+      "summary": "Zusätzliche Kosten beim Immobilienerwerb – variieren je nach Bundesland.",
+      "detail": "Kaufnebenkosten erhöhen den Gesamtkapitalbedarf und sind teilweise steuerlich relevant.<br><br><b>Typische Kosten in Deutschland:</b><ul><li><b>Grunderwerbsteuer:</b> 3,5%–6,5% je nach Bundesland</li><li><b>Notar:</b> ca. 1,5% des Kaufpreises</li><li><b>Grundbuch:</b> ca. 0,5% des Kaufpreises</li><li><b>Makler:</b> 3%–7% (je nach Region und Vereinbarung)</li></ul><b>Steuerliche Behandlung:</b> Grunderwerbsteuer und Notar/Grundbuch erhöhen die AfA-Basis. Maklerkosten sind Werbungskosten."
+    },
+    "totalInvestment": {
+      "title": "Gesamtinvestition",
+      "summary": "Kaufpreis plus alle Nebenkosten – der tatsächliche Kapitalbedarf für den Erwerb.",
+      "detail": "Die Gesamtinvestition zeigt den vollständigen Kapitalbedarf:<br><br><b>Berechnung:</b><br>Kaufpreis + Grunderwerbsteuer + Notar + Grundbuch + Makler = Gesamtinvestition<br><br>Dieser Wert wird mit dem Eigenkapital und den Darlehen im Finanzierungsschritt abgeglichen."
+    }
+  },
+  "capex": {
+    "category": {
+      "title": "Kategorie",
+      "summary": "Zuordnung der Investition zu einem Gebäudebestandteil mit Standard-Erneuerungszyklus.",
+      "detail": "Die Kategorie ordnet die Investition einem Bauteil zu und bestimmt den Standard-Erneuerungszyklus.<br><br><b>Auswirkungen:</b><ul><li>Verknüpfung mit der Bauteil-Alterungsberechnung</li><li>Standardzyklus für wiederkehrende Wartung</li><li>Sanierungsrisiko-Bewertung pro Bauteil</li></ul>"
+    },
+    "amount": {
+      "title": "Investitionsbetrag",
+      "summary": "Kosten der geplanten Maßnahme – fließt in den Gesamtkapitalbedarf ein.",
+      "detail": "Der Investitionsbetrag wird im Cashflow zum geplanten Zeitpunkt als Ausgabe verbucht.<br><br><b>Auswirkungen:</b><ul><li>Erhöht den Gesamtkapitalbedarf (Finanzierungslücke)</li><li>Steuerliche Behandlung abhängig von der Klassifizierung</li><li>Bei der 15%-Regel werden alle CapEx-Beträge in den ersten 3 Jahren summiert</li></ul>"
+    },
+    "scheduledDate": {
+      "title": "Geplantes Datum",
+      "summary": "Zeitpunkt der Maßnahme – relevant für Cashflow-Timing und 15%-Regel.",
+      "detail": "Das geplante Datum bestimmt, wann die Investition im Cashflow erscheint.<br><br><b>Steuerliche Relevanz:</b><ul><li>Maßnahmen in den ersten 3 Jahren nach Kauf: 15%-Regel prüfen</li><li>Verteilung nach §82b: Beginn des Verteilungszeitraums</li><li>Modernisierungsumlage: Wirkt erst nach Fertigstellung</li></ul>"
+    },
+    "taxClassification": {
+      "title": "Steuerliche Behandlung",
+      "summary": "Bestimmt, wie die Investition steuerlich behandelt wird – sofort absetzbar, verteilt oder aktiviert.",
+      "detail": "Die steuerliche Klassifizierung hat erheblichen Einfluss auf den Cashflow nach Steuern:<br><br><b>Klassifizierungen:</b><ul><li><b>Sofort absetzbar:</b> Voller Abzug als Werbungskosten im Jahr der Zahlung</li><li><b>§82b-Verteilung:</b> Verteilung auf 2–5 Jahre (bei größeren Erhaltungsaufwendungen)</li><li><b>Aktivierung (Modernisierung):</b> Abschreibung über die Restnutzungsdauer des Gebäudes</li><li><b>Anschaffungsnah:</b> Pflichtaktivierung wenn 15%-Grenze überschritten</li></ul>"
+    },
+    "costSavings": {
+      "title": "Betriebskostenersparnis",
+      "summary": "Monatliche Einsparung durch die Maßnahme – verbessert den NOI.",
+      "detail": "Energetische Sanierungen oder Modernisierungen können die laufenden Betriebskosten senken.<br><br><b>Beispiele:</b><ul><li>Neue Heizung: Reduzierte Energiekosten</li><li>Dämmung: Geringere Heizkosten</li><li>LED-Beleuchtung: Weniger Stromkosten</li></ul>Die Einsparung wird ab Fertigstellung (nach Bauzeit) im monatlichen Cashflow berücksichtigt."
+    },
+    "rentIncrease": {
+      "title": "Mieterhöhung pro Monat",
+      "summary": "Mögliche Mieterhöhung durch Modernisierungsumlage nach §559 BGB.",
+      "detail": "Nach einer Modernisierung können bis zu 8% der Kosten jährlich auf die Miete umgelegt werden (§559 BGB).<br><br><b>Gesetzliche Grenzen:</b><ul><li>Max. 8% der Modernisierungskosten pro Jahr</li><li>Max. 3 EUR/m² Erhöhung innerhalb von 6 Jahren</li><li>Max. 2 EUR/m² bei Mieten unter 7 EUR/m²</li><li>Härtefallprüfung bei mehr als 30% des Haushaltseinkommens</li></ul>Die Mieterhöhung wirkt erst nach Ablauf der Bauzeit."
+    },
+    "rentIncreasePercent": {
+      "title": "Mieterhöhung (%)",
+      "summary": "Prozentuale Mieterhöhung als Alternative zur Betragsangabe.",
+      "detail": "Alternativ zur absoluten Mieterhöhung können Sie die Erhöhung als Prozentsatz der aktuellen Miete angeben.<br><br>Die gleichen gesetzlichen Grenzen wie bei der Betragsangabe gelten."
+    },
+    "delayMonths": {
+      "title": "Bauzeit / Verzögerung",
+      "summary": "Monate bis die Maßnahme abgeschlossen ist und Mieterhöhung/Einsparung wirkt.",
+      "detail": "Während der Bauzeit fallen bereits Kosten an, aber Mieterhöhungen und Einsparungen greifen erst nach Fertigstellung.<br><br><b>Auswirkungen:</b><ul><li>Mieterhöhung wirkt erst nach Ablauf der Bauzeit</li><li>Betriebskostenersparnis beginnt nach Fertigstellung</li><li>Bei umfangreichen Sanierungen: Eventuell kein Mieteingang während der Bauphase</li></ul>"
+    },
+    "recurringInterval": {
+      "title": "Wartungsintervall (% des Zyklus)",
+      "summary": "Regelmäßige Wartung in Prozent des Erneuerungszyklus des Bauteils.",
+      "detail": "Regelmäßige Wartung kann die Lebensdauer eines Bauteils verlängern.<br><br><b>Beispiel:</b> Heizungswartung alle 5% des 25-Jahres-Zyklus = alle 1,25 Jahre<br><br>Die Wartungskosten erscheinen regelmäßig im Cashflow und beeinflussen den Zustand des Bauteils."
+    },
+    "recurringCost": {
+      "title": "Wartungskosten (% der Erneuerung)",
+      "summary": "Kosten pro Wartungsdurchführung als Prozentsatz der Gesamterneuerungskosten.",
+      "detail": "Die Wartungskosten werden als Anteil der Erneuerungskosten berechnet.<br><br><b>Beispiel:</b> Erneuerungskosten 50.000 EUR, Wartungskosten 2% = 1.000 EUR pro Durchführung<br><br>Regelmäßige Wartung ist steuerlich als Erhaltungsaufwand sofort absetzbar."
+    },
+    "cycleExtension": {
+      "title": "Zyklusverlängerung",
+      "summary": "Wie stark regelmäßige Wartung den Erneuerungszyklus des Bauteils verlängert.",
+      "detail": "Regelmäßige Wartung kann den Erneuerungszyklus verlängern und so die Gesamtkosten senken.<br><br><b>Beispiel:</b> 20% Verlängerung bei einem 25-Jahres-Zyklus = effektiv 30 Jahre<br><br>Die Verlängerung wirkt sich positiv auf die Wertprognose und das Sanierungsrisiko aus."
+    }
+  },
+  "financing": {
+    "equity": {
+      "title": "Eigenkapital",
+      "summary": "Ihr eingesetztes Kapital – bestimmt den Leverage-Effekt und die EK-Rendite.",
+      "detail": "Das Eigenkapital ist Ihr persönlicher Kapitaleinsatz für die Investition.<br><br><b>Auswirkungen:</b><ul><li><b>Leverage-Effekt:</b> Weniger EK = höhere Rendite auf EK (bei positiver Gesamtrendite), aber auch höheres Risiko</li><li><b>LTV:</b> Eigenkapital bestimmt den Beleihungsauslauf</li><li><b>Cash-on-Cash:</b> Jährlicher Cashflow bezogen auf eingesetztes EK</li><li><b>Bankkonditionen:</b> Mehr EK = bessere Zinsen (typisch: min. 20% EK)</li></ul>"
+    },
+    "principal": {
+      "title": "Darlehensbetrag",
+      "summary": "Höhe des Bankdarlehens – zusammen mit EK ergibt sich der Gesamtkapitalbedarf.",
+      "detail": "Der Darlehensbetrag bestimmt die monatliche Belastung und den Zinsaufwand.<br><br><b>Faustregeln:</b><ul><li>Gesamtkapitalbedarf = Kaufpreis + Nebenkosten + geplante CapEx</li><li>Darlehensbetrag = Gesamtkapitalbedarf − Eigenkapital</li><li>Zinsen sind als Werbungskosten steuerlich absetzbar</li><li>Tilgung ist nicht absetzbar, baut aber Vermögen auf</li></ul>"
+    },
+    "interestRate": {
+      "title": "Sollzins",
+      "summary": "Jährlicher Nominalzins des Darlehens – steuerlich absetzbar als Werbungskosten.",
+      "detail": "Der Sollzins bestimmt die Zinskosten und damit einen wesentlichen Teil des Cashflows.<br><br><b>Auswirkungen:</b><ul><li>Zinsen sind vollständig als Werbungskosten absetzbar</li><li>Höherer Zins = höhere Steuerersparnis, aber niedrigerer Cashflow</li><li>Der effektive Zins (mit Nebenkosten) kann höher sein als der Sollzins</li></ul><b>Aktuelle Richtwerte:</b> Abhängig von Zinsbindung, LTV und Bonität."
+    },
+    "initialRepayment": {
+      "title": "Anfängliche Tilgung",
+      "summary": "Tilgungssatz im ersten Jahr – typisch 1–3%, beeinflusst Laufzeit und Monatsrate.",
+      "detail": "Die anfängliche Tilgung bestimmt zusammen mit dem Zins die Monatsrate (Annuität).<br><br><b>Typische Werte:</b><ul><li><b>1%:</b> Niedrige Rate, sehr lange Laufzeit (~45 Jahre)</li><li><b>2%:</b> Ausgewogen, Laufzeit ca. 30 Jahre</li><li><b>3%:</b> Schnellere Entschuldung, ca. 25 Jahre</li></ul><b>Hinweis:</b> Bei einem Annuitätendarlehen steigt der Tilgungsanteil automatisch, da der Zinsanteil mit sinkender Restschuld abnimmt."
+    },
+    "fixedInterestYears": {
+      "title": "Zinsbindung",
+      "summary": "Zeitraum mit festem Zinssatz – danach Prolongationsrisiko.",
+      "detail": "Nach Ablauf der Zinsbindung muss der Kredit zu dann aktuellen Konditionen verlängert werden.<br><br><b>Übliche Laufzeiten:</b><ul><li><b>5 Jahre:</b> Niedrigster Zins, höchstes Prolongationsrisiko</li><li><b>10 Jahre:</b> Standard, guter Kompromiss</li><li><b>15–20 Jahre:</b> Höherer Zins, maximale Planungssicherheit</li></ul><b>Risiko:</b> Nach Ablauf können sich die Zinsen deutlich verändert haben. Die Berechnung nimmt nach Ablauf der Zinsbindung den gleichen Zinssatz an."
+    },
+    "totalCapitalNeed": {
+      "title": "Gesamtkapitalbedarf",
+      "summary": "Summe aus Kaufpreis, Nebenkosten und geplanten Investitionen.",
+      "detail": "Der Gesamtkapitalbedarf zeigt, wie viel Kapital Sie insgesamt benötigen:<br><br><b>Berechnung:</b><br>Kaufpreis + Kaufnebenkosten + geplante CapEx-Maßnahmen = Gesamtkapitalbedarf<br><br>Dieser Betrag muss durch Eigenkapital und Darlehen gedeckt werden."
+    },
+    "gap": {
+      "title": "Finanzierungslücke",
+      "summary": "Differenz zwischen Gesamtkapitalbedarf und verfügbarer Finanzierung (EK + Darlehen).",
+      "detail": "Die Finanzierungslücke zeigt, ob Ihre Finanzierung vollständig ist:<br><br><ul><li><b>Lücke = 0:</b> Finanzierung passt genau</li><li><b>Lücke > 0:</b> Sie benötigen mehr EK oder ein höheres Darlehen</li><li><b>Lücke < 0:</b> Sie haben mehr Kapital als nötig – der Überschuss könnte anderweitig investiert werden</li></ul>"
+    }
+  },
+  "rent": {
+    "monthlyRent": {
+      "title": "Kaltmiete",
+      "summary": "Monatliche Nettokaltmiete – Basis für die gesamte Ertragsberechnung.",
+      "detail": "Die Kaltmiete (Nettomiete ohne Nebenkosten) ist die wichtigste Ertragskomponente.<br><br><b>Auswirkungen:</b><ul><li>Basis für NOI (Net Operating Income)</li><li>Bestimmt die Bruttomietrendite und Cash-on-Cash-Rendite</li><li>Steuerliches Bruttoeinkommen aus Vermietung</li></ul><b>Tipp:</b> Orientieren Sie sich am lokalen Mietspiegel für eine realistische Einschätzung."
+    },
+    "serviceCharge": {
+      "title": "Nebenkosten (Hausgeld)",
+      "summary": "Monatliche umlagefähige Nebenkosten – durchlaufender Posten, nicht renditeerhöhend.",
+      "detail": "Nebenkosten werden vom Mieter getragen und sind für den Vermieter ein durchlaufender Posten.<br><br><b>Typische Bestandteile:</b><ul><li>Heizung und Warmwasser</li><li>Wasser und Abwasser</li><li>Müllabfuhr und Straßenreinigung</li><li>Hausverwaltung</li><li>Versicherungen</li></ul>Nicht umlagefähige Kosten (z.B. Instandhaltung, Verwaltung) trägt der Vermieter."
+    },
+    "annualIncrease": {
+      "title": "Jährliche Mietsteigerung",
+      "summary": "Erwartete jährliche Mieterhöhung in Prozent – beeinflusst langfristige Ertragsprognose.",
+      "detail": "Die Mietsteigerung bestimmt das Wachstum der Mieteinnahmen über den Analysezeitraum.<br><br><b>Richtwerte:</b><ul><li><b>1–2%:</b> Konservativ, orientiert an Inflationsrate</li><li><b>2–3%:</b> In Wachstumsregionen realistisch</li><li><b>0%:</b> Stagnation, z.B. bei Mietpreisbremse</li></ul><b>Hinweis:</b> Bei bestehenden Mietverträgen gelten die gesetzlichen Grenzen (Kappungsgrenze 20% in 3 Jahren, bzw. 15% in angespannten Märkten)."
+    },
+    "vacancy": {
+      "title": "Leerstandsquote",
+      "summary": "Erwarteter Anteil unvermieteter Zeit – reduziert die effektive Mieteinnahme.",
+      "detail": "Die Leerstandsquote berücksichtigt Mieterwechsel und unvermietete Zeiträume.<br><br><b>Typische Werte:</b><ul><li><b>2–3%:</b> Gute Lagen, hohe Nachfrage</li><li><b>5%:</b> Durchschnittlicher Wert</li><li><b>8–10%:</b> Schwächere Lagen oder Spezialobjekte</li></ul><b>Berechnung:</b> Effektive Miete = Kaltmiete × (1 − Leerstandsquote)"
+    },
+    "rentLossReserve": {
+      "title": "Mietausfallreserve",
+      "summary": "Liquiditätspuffer in Monatsmieten – für unerwartete Ausfälle und Leerstandsphasen.",
+      "detail": "Die Mietausfallreserve ist ein Liquiditätspuffer für unvorhergesehene Mietausfälle.<br><br><b>Empfehlung:</b><ul><li><b>3 Monate:</b> Minimum für eine Einheit</li><li><b>6 Monate:</b> Empfohlen bei Einzelobjekten</li><li><b>2 Monate:</b> Ausreichend bei MFH mit guter Diversifikation</li></ul>Dieser Wert fließt in die Berechnung des Liquiditätsrisikos ein."
+    }
+  },
+  "costs": {
+    "maintenanceReserve": {
+      "title": "Instandhaltungsrücklage",
+      "summary": "Monatliche Rücklage für Instandhaltung – Cashflow-relevant, aber steuerlich erst bei Verwendung absetzbar.",
+      "detail": "Die Instandhaltungsrücklage ist ein Sparbetrag für zukünftige Reparaturen und Sanierungen.<br><br><b>Wichtig:</b><ul><li>Reduziert den monatlichen Cashflow</li><li>Steuerlich <b>nicht</b> als Werbungskosten absetzbar (erst bei tatsächlicher Verwendung)</li><li>Bildet einen Puffer für ungeplante Ausgaben</li><li>Bei WEG: Wird über das Hausgeld erhoben</li></ul><b>Richtwert:</b> ca. 7–12 EUR/m² Wohnfläche pro Jahr."
+    },
+    "monthlyAmount": {
+      "title": "Monatliche Kosten",
+      "summary": "Einzelne Betriebskostenposition pro Monat – reduziert den NOI.",
+      "detail": "Jede Kostenposition reduziert das Nettobetriebsergebnis (NOI).<br><br><b>Typische Positionen:</b><ul><li>Verwaltungskosten</li><li>Versicherungen</li><li>Grundsteuer</li><li>Wartungsverträge</li></ul>Ob die Kosten umlagefähig sind, beeinflusst die steuerliche Behandlung und den Netto-Ertrag."
+    },
+    "isTransferable": {
+      "title": "Umlagefähig",
+      "summary": "Ob diese Kosten auf den Mieter umgelegt werden können (nach BetrKV).",
+      "detail": "Umlagefähige Kosten können im Rahmen der Betriebskostenabrechnung an den Mieter weitergegeben werden.<br><br><b>Umlagefähig (BetrKV):</b><ul><li>Grundsteuer, Wasser, Abwasser</li><li>Heizung, Warmwasser</li><li>Aufzug, Straßenreinigung, Müllabfuhr</li><li>Gartenpflege, Versicherungen</li></ul><b>Nicht umlagefähig:</b><ul><li>Verwaltungskosten</li><li>Instandhaltung und Instandsetzung</li><li>Rücklagen für Reparaturen</li></ul>"
+    }
+  },
+  "tax": {
+    "marginalRate": {
+      "title": "Grenzsteuersatz",
+      "summary": "Ihr persönlicher Spitzensteuersatz – nicht der effektive, sondern der marginale Satz.",
+      "detail": "Der Grenzsteuersatz bestimmt, wie stark sich steuerliche Abzüge (AfA, Zinsen) auf Ihren Cashflow auswirken.<br><br><b>Typische Werte:</b><ul><li><b>42%:</b> Ab ca. 62.810 EUR zu versteuerndem Einkommen (2024)</li><li><b>45%:</b> Ab ca. 277.826 EUR (Reichensteuersatz)</li><li><b>25–35%:</b> Mittlere Einkommen</li></ul><b>Hinweis:</b> Dies ist <b>nicht</b> der durchschnittliche Steuersatz, sondern der Satz auf den letzten verdienten Euro. Die Immobilieneinkünfte werden mit diesem Satz besteuert."
+    },
+    "churchTax": {
+      "title": "Kirchensteuer",
+      "summary": "Zusätzlich zur Einkommensteuer – 8% oder 9% je nach Bundesland.",
+      "detail": "Die Kirchensteuer wird als Zuschlag auf die Einkommensteuer erhoben.<br><br><b>Sätze:</b><ul><li><b>8%:</b> Bayern und Baden-Württemberg</li><li><b>9%:</b> Alle übrigen Bundesländer</li><li><b>0%:</b> Wenn nicht kirchensteuerpflichtig</li></ul>Die Kirchensteuer erhöht die effektive Steuerbelastung auf die Mieteinnahmen um ca. 3–4 Prozentpunkte."
+    },
+    "isCorporate": {
+      "title": "Kapitalgesellschaft",
+      "summary": "GmbH oder andere Kapitalgesellschaft – fundamental andere Besteuerung als Privatperson.",
+      "detail": "Die Besteuerung unterscheidet sich grundlegend zwischen natürlicher und juristischer Person:<br><br><b>Privatperson (ESt):</b><ul><li>Grenzsteuersatz 0–45% + SolZ + KiSt</li><li>§23 EStG: Steuerfreier Verkauf nach 10 Jahren</li><li>AfA, §82b verfügbar</li></ul><b>Kapitalgesellschaft:</b><ul><li>Körperschaftsteuer: 15% + 5,5% SolZ = 15,825%</li><li>Gewerbesteuer: ca. 14–17% (Hebesatz-abhängig)</li><li>Gesamt: ca. 30%</li><li>Kein steuerfreier Verkauf nach 10 Jahren</li></ul>"
+    },
+    "depreciation": {
+      "title": "AfA (Absetzung für Abnutzung)",
+      "summary": "Steuerliche Gebäudeabschreibung – der Satz richtet sich nach dem Baujahr.",
+      "detail": "Die AfA ist einer der wichtigsten Steuervorteile bei Immobilien:<br><br><b>AfA-Sätze:</b><ul><li><b>3,0% p.a.:</b> Neubauten ab 01.01.2023</li><li><b>2,0% p.a.:</b> Gebäude 1925–2022</li><li><b>2,5% p.a.:</b> Gebäude vor 1925</li></ul><b>AfA-Basis:</b> Kaufpreis + Kaufnebenkosten − Grundstücksanteil<br><br><b>Beispiel:</b> Kaufpreis 300.000 EUR, Grundstücksanteil 30% → AfA-Basis 210.000 EUR × 2% = 4.200 EUR/Jahr Steuerersparnis bei 42% Grenzsteuersatz: 1.764 EUR."
+    },
+    "section82b": {
+      "title": "§82b EStDV – Verteilung",
+      "summary": "Größere Erhaltungsaufwendungen können auf 2–5 Jahre verteilt werden.",
+      "detail": "§82b EStDV erlaubt die Verteilung größerer Erhaltungsaufwendungen auf 2–5 Jahre:<br><br><b>Voraussetzungen:</b><ul><li>Nur für Gebäude, die überwiegend Wohnzwecken dienen</li><li>Nur Erhaltungsaufwand (keine Herstellungskosten)</li><li>Freiwillige Wahl des Verteilungszeitraums</li></ul><b>Vorteil:</b> Vermeidung von Steuerspitzen. Bei gleichmäßiger Verteilung auf 5 Jahre wird die Steuerprogression geglättet."
+    },
+    "distributionYears": {
+      "title": "Verteilungszeitraum",
+      "summary": "Anzahl der Jahre für die §82b-Verteilung – 2 bis 5 Jahre wählbar.",
+      "detail": "Wählen Sie den optimalen Verteilungszeitraum basierend auf Ihrer Steuersituation:<br><br><b>Optimierung:</b><ul><li><b>2 Jahre:</b> Schnellerer Steuereffekt, sinnvoll bei hohem und gleichmäßigem Einkommen</li><li><b>3–4 Jahre:</b> Guter Kompromiss</li><li><b>5 Jahre:</b> Maximale Glättung, sinnvoll bei schwankendem Einkommen</li></ul>"
+    },
+    "section23": {
+      "title": "§23 EStG – Spekulationsfrist",
+      "summary": "Verkaufsgewinn bei Privatpersonen: Nach 10 Jahren Haltedauer steuerfrei.",
+      "detail": "§23 EStG regelt die Besteuerung von Immobilienverkäufen bei Privatpersonen:<br><br><b>Regeln:</b><ul><li><b>Haltedauer > 10 Jahre:</b> Verkaufsgewinn komplett steuerfrei</li><li><b>Haltedauer ≤ 10 Jahre:</b> Gewinn wird mit persönlichem Steuersatz versteuert</li><li><b>Freigrenze:</b> 1.000 EUR pro Jahr (seit 2024) – bei Überschreitung wird der gesamte Gewinn versteuert</li></ul><b>Berechnung:</b> Gewinn = Verkaufspreis − Anschaffungskosten − Veräußerungskosten + bereits abgesetzte AfA"
+    }
+  },
+  "summary": {
+    "irrAfterTax": {
+      "title": "IRR nach Steuern",
+      "summary": "Interner Zinsfuß unter Berücksichtigung aller Steuereffekte – die zentrale Renditekennzahl.",
+      "detail": "Der IRR nach Steuern zeigt die tatsächliche Rendite Ihres eingesetzten Eigenkapitals:<br><br><b>Berechnung:</b> Der Zinssatz, bei dem der Barwert aller Cashflows (nach Steuern) gleich dem eingesetzten Eigenkapital ist.<br><br><b>Interpretation:</b><ul><li><b>&gt; 5%:</b> Gute Rendite für Immobilien</li><li><b>3–5%:</b> Akzeptabel</li><li><b>&lt; 3%:</b> Fragwürdig – Alternativen prüfen</li></ul><b>Vergleich:</b> Vergleichen Sie mit alternativen Anlagen (Festgeld, ETFs) unter Berücksichtigung des Risikos."
+    },
+    "irrBeforeTax": {
+      "title": "IRR vor Steuern",
+      "summary": "Interner Zinsfuß ohne Steuereffekte – zeigt die operative Rendite.",
+      "detail": "Der IRR vor Steuern zeigt die Rendite des Projekts unabhängig von der persönlichen Steuersituation.<br><br><b>Nutzen:</b><ul><li>Vergleich verschiedener Projekte unabhängig von Steuereffekten</li><li>Objektive Bewertung der Immobilienqualität</li><li>Differenz zum IRR nach Steuern zeigt den Steuereffekt</li></ul>"
+    },
+    "npvAfterTax": {
+      "title": "Kapitalwert (NPV)",
+      "summary": "Barwert aller zukünftigen Cashflows abzüglich des eingesetzten Eigenkapitals.",
+      "detail": "Der NPV beantwortet die Frage: Wie viel ist diese Investition heute wert?<br><br><b>Interpretation:</b><ul><li><b>NPV &gt; 0:</b> Investition schafft Mehrwert – lohnenswert</li><li><b>NPV = 0:</b> Investition erreicht genau die Zielrendite</li><li><b>NPV &lt; 0:</b> Investition schafft weniger als die Zielrendite – kritisch prüfen</li></ul><b>Diskontierungssatz:</b> Der NPV verwendet den Sollzins als Diskontierungssatz."
+    },
+    "cashOnCash": {
+      "title": "Cash-on-Cash-Rendite",
+      "summary": "Verhältnis von Jahres-Cashflow zu eingesetztem Eigenkapital im ersten Jahr.",
+      "detail": "Die Cash-on-Cash-Rendite zeigt die direkte Verzinsung Ihres Eigenkapitals im ersten Jahr:<br><br><b>Berechnung:</b> Jährlicher Cashflow (nach Schuldendienst) / Eigenkapital × 100<br><br><b>Interpretation:</b><ul><li><b>&gt; 6%:</b> Sehr gut</li><li><b>3–6%:</b> Gut</li><li><b>&lt; 3%:</b> Gering, aber ggf. durch Wertsteigerung ausgeglichen</li></ul><b>Hinweis:</b> Diese Kennzahl berücksichtigt nicht die Tilgung (Vermögensaufbau) und Wertsteigerung."
+    },
+    "equityMultiple": {
+      "title": "Eigenkapital-Multiple",
+      "summary": "Wie oft Sie Ihr eingesetztes Eigenkapital über den Analysezeitraum zurückerhalten.",
+      "detail": "Das Eigenkapital-Multiple zeigt den Gesamtrückfluss bezogen auf Ihren Kapitaleinsatz:<br><br><b>Berechnung:</b> (Kumulierter Cashflow + Verkaufserlös) / eingesetztes Eigenkapital<br><br><b>Interpretation:</b><ul><li><b>&gt; 2,0x:</b> Verdopplung des Eigenkapitals</li><li><b>1,5–2,0x:</b> Guter Vermögensaufbau</li><li><b>&lt; 1,0x:</b> Kapitalverlust</li></ul>"
+    },
+    "roi": {
+      "title": "Eigenkapitalrendite (ROI)",
+      "summary": "Annualisierte Rendite auf das eingesetzte Eigenkapital über den gesamten Analysezeitraum.",
+      "detail": "Der ROI zeigt die durchschnittliche jährliche Rendite Ihres Eigenkapitals:<br><br><b>Berechnung:</b> Annualisierte Rendite basierend auf Gesamtrückfluss und eingesetztem EK.<br><br>Im Unterschied zum IRR berücksichtigt der ROI nicht das Timing der Cashflows, sondern nur den Gesamtertrag."
+    },
+    "dscrMin": {
+      "title": "DSCR (Minimum)",
+      "summary": "Schuldendienstdeckungsgrad im schwächsten Jahr – zentrale Bankenkennzahl.",
+      "detail": "Der DSCR zeigt, wie gut die Mieteinnahmen den Schuldendienst decken:<br><br><b>Berechnung:</b> NOI / Schuldendienst (Zins + Tilgung)<br><br><b>Interpretation:</b><ul><li><b>&gt; 1,4:</b> Komfortabel</li><li><b>1,2–1,4:</b> Akzeptabel für Banken</li><li><b>&lt; 1,2:</b> Kritisch – Bank könnte ablehnen</li><li><b>&lt; 1,0:</b> Mieteinnahmen decken Kreditrate nicht</li></ul>Der Minimum-DSCR zeigt das schwächste Jahr und ist der konservativste Indikator."
+    },
+    "dscrAvg": {
+      "title": "DSCR (Durchschnitt)",
+      "summary": "Durchschnittlicher Schuldendienstdeckungsgrad über den Analysezeitraum.",
+      "detail": "Der durchschnittliche DSCR gibt ein Gesamtbild der Schuldendienstfähigkeit:<br><br>Ein Durchschnittswert über 1,3 zeigt eine solide Finanzierung. Beachten Sie aber den Minimum-DSCR für die Worst-Case-Betrachtung."
+    },
+    "icrMin": {
+      "title": "ICR (Minimum)",
+      "summary": "Minimaler Zinsdeckungsgrad – NOI geteilt durch die reinen Zinszahlungen.",
+      "detail": "Der ICR (Interest Coverage Ratio) betrachtet nur die Zinszahlungen (ohne Tilgung):<br><br><b>Berechnung:</b> NOI / Zinszahlungen<br><br><b>Interpretation:</b><ul><li><b>&gt; 2,0:</b> Komfortabel</li><li><b>1,5–2,0:</b> Akzeptabel</li><li><b>&lt; 1,5:</b> Erhöhtes Risiko</li></ul>Der ICR ist weniger streng als der DSCR, da er die Tilgung nicht einbezieht."
+    },
+    "ltvInitial": {
+      "title": "LTV (initial)",
+      "summary": "Beleihungsauslauf bei Kaufzeitpunkt – Verhältnis Darlehen zu Immobilienwert.",
+      "detail": "Der anfängliche LTV zeigt den Verschuldungsgrad bei Erwerb:<br><br><b>Berechnung:</b> Darlehenssumme / Immobilienwert × 100<br><br><b>Typische Werte:</b><ul><li><b>60%:</b> Konservativ, beste Zinskonditionen</li><li><b>70–80%:</b> Üblich, akzeptable Konditionen</li><li><b>&gt; 80%:</b> Erhöhter Zinsaufschlag</li><li><b>&gt; 100%:</b> Vollfinanzierung inkl. Nebenkosten</li></ul>"
+    },
+    "ltvFinal": {
+      "title": "LTV (final)",
+      "summary": "Beleihungsauslauf am Ende des Analysezeitraums – zeigt den Entschuldungsfortschritt.",
+      "detail": "Der finale LTV zeigt, wie weit die Entschuldung nach dem Analysezeitraum fortgeschritten ist:<br><br><b>Einflussfaktoren:</b><ul><li>Tilgung reduziert die Restschuld</li><li>Wertsteigerung der Immobilie reduziert den LTV zusätzlich</li></ul>Ein sinkender LTV zeigt den Vermögensaufbau durch Tilgung und Wertsteigerung."
+    },
+    "breakEvenRent": {
+      "title": "Break-Even Miete",
+      "summary": "Mindestmiete, um alle laufenden Kosten (Schuldendienst + Betriebskosten) zu decken.",
+      "detail": "Die Break-Even Miete zeigt die minimale monatliche Miete für einen ausgeglichenen Cashflow:<br><br><b>Berechnung:</b> (Schuldendienst + nicht umlagefähige Betriebskosten + Instandhaltung) / 12<br><br>Liegt Ihre tatsächliche Miete über der Break-Even Miete, haben Sie einen positiven monatlichen Cashflow."
+    },
+    "riskMaintenance": {
+      "title": "Sanierungsrisiko",
+      "summary": "Risiko-Score 0–100 basierend auf dem Alter und Zustand der Gebäudebestandteile.",
+      "detail": "Das Sanierungsrisiko bewertet die Wahrscheinlichkeit größerer ungeplanter Instandhaltungsmaßnahmen:<br><br><b>Faktoren:</b><ul><li>Alter der Bauteile relativ zum Erneuerungszyklus</li><li>Anzahl überfälliger Bauteile</li><li>Geschätzte Erneuerungskosten</li></ul><b>Skala:</b><ul><li><b>0–30:</b> Niedriges Risiko (grün)</li><li><b>30–60:</b> Mittleres Risiko (gelb)</li><li><b>60–100:</b> Hohes Risiko (rot)</li></ul>"
+    },
+    "riskLiquidity": {
+      "title": "Liquiditätsrisiko",
+      "summary": "Risiko-Score 0–100 basierend auf DSCR, Reserven und Leerstandsquote.",
+      "detail": "Das Liquiditätsrisiko bewertet die Wahrscheinlichkeit von Zahlungsschwierigkeiten:<br><br><b>Faktoren:</b><ul><li>DSCR-Niveau (je niedriger, desto höheres Risiko)</li><li>Höhe der Mietausfallreserve</li><li>Leerstandsquote</li><li>Finanzierungslücke</li></ul><b>Skala:</b><ul><li><b>0–30:</b> Niedriges Risiko (grün)</li><li><b>30–60:</b> Mittleres Risiko (gelb)</li><li><b>60–100:</b> Hohes Risiko (rot)</li></ul>"
+    },
+    "cf": {
+      "effectiveRent": {
+        "title": "Effektive Nettomiete",
+        "summary": "Bruttomiete abzüglich Leerstand – die tatsächlich erzielbare Mieteinnahme.",
+        "detail": "Die effektive Nettomiete berücksichtigt den erwarteten Leerstand:<br><br><b>Berechnung:</b> Kaltmiete × (1 − Leerstandsquote) × 12 Monate<br><br>Dies ist der realistische Mietertrag, der in alle weiteren Berechnungen einfließt."
+      },
+      "noi": {
+        "title": "NOI (Net Operating Income)",
+        "summary": "Nettobetriebsergebnis: Effektive Miete minus alle Betriebskosten.",
+        "detail": "Das NOI ist die zentrale Ertrags-Kennzahl für Immobilien:<br><br><b>Berechnung:</b> Effektive Miete − nicht umlagefähige Betriebskosten − Instandhaltungsrücklage<br><br><b>Bedeutung:</b><ul><li>Basis für DSCR-Berechnung</li><li>Zeigt die operative Ertragskraft unabhängig von der Finanzierung</li><li>Vergleichbar zwischen verschiedenen Objekten</li></ul>"
+      },
+      "beforeTax": {
+        "title": "Cashflow vor Steuern",
+        "summary": "NOI abzüglich Schuldendienst und CapEx – der Cashflow vor Einkommensteuer.",
+        "detail": "Der Cashflow vor Steuern zeigt den operativen Überschuss nach Finanzierung:<br><br><b>Berechnung:</b> NOI − Zins − Tilgung − CapEx-Zahlungen<br><br>Ein negativer Wert bedeutet: Sie müssen Geld zuschießen. Ein positiver Wert: Die Immobilie trägt sich selbst."
+      },
+      "afterTax": {
+        "title": "Cashflow nach Steuern",
+        "summary": "Der endgültige verfügbare Cashflow nach Einkommensteuer.",
+        "detail": "Der Cashflow nach Steuern ist der tatsächlich verfügbare Betrag:<br><br><b>Berechnung:</b> Cashflow vor Steuern − Einkommensteuer auf Vermietungseinkünfte<br><br><b>Hinweis:</b> Durch AfA und Zinsabzug kann der steuerliche Verlust höher sein als der tatsächliche Cashflow-Verlust – das führt zu einer Steuererstattung."
+      },
+      "cumulative": {
+        "title": "Kumulierter Cashflow",
+        "summary": "Laufende Summe aller Cashflows nach Steuern seit Projektbeginn.",
+        "detail": "Der kumulierte Cashflow zeigt, ab wann sich die Investition amortisiert hat:<br><br>Wenn der kumulierte Cashflow positiv wird, haben Sie Ihre laufenden Kosten durch Mieteinnahmen gedeckt. Der Zeitpunkt wird als Break-Even-Point bezeichnet."
+      }
+    },
+    "tax": {
+      "bridge": {
+        "title": "Steuer-Bridge",
+        "summary": "Herleitung vom Bruttoeinkommen zum zu versteuernden Einkommen aus Vermietung.",
+        "detail": "Die Steuer-Bridge zeigt die einzelnen Abzugsposten:<br><br><b>Bruttomieteinnahmen</b><br>− AfA (Gebäudeabschreibung)<br>− Schuldzinsen<br>− Betriebskosten (nicht umlagefähig)<br>− Erhaltungsaufwand / §82b<br>= <b>Zu versteuerndes Einkommen</b><br><br>Bei negativem zu versteuerndem Einkommen entsteht ein steuerlicher Verlust, der mit anderen Einkünften verrechnet werden kann."
+      },
+      "effectiveRate": {
+        "title": "Effektiver Steuersatz",
+        "summary": "Tatsächlich gezahlte Steuer im Verhältnis zu den Bruttomieteinnahmen.",
+        "detail": "Der effektive Steuersatz zeigt die reale Steuerbelastung:<br><br><b>Berechnung:</b> Tatsächliche Steuerzahlung / Bruttomieteinnahmen × 100<br><br>Durch AfA und Zinsabzug ist der effektive Steuersatz oft deutlich niedriger als der Grenzsteuersatz. In den ersten Jahren kann er durch steuerliche Verluste sogar negativ sein (Steuererstattung)."
+      },
+      "rule15": {
+        "title": "15%-Regel (anschaffungsnahe HK)",
+        "summary": "Wenn Modernisierungskosten in 3 Jahren 15% des Gebäudewerts überschreiten, werden sie aktiviert.",
+        "detail": "Die 15%-Regel ist eine wichtige steuerliche Falle bei Immobilienkauf mit Sanierung:<br><br><b>Regel:</b> Modernisierungskosten, die innerhalb von 3 Jahren nach Kauf 15% des Gebäudewerts (netto, ohne Grundstück) überschreiten, gelten als anschaffungsnahe Herstellungskosten.<br><br><b>Folge:</b><ul><li>Keine sofortige Absetzung als Erhaltungsaufwand</li><li>Stattdessen Aktivierung und Abschreibung über Restnutzungsdauer (AfA)</li><li>Deutlich geringerer jährlicher Steuereffekt</li></ul><b>Tipp:</b> Sanierungen ggf. zeitlich auf nach der 3-Jahres-Frist verschieben."
+      },
+      "totalSavings": {
+        "title": "Steuerersparnis gesamt",
+        "summary": "Gesamte Steuerersparnis durch alle Abzüge über den Analysezeitraum.",
+        "detail": "Die Gesamtersparnis zeigt den kumulierten Steuervorteil Ihrer Immobilieninvestition:<br><br><b>Abzugsposten:</b><ul><li>AfA (Gebäudeabschreibung)</li><li>Schuldzinsen</li><li>Nicht umlagefähige Betriebskosten</li><li>Erhaltungsaufwand / §82b-Verteilung</li></ul>Die Steuerersparnis ist ein wesentlicher Renditefaktor bei Immobilieninvestitionen."
+      }
+    },
+    "property": {
+      "forecast": {
+        "title": "Wertprognose",
+        "summary": "Mehrdimensionale Schätzung der Wertentwicklung über den Analysezeitraum.",
+        "detail": "Die Wertprognose berücksichtigt mehrere Faktoren:<br><br><b>Methodik:</b><ul><li><b>Marktsteigerung:</b> Jährliche Wertsteigerung (Szenarien: konservativ/basis/optimistisch)</li><li><b>Zustandsfaktor:</b> Wertminderung durch Alterung der Bauteile</li><li><b>Investitionseffekt:</b> Wertsteigerung durch CapEx-Maßnahmen</li><li><b>Mean-Reversion:</b> Langfristige Annäherung an den regionalen Marktpreis</li></ul>Die Prognose wird in drei Szenarien dargestellt, um die Bandbreite möglicher Entwicklungen zu zeigen."
+      },
+      "conditionFactor": {
+        "title": "Zustandsfaktor",
+        "summary": "Prozentualer Wertfaktor basierend auf dem Gebäudezustand (0–100%).",
+        "detail": "Der Zustandsfaktor wirkt als Multiplikator auf den theoretischen Marktwert:<br><br><b>Berechnung:</b> Basiert auf dem gewählten Gebäudezustand und dem Alter der Bauteile.<br><br>Ein Zustandsfaktor von 80% bedeutet: Die Immobilie ist nur 80% des theoretischen Marktwerts wert, weil Bauteile veraltet oder sanierungsbedürftig sind.<br><br>Durch Investitionen (CapEx) kann der Zustandsfaktor verbessert werden."
+      },
+      "componentDeterioration": {
+        "title": "Bauteil-Alterung",
+        "summary": "Detaillierte Übersicht der Alterung einzelner Gebäudebestandteile und deren Werteinfluss.",
+        "detail": "Die Bauteil-Alterung zeigt für jedes Bauteil:<br><br><b>Informationen:</b><ul><li>Aktuelles Alter vs. Erneuerungszyklus</li><li>Status: OK, Erneuert, Überfällig, Bereits beim Kauf überfällig</li><li>Wertminderung durch Alterung</li><li>Geschätzte Erneuerungskosten</li><li>Wirkung regelmäßiger Wartung auf den Zyklus</li></ul>Bauteile, die beim Kauf bereits überfällig waren, werden als eingepreist betrachtet und belasten die Wertprognose nicht zusätzlich."
+      }
+    },
+    "exit": {
+      "totalReturn": {
+        "title": "Gesamtertrag",
+        "summary": "Vollständiger Ertrag: Verkaufserlös + kumulierter Cashflow − eingesetztes Eigenkapital.",
+        "detail": "Der Gesamtertrag zeigt das finanzielle Gesamtergebnis der Investition:<br><br><b>Berechnung:</b><br>Nettoverkaufserlös (nach Kosten und ggf. Steuern)<br>+ Kumulierter Cashflow nach Steuern<br>− Eingesetztes Eigenkapital<br>= <b>Gesamtertrag</b><br><br>Ein positiver Gesamtertrag bedeutet: Sie haben mehr erhalten als eingesetzt."
+      },
+      "annualizedReturn": {
+        "title": "Rendite p.a. (CAGR)",
+        "summary": "Durchschnittliche jährliche Wachstumsrate des eingesetzten Eigenkapitals inkl. Verkauf.",
+        "detail": "Die annualisierte Rendite (CAGR) zeigt die durchschnittliche jährliche Rendite:<br><br><b>Berechnung:</b> (Endwert / Anfangswert)^(1/Jahre) − 1<br><br>Dabei ist der Endwert = Eigenkapital + Gesamtertrag und der Anfangswert = eingesetztes Eigenkapital.<br><br>Diese Kennzahl ermöglicht den Vergleich mit anderen Anlagen über verschiedene Zeiträume."
+      }
+    }
+  },
+  "glossary": {
+    "irr": {
+      "title": "IRR (Interner Zinsfuß)",
+      "summary": "Der interne Zinsfuß ist die Rendite, bei der der Kapitalwert aller Cashflows gleich Null ist.",
+      "detail": "Der IRR (Internal Rate of Return) ist die zentrale Renditekennzahl für Immobilieninvestitionen:<br><br><b>Definition:</b> Der Zinssatz, bei dem der Barwert aller zukünftigen Cashflows genau dem eingesetzten Eigenkapital entspricht.<br><br><b>Interpretation:</b><ul><li>Je höher der IRR, desto rentabler die Investition</li><li>Vergleichbar mit der Verzinsung einer Festgeldanlage</li><li>Berücksichtigt das Timing der Cashflows (frühere Zahlungen sind wertvoller)</li></ul><b>Einschränkung:</b> Bei ungewöhnlichen Cashflow-Mustern (mehrfacher Vorzeichenwechsel) kann der IRR mehrdeutig sein."
+    },
+    "npv": {
+      "title": "NPV (Kapitalwert)",
+      "summary": "Der Kapitalwert ist die Summe aller abgezinsten zukünftigen Cashflows minus der Anfangsinvestition.",
+      "detail": "Der NPV (Net Present Value) beantwortet: Wie viel Mehrwert schafft diese Investition?<br><br><b>Berechnung:</b> Summe aller Cashflows, abgezinst mit dem Diskontierungssatz, minus Eigenkapitaleinsatz.<br><br><b>Interpretation:</b><ul><li><b>NPV &gt; 0:</b> Investition schafft Wert über die Zielrendite hinaus</li><li><b>NPV = 0:</b> Investition erreicht genau die Zielrendite</li><li><b>NPV &lt; 0:</b> Investition erreicht die Zielrendite nicht</li></ul>"
+    },
+    "dscr": {
+      "title": "DSCR (Schuldendienstdeckungsgrad)",
+      "summary": "Verhältnis zwischen verfügbarem Cashflow und Schuldendienst. Banken fordern oft mindestens 1,2.",
+      "detail": "Der DSCR (Debt Service Coverage Ratio) ist die wichtigste Kennzahl für die Kreditwürdigkeit:<br><br><b>Berechnung:</b> NOI / (Zins + Tilgung pro Jahr)<br><br><b>Bankstandards:</b><ul><li><b>&gt; 1,4:</b> Sehr solide Finanzierung</li><li><b>1,2–1,4:</b> Standard-Anforderung der meisten Banken</li><li><b>&lt; 1,2:</b> Erhöhte Anforderungen (mehr EK, Sicherheiten)</li><li><b>&lt; 1,0:</b> Mieteinnahmen decken den Schuldendienst nicht</li></ul>"
+    },
+    "ltv": {
+      "title": "LTV (Beleihungsauslauf)",
+      "summary": "Verhältnis zwischen Darlehenssumme und Immobilienwert. Je niedriger, desto sicherer.",
+      "detail": "Der LTV (Loan-to-Value) zeigt den Verschuldungsgrad bezogen auf den Immobilienwert:<br><br><b>Berechnung:</b> Darlehenssumme / Verkehrswert × 100%<br><br><b>Einfluss auf Konditionen:</b><ul><li><b>&lt; 60%:</b> Beste Zinskonditionen, geringes Risiko</li><li><b>60–80%:</b> Standard, gute Konditionen</li><li><b>80–90%:</b> Zinsaufschlag, erhöhtes Risiko</li><li><b>&gt; 90%:</b> Vollfinanzierung, deutlicher Aufschlag</li></ul>"
+    },
+    "afa": {
+      "title": "AfA (Absetzung für Abnutzung)",
+      "summary": "Steuerliche Abschreibung des Gebäudewerts. Der Satz hängt vom Baujahr ab: 2%, 2,5% oder 3%.",
+      "detail": "Die AfA ist der wichtigste Steuervorteil bei Immobilien:<br><br><b>AfA-Sätze:</b><ul><li><b>3,0% p.a.:</b> Neubauten ab 01.01.2023 (§7 Abs. 4 EStG)</li><li><b>2,0% p.a.:</b> Gebäude 1925–2022 (50 Jahre Nutzungsdauer)</li><li><b>2,5% p.a.:</b> Gebäude vor 1925 (40 Jahre Nutzungsdauer)</li></ul><b>AfA-Basis:</b> Kaufpreis + aktivierbare Nebenkosten − Grundstückswert<br><br><b>Wichtig:</b> Grund und Boden werden nicht abgeschrieben, da sie keiner Abnutzung unterliegen."
+    },
+    "mea": {
+      "title": "MEA (Miteigentumsanteil)",
+      "summary": "Anteil am Gemeinschaftseigentum bei Eigentumswohnungen, meist in Tausendstel angegeben.",
+      "detail": "Der MEA bestimmt Ihren Anteil an der Wohnungseigentümergemeinschaft (WEG):<br><br><b>Relevanz:</b><ul><li>Anteil an Gemeinschaftskosten (Hausgeld, Rücklagen)</li><li>Anteil an Sonderumlagen bei Sanierungen</li><li>Stimmrecht in der Eigentümerversammlung</li></ul><b>Festlegung:</b> Der MEA ist in der Teilungserklärung festgelegt und kann nur durch notarielle Vereinbarung aller Eigentümer geändert werden."
+    }
+  }
+}

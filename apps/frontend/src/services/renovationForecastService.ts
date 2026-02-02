@@ -5,7 +5,8 @@
  * ages, condition, and standard lifecycle data. Mirrors the backend
  * RenovationForecastGenerator logic for offline/local use.
  */
-import type { Property, CapExCategory, Condition, ComponentCondition } from '@/stores/types';
+import type { Property, Unit, CapExCategory, Condition, ComponentCondition } from '@/stores/types';
+import { BUILDING_LEVEL_CATEGORIES, UNIT_LEVEL_CATEGORIES } from '@/stores/types';
 
 export type MeasurePriority = 'Critical' | 'High' | 'Medium' | 'Low';
 
@@ -26,6 +27,8 @@ export interface ForecastedMeasure {
   cycleYears: number;
   reasoning: string;
   suggestedImpact?: SuggestedImpact;
+  unitId?: string;
+  unitName?: string;
 }
 
 interface ComponentCycleData {
@@ -43,6 +46,7 @@ interface ComponentCycleData {
  * Standard component lifecycle data matching backend DefaultComponentCycles.
  * Costs reflect German market prices (2024/2025 level, excl. MwSt.).
  *
+ * === Gebäudeebene ===
  * Heating:    Gas-Brennwert 10–18k€, Wärmepumpe 18–40k€ → ~80–250 €/m² Wohnfläche
  * Roof:       Neueindeckung inkl. Dämmung/Lattung → 150–350 €/m² Dachfläche
  * Facade:     WDVS + Putz/Anstrich → 120–300 €/m² Fassadenfläche
@@ -51,8 +55,15 @@ interface ComponentCycleData {
  * Plumbing:   Steigleitungen + Bäder → 100–220 €/m² Wohnfläche
  * Interior:   Böden, Wände, Türen, Decken → 60–150 €/m² Wohnfläche
  * Exterior:   Wege, Entwässerung, Begrünung → 60–180 €/m² Grundstücksfläche
+ *
+ * === Mieteinheit-Ebene (pro m² Einheitsfläche) ===
+ * Kitchen:        Einbauküche komplett → 80–250 €/m²
+ * Bathroom:       Sanitärausstattung (Keramik, Armaturen, Fliesen) → 120–350 €/m²
+ * UnitRenovation: Grundlegende Renovierung (Wände, Böden, Malerarbeiten) → 40–150 €/m²
+ * UnitOther:      Sonstige wohnungsbezogene Ausstattung → 20–80 €/m²
  */
 export const DEFAULT_COMPONENT_CYCLES: Record<CapExCategory, ComponentCycleData> = {
+  // Gebäudeebene
   Heating:    { minYears: 15, maxYears: 25, costPerSqmMin: 80,  costPerSqmMax: 250, areaMode: 'living' },
   Roof:       { minYears: 30, maxYears: 60, costPerSqmMin: 150, costPerSqmMax: 350, areaMode: 'total' },
   Facade:     { minYears: 25, maxYears: 50, costPerSqmMin: 120, costPerSqmMax: 300, areaMode: 'total' },
@@ -62,6 +73,12 @@ export const DEFAULT_COMPONENT_CYCLES: Record<CapExCategory, ComponentCycleData>
   Interior:   { minYears: 15, maxYears: 30, costPerSqmMin: 60,  costPerSqmMax: 150, areaMode: 'living' },
   Exterior:   { minYears: 20, maxYears: 40, costPerSqmMin: 60,  costPerSqmMax: 180, areaMode: 'total' },
   Other:      { minYears: 20, maxYears: 40, costPerSqmMin: 80,  costPerSqmMax: 200, areaMode: 'living' },
+
+  // Mieteinheit-Ebene (Kosten pro m² Einheitsfläche)
+  Kitchen:        { minYears: 15, maxYears: 25, costPerSqmMin: 80,  costPerSqmMax: 250, areaMode: 'living' },
+  Bathroom:       { minYears: 20, maxYears: 30, costPerSqmMin: 120, costPerSqmMax: 350, areaMode: 'living' },
+  UnitRenovation: { minYears: 10, maxYears: 20, costPerSqmMin: 40,  costPerSqmMax: 150, areaMode: 'living' },
+  UnitOther:      { minYears: 15, maxYears: 30, costPerSqmMin: 20,  costPerSqmMax: 80,  areaMode: 'living' },
 };
 
 /** Default cycle years (midpoint) for a given category */
@@ -84,6 +101,7 @@ function conditionCostFactor(condition: Condition): number {
 
 /** Category display names (German) for measure names */
 const CATEGORY_NAMES: Record<CapExCategory, string> = {
+  // Gebäudeebene
   Heating:    'Heizungserneuerung',
   Roof:       'Dachsanierung',
   Facade:     'Fassadensanierung',
@@ -93,6 +111,11 @@ const CATEGORY_NAMES: Record<CapExCategory, string> = {
   Interior:   'Innenausbau-Erneuerung',
   Exterior:   'Außenanlagen-Erneuerung',
   Other:      'Sonstige Sanierung',
+  // Mieteinheit-Ebene
+  Kitchen:        'Küchenerneuerung',
+  Bathroom:       'Sanitärausstattung-Erneuerung',
+  UnitRenovation: 'Grundrenovierung',
+  UnitOther:      'Sonstige Wohnungssanierung',
 };
 
 /**
@@ -100,21 +123,15 @@ const CATEGORY_NAMES: Record<CapExCategory, string> = {
  * costSavingsBase100: monthly operating cost savings for 100m² living area (EUR)
  * rentIncreasePercent: potential rent increase at re-letting (%)
  * delayMonths: typical construction time (months)
- *
- * Values based on typical German energy renovation effects:
- * - Heating (Wärmepumpe): 80–150 €/Mon. Heizkostenersparnis, 3–5% Mietpotenzial
- * - Fassade (WDVS): 60–120 €/Mon. Einsparung, 5–8% Mietpotenzial
- * - Fenster (3-fach): 30–60 €/Mon. Einsparung, 2–4% Mietpotenzial
- * - Dach (mit Dämmung): 40–80 €/Mon. Einsparung, 2–3% Mietpotenzial
- * - Energetisch (Komplett): 100–200 €/Mon. Einsparung, 5–10% Mietpotenzial
  */
 interface DefaultImpactData {
-  costSavingsBase100: number; // monthly savings at 100m² reference
+  costSavingsBase100: number;
   rentIncreasePercent: number;
   delayMonths: number;
 }
 
 const DEFAULT_IMPACT_DATA: Partial<Record<CapExCategory, DefaultImpactData>> = {
+  // Gebäudeebene
   Heating:    { costSavingsBase100: 110, rentIncreasePercent: 4, delayMonths: 2 },
   Facade:     { costSavingsBase100: 90,  rentIncreasePercent: 6, delayMonths: 3 },
   Windows:    { costSavingsBase100: 45,  rentIncreasePercent: 3, delayMonths: 1 },
@@ -123,15 +140,19 @@ const DEFAULT_IMPACT_DATA: Partial<Record<CapExCategory, DefaultImpactData>> = {
   Electrical: { costSavingsBase100: 0,   rentIncreasePercent: 1, delayMonths: 1 },
   Plumbing:   { costSavingsBase100: 0,   rentIncreasePercent: 1.5, delayMonths: 2 },
   Interior:   { costSavingsBase100: 0,   rentIncreasePercent: 2, delayMonths: 1 },
+  // Mieteinheit-Ebene
+  Kitchen:        { costSavingsBase100: 0, rentIncreasePercent: 3, delayMonths: 1 },
+  Bathroom:       { costSavingsBase100: 0, rentIncreasePercent: 2.5, delayMonths: 1 },
+  UnitRenovation: { costSavingsBase100: 0, rentIncreasePercent: 2, delayMonths: 1 },
 };
 
-/** Scale default impact to actual living area (reference: 100m²) */
-function getSuggestedImpact(category: CapExCategory, livingAreaSqm: number): SuggestedImpact | undefined {
+/** Scale default impact to actual area (reference: 100m²) */
+function getSuggestedImpact(category: CapExCategory, areaSqm: number): SuggestedImpact | undefined {
   const data = DEFAULT_IMPACT_DATA[category];
   if (!data) return undefined;
   if (data.costSavingsBase100 === 0 && data.rentIncreasePercent === 0) return undefined;
 
-  const scaleFactor = livingAreaSqm / 100;
+  const scaleFactor = areaSqm / 100;
   return {
     costSavingsMonthly: Math.round(data.costSavingsBase100 * scaleFactor),
     rentIncreasePercent: data.rentIncreasePercent,
@@ -148,10 +169,89 @@ function derivePriority(componentAge: number, cycleYears: number): MeasurePriori
 }
 
 /**
- * Generate renovation forecast measures based on building component data.
+ * Generate a single measure for a component (building or unit level).
+ */
+function generateMeasureForComponent(
+  category: CapExCategory,
+  component: ComponentCondition | undefined,
+  constructionYear: number,
+  overallCondition: Condition,
+  areaReference: number,
+  startYear: number,
+  endYear: number,
+  currentYear: number,
+  unitId?: string,
+  unitName?: string,
+): ForecastedMeasure | null {
+  const cycleData = DEFAULT_COMPONENT_CYCLES[category];
+
+  const lastRenovationYear = component?.lastRenovationYear || constructionYear;
+  const cycleYears = component?.expectedCycleYears || getDefaultCycleYears(category);
+  const componentCondition = component?.condition || overallCondition;
+  const nextRenewalYear = lastRenovationYear + cycleYears;
+
+  if (nextRenewalYear > endYear) return null;
+
+  const plannedYear = Math.max(nextRenewalYear, startYear);
+  const componentAge = currentYear - lastRenovationYear;
+
+  const costFactor = conditionCostFactor(componentCondition);
+  const baseCostPerUnit = cycleData.costPerSqmMin +
+    (cycleData.costPerSqmMax - cycleData.costPerSqmMin) * costFactor;
+
+  let estimatedCost = baseCostPerUnit * areaReference;
+  const yearsUntil = Math.max(0, plannedYear - currentYear);
+  estimatedCost *= Math.pow(1 + 0.03, yearsUntil);
+  estimatedCost = Math.round(estimatedCost / 100) * 100;
+
+  const priority = derivePriority(componentAge, cycleYears);
+
+  const ageText = componentAge === 1 ? '1 Jahr' : `${componentAge} Jahre`;
+  const baseName = CATEGORY_NAMES[category];
+  const displayName = unitName ? `${unitName}: ${baseName}` : baseName;
+  const reasoning =
+    `${displayName}: ${ageText} alt, ` +
+    `Zyklus ${cycleData.minYears}–${cycleData.maxYears} Jahre` +
+    (priority === 'Critical' ? ' → überfällig' :
+     priority === 'High' ? ' → bald fällig' : '');
+
+  return {
+    category,
+    name: displayName,
+    estimatedCost,
+    plannedYear,
+    plannedMonth: 1,
+    priority,
+    componentAge,
+    cycleYears,
+    reasoning,
+    suggestedImpact: getSuggestedImpact(category, areaReference),
+    unitId,
+    unitName,
+  };
+}
+
+/**
+ * Get the area reference for a building-level category.
+ */
+function getBuildingAreaReference(category: CapExCategory, property: Property): number {
+  const cycleData = DEFAULT_COMPONENT_CYCLES[category];
+  switch (cycleData.areaMode) {
+    case 'total':
+      return property.totalArea;
+    case 'perUnit':
+      return Math.ceil(property.livingArea * (cycleData.unitsPerSqm || (1 / 8)));
+    case 'living':
+    default:
+      return property.livingArea;
+  }
+}
+
+/**
+ * Generate renovation forecast measures based on building and unit component data.
  *
  * For each component category, calculates when renewal is expected and
- * estimates costs based on building size, condition, and price level.
+ * estimates costs based on building/unit size, condition, and price level.
  */
 export function generateForecast(
   property: Property,
@@ -161,94 +261,39 @@ export function generateForecast(
 ): ForecastedMeasure[] {
   const measures: ForecastedMeasure[] = [];
   const currentYear = new Date().getFullYear();
-  const annualInflation = 0.03; // 3% p.a. Baukostensteigerung
 
-  // All standard categories to evaluate
-  const categories: CapExCategory[] = [
+  // === Gebäude-Bauteile ===
+  const buildingCategories: CapExCategory[] = [
     'Heating', 'Roof', 'Facade', 'Windows',
     'Electrical', 'Plumbing', 'Interior', 'Exterior'
   ];
 
-  for (const category of categories) {
-    const cycleData = DEFAULT_COMPONENT_CYCLES[category];
-
-    // Find component data from property (if captured)
+  for (const category of buildingCategories) {
     const component = property.components.find(c => c.category === category);
+    const areaRef = getBuildingAreaReference(category, property);
 
-    // Determine last renovation year: explicit > component fallback > construction year
-    const lastRenovationYear = component?.lastRenovationYear || property.constructionYear;
+    const measure = generateMeasureForComponent(
+      category, component, property.constructionYear, property.overallCondition,
+      areaRef, startYear, endYear, currentYear);
 
-    // Determine expected cycle: explicit > default midpoint
-    const cycleYears = component?.expectedCycleYears || getDefaultCycleYears(category);
+    if (measure) measures.push(measure);
+  }
 
-    // Determine component condition for cost interpolation
-    const componentCondition = component?.condition || property.overallCondition;
+  // === Einheit-Bauteile ===
+  for (const unit of property.units) {
+    if (!unit.components || unit.components.length === 0) continue;
 
-    // Calculate when next renewal is due
-    const nextRenewalYear = lastRenovationYear + cycleYears;
+    for (const category of UNIT_LEVEL_CATEGORIES) {
+      const component = unit.components.find(c => c.category === category);
+      if (!component) continue;
 
-    // Skip if renewal is not within the analysis period
-    if (nextRenewalYear > endYear) continue;
+      const measure = generateMeasureForComponent(
+        category, component, property.constructionYear, property.overallCondition,
+        unit.area, startYear, endYear, currentYear,
+        unit.id, unit.name);
 
-    // Clamp the planned year to at least the start of the analysis
-    const plannedYear = Math.max(nextRenewalYear, startYear);
-
-    // Current component age (not age at planned year)
-    const componentAge = currentYear - lastRenovationYear;
-
-    // Calculate cost
-    const costFactor = conditionCostFactor(componentCondition);
-    const baseCostPerUnit = cycleData.costPerSqmMin +
-      (cycleData.costPerSqmMax - cycleData.costPerSqmMin) * costFactor;
-
-    // Determine relevant area/count
-    let unitCount: number;
-    switch (cycleData.areaMode) {
-      case 'total':
-        unitCount = property.totalArea;
-        break;
-      case 'perUnit':
-        unitCount = Math.ceil(property.livingArea * (cycleData.unitsPerSqm || (1 / 8)));
-        break;
-      case 'living':
-      default:
-        unitCount = property.livingArea;
-        break;
+      if (measure) measures.push(measure);
     }
-
-    // Base cost
-    let estimatedCost = baseCostPerUnit * unitCount;
-
-    // Inflation adjustment to planned year from current year
-    const yearsUntil = Math.max(0, plannedYear - currentYear);
-    estimatedCost *= Math.pow(1 + annualInflation, yearsUntil);
-
-    // Round to nearest 100
-    estimatedCost = Math.round(estimatedCost / 100) * 100;
-
-    // Priority
-    const priority = derivePriority(componentAge, cycleYears);
-
-    // Reasoning text
-    const ageText = componentAge === 1 ? '1 Jahr' : `${componentAge} Jahre`;
-    const reasoning =
-      `${CATEGORY_NAMES[category]}: ${ageText} alt, ` +
-      `Zyklus ${cycleData.minYears}–${cycleData.maxYears} Jahre` +
-      (priority === 'Critical' ? ' → überfällig' :
-       priority === 'High' ? ' → bald fällig' : '');
-
-    measures.push({
-      category,
-      name: CATEGORY_NAMES[category],
-      estimatedCost,
-      plannedYear,
-      plannedMonth: 1, // default to January
-      priority,
-      componentAge,
-      cycleYears,
-      reasoning,
-      suggestedImpact: getSuggestedImpact(category, property.livingArea),
-    });
   }
 
   // Sort by priority (Critical first), then by planned year

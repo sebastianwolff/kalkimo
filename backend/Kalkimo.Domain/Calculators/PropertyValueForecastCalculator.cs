@@ -63,11 +63,15 @@ public static class PropertyValueForecastCalculator
         var fairMarketValue = marketComparison?.FairMarketValue;
         var useMeanReversion = fairMarketValue.HasValue && fairMarketValue.Value > 0;
 
-        // === Initial condition factor ===
+        // === Initial condition factor (Gebäude- + Einheit-Bauteile) ===
+        var allComponents = components
+            .Concat(project.Property.Units.SelectMany(u => u.Components))
+            .ToList();
+
         decimal initialConditionFactor;
-        if (components.Count > 0)
+        if (allComponents.Count > 0)
         {
-            var factors = components.Select(c =>
+            var factors = allComponents.Select(c =>
             {
                 var baseFactor = ConditionToFactor(c.Condition);
                 var lastReno = c.LastRenovationYear ?? project.Property.ConstructionYear;
@@ -83,8 +87,8 @@ public static class PropertyValueForecastCalculator
             initialConditionFactor = ConditionToFactor(project.Property.OverallCondition);
         }
 
-        // === Overdue components ===
-        var overdueComponents = components
+        // === Overdue components (Gebäude + Einheiten) ===
+        var overdueComponents = allComponents
             .Select(c =>
             {
                 var lastReno = c.LastRenovationYear ?? project.Property.ConstructionYear;
@@ -346,19 +350,27 @@ public static class PropertyValueForecastCalculator
 
     // === Component renewal cost estimate ===
 
-    internal static decimal CalculateComponentRenewalCost(CapExCategory category, Property property)
+    internal static decimal CalculateComponentRenewalCost(CapExCategory category, Property property, Unit? unit = null)
     {
         var (_, _, _, costMax) = DefaultComponentCycles.GetCycle(category);
-        var unitCount = GetUnitCountForCategory(category, property);
-        return Math.Round(costMax.Amount * unitCount / 100) * 100;
+        var areaRef = GetUnitCountForCategory(category, property, unit);
+        return Math.Round(costMax.Amount * areaRef / 100) * 100;
     }
 
-    private static decimal GetUnitCountForCategory(CapExCategory category, Property property) => category switch
+    private static decimal GetUnitCountForCategory(CapExCategory category, Property property, Unit? unit = null)
     {
-        CapExCategory.Roof or CapExCategory.Facade or CapExCategory.Energy => property.TotalArea,
-        CapExCategory.Windows => Math.Ceiling(property.LivingArea / 8), // ~1 Fenster pro 8m²
-        _ => property.LivingArea // Heating, Electrical, Plumbing, Interior
-    };
+        // Einheit-Bauteile: Kosten basieren auf Einheitsfläche
+        if (category.IsUnitLevel() && unit != null)
+            return unit.Area;
+
+        // Gebäude-Bauteile
+        return category switch
+        {
+            CapExCategory.Roof or CapExCategory.Facade or CapExCategory.Energy => property.TotalArea,
+            CapExCategory.Windows => Math.Ceiling(property.LivingArea / 8), // ~1 Fenster pro 8m²
+            _ => property.LivingArea // Heating, Electrical, Plumbing, Interior
+        };
+    }
 
     // === Component deterioration summary ===
 
@@ -368,28 +380,37 @@ public static class PropertyValueForecastCalculator
         int startYear,
         int endYear)
     {
-        if (property.Components.Count == 0) return null;
+        // Alle Bauteile sammeln: Gebäude + Einheiten
+        var componentEntries = property.Components
+            .Select(c => (Component: c, UnitId: (string?)null, Unit: (Unit?)null))
+            .Concat(property.Units.SelectMany(u =>
+                u.Components.Select(c => (Component: c, UnitId: (string?)u.Id, Unit: (Unit?)u))))
+            .ToList();
+
+        if (componentEntries.Count == 0) return null;
 
         var holdingYears = endYear - startYear;
 
-        // Index CapEx by category
-        var capexByCategory = new Dictionary<CapExCategory, List<(int Year, decimal Amount)>>();
-        var recurringByCategory = new Dictionary<CapExCategory, (string Name, RecurringMeasureConfig Config)>();
+        // Index CapEx by (category, unitId) — unitId null für Gebäudeebene
+        var capexKey = new Dictionary<(CapExCategory, string?), List<(int Year, decimal Amount)>>();
+        var recurringKey = new Dictionary<(CapExCategory, string?), (string Name, RecurringMeasureConfig Config)>();
 
         foreach (var measure in capexMeasures)
         {
+            var key = (measure.Category, measure.UnitId);
+
             if (measure.IsRecurring && measure.RecurringConfig != null)
-                recurringByCategory[measure.Category] = (measure.Name, measure.RecurringConfig);
+                recurringKey[key] = (measure.Name, measure.RecurringConfig);
 
             if (measure.EstimatedCost.Amount > 0)
             {
                 var y = measure.PlannedPeriod.Year;
                 if (y >= startYear && y <= endYear)
                 {
-                    if (!capexByCategory.TryGetValue(measure.Category, out var list))
+                    if (!capexKey.TryGetValue(key, out var list))
                     {
                         list = [];
-                        capexByCategory[measure.Category] = list;
+                        capexKey[key] = list;
                     }
                     list.Add((y, measure.EstimatedCost.Amount));
                 }
@@ -402,18 +423,19 @@ public static class PropertyValueForecastCalculator
         decimal coveredByCapex = 0;
         decimal uncoveredDeterioration = 0;
 
-        foreach (var comp in property.Components)
+        foreach (var (comp, unitId, unit) in componentEntries)
         {
             var lastReno = comp.LastRenovationYear ?? property.ConstructionYear;
             var ageAtStart = startYear - lastReno;
             var cycle = comp.ExpectedCycleYears;
             var dueYear = lastReno + cycle;
 
-            var renewalCost = CalculateComponentRenewalCost(comp.Category, property);
+            var renewalCost = CalculateComponentRenewalCost(comp.Category, property, unit);
             totalRenewalCostIfAllDone += renewalCost;
 
-            // Check if CapEx addresses this component
-            var measures = capexByCategory.GetValueOrDefault(comp.Category, []);
+            // Check if CapEx addresses this component (matched by category + unitId)
+            var key = (comp.Category, unitId);
+            var measures = capexKey.GetValueOrDefault(key, []);
             (int Year, decimal Amount)? matchingCapex = null;
             if (measures.Count > 0)
             {
@@ -423,7 +445,7 @@ public static class PropertyValueForecastCalculator
             }
 
             // Recurring maintenance
-            recurringByCategory.TryGetValue(comp.Category, out var recurring);
+            recurringKey.TryGetValue(key, out var recurring);
             var effectiveCycle = recurring.Config != null
                 ? cycle * (1 + recurring.Config.CycleExtensionPercent / 100)
                 : (decimal)cycle;
@@ -508,7 +530,8 @@ public static class PropertyValueForecastCalculator
                 CapexAddressedYear = matchingCapex?.Year,
                 ValueImpact = valueImpact,
                 StatusAtEnd = statusAtEnd,
-                RecurringMaintenance = recurringInfo
+                RecurringMaintenance = recurringInfo,
+                UnitId = unitId
             });
         }
 

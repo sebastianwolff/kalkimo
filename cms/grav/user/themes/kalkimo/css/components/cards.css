@@ -8,28 +8,33 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: var(--km-space-lg) var(--km-space-md);
+  padding: var(--km-space-md);
   gap: var(--km-space-sm);
 }
 
 .feature-card-icon {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   background: var(--km-teal-light);
-  border-radius: var(--km-radius-lg);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--km-teal);
   flex-shrink: 0;
-  margin-bottom: var(--km-space-sm);
+  margin-bottom: var(--km-space-xs);
+}
+
+.feature-card-icon svg {
+  width: 24px;
+  height: 24px;
 }
 
 .feature-card-title {
   font-size: var(--km-h4);
   font-weight: 600;
   color: var(--km-navy);
-  margin-bottom: var(--km-space-xs);
+  margin-bottom: 0;
 }
 
 .feature-card-desc {
@@ -45,6 +50,7 @@
 }
 
 .km-article-list h2 {
+  font-size: var(--km-h2);
   margin-bottom: var(--km-space-md);
 }
 
@@ -98,6 +104,7 @@
 .km-topics-box-title {
   font-size: var(--km-h3);
   color: var(--km-navy);
+  font-weight: 600;
   margin-bottom: var(--km-space-md);
   margin-top: 0;
 }
@@ -115,8 +122,6 @@
 /* ---------- Search Bar ---------- */
 .km-search-wrapper {
   margin-top: var(--km-space-xl);
-  display: flex;
-  justify-content: center;
 }
 
 .search-bar {
@@ -169,15 +174,16 @@
 
 /* ---------- Blog Header ---------- */
 .km-blog-header {
-  text-align: center;
+  text-align: left;
 }
 
 .km-blog-header h1 {
-  margin-bottom: var(--km-space-sm);
+  margin-bottom: var(--km-space-xs);
 }
 
 .km-blog-header .lead {
   margin-bottom: 0;
+  color: var(--km-gray-400);
 }
 
 /* ---------- Blog Mascot ---------- */

@@ -6,6 +6,7 @@
       :placeholder="t('project.namePlaceholder')"
       required
       :error-message="errors.name"
+      help-key="project.name"
     />
 
     <KalkInput
@@ -13,6 +14,7 @@
       :label="t('project.description')"
       :placeholder="t('project.descriptionPlaceholder')"
       type="text"
+      help-key="project.description"
     />
 
     <KalkSelect
@@ -20,6 +22,7 @@
       :label="t('project.currency')"
       :options="currencyOptions"
       required
+      help-key="project.currency"
     />
 
     <div class="period-section">
@@ -33,6 +36,7 @@
           :min-year="currentYear"
           :max-year="currentYear + 10"
           required
+          help-key="project.startDate"
         />
       </div>
 
@@ -65,6 +69,7 @@
             :max="50"
             suffix="Jahre"
             required
+            help-key="project.duration"
           />
           <p class="calculated-end">
             Enddatum: {{ formatYearMonth(calculatedEndPeriod) }}
@@ -79,6 +84,7 @@
             :min-year="startPeriod?.year || currentYear"
             :max-year="currentYear + 50"
             required
+            help-key="project.endDate"
           />
         </div>
       </div>

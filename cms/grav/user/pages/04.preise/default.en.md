@@ -5,8 +5,6 @@ metadata:
     description: "Kalkimo Planner pricing and plans. Start for free, calculate professionally."
 ---
 
-# Pricing
-
 Find the right plan for your real estate investments.
 
 ## Free

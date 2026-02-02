@@ -9,6 +9,7 @@
           v-model="maintenanceReserveMonthly"
           :label="t('costs.maintenanceReserve.monthlyAmount')"
           :currency="currency"
+          help-key="costs.maintenanceReserve"
         />
         <KalkCurrency
           :model-value="maintenanceReserveMonthly * 12"
@@ -69,6 +70,7 @@
               v-model="item.monthlyAmount"
               :label="t('costs.item.monthlyAmount')"
               :currency="currency"
+              help-key="costs.monthlyAmount"
             />
             <div class="checkbox-field">
               <label class="checkbox-label">
@@ -78,7 +80,7 @@
                   class="checkbox-input"
                 />
                 <span class="checkbox-custom"></span>
-                <span class="checkbox-text">{{ t('costs.item.isTransferable') }}</span>
+                <span class="checkbox-text">{{ t('costs.item.isTransferable') }} <HelpIcon help-key="costs.isTransferable" /></span>
               </label>
               <p class="checkbox-hint">Auf Mieter umlegbar</p>
             </div>
@@ -116,7 +118,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { KalkCard, KalkCurrency } from '@/components';
+import { KalkCard, KalkCurrency, HelpIcon } from '@/components';
 import { useProjectStore } from '@/stores/projectStore';
 
 interface CostItemData {

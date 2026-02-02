@@ -11,6 +11,10 @@ export { default as KalkPercent } from './common/KalkPercent.vue';
 export { default as KalkDatePicker } from './common/KalkDatePicker.vue';
 export { default as KalkAmountInput } from './common/KalkAmountInput.vue';
 
+// Help components
+export { default as HelpPanel } from './help/HelpPanel.vue';
+export { default as HelpIcon } from './help/HelpIcon.vue';
+
 // Wizard components
 export { default as WizardStepper } from './wizard/WizardStepper.vue';
 export { default as WizardNavigation } from './wizard/WizardNavigation.vue';

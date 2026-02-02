@@ -5,8 +5,6 @@ metadata:
     robots: "noindex, follow"
 ---
 
-# Privacy Policy
-
 ## 1. Privacy at a Glance
 
 ### General Information

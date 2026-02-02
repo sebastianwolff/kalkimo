@@ -84,6 +84,9 @@ public record ComponentDeteriorationRow
     public required string StatusAtEnd { get; init; }
 
     public RecurringMaintenanceInfo? RecurringMaintenance { get; init; }
+
+    /// <summary>Zugehörige Mieteinheit (null = Gebäudeebene)</summary>
+    public string? UnitId { get; init; }
 }
 
 /// <summary>

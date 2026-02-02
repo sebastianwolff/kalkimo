@@ -20,6 +20,7 @@ public static class RecurringCapExExpander
         public required TaxClassification TaxClassification { get; init; }
         public required string Name { get; init; }
         public required string SourceMeasureId { get; init; }
+        public string? UnitId { get; init; }
     }
 
     /// <summary>
@@ -40,7 +41,19 @@ public static class RecurringCapExExpander
         {
             if (!measure.IsRecurring || measure.RecurringConfig == null) continue;
 
-            var comp = property.Components.FirstOrDefault(c => c.Category == measure.Category);
+            // Bauteil suchen: bei Einheit-Level im richtigen Unit, sonst auf Property-Ebene
+            ComponentCondition? comp;
+            Unit? targetUnit = null;
+            if (measure.UnitId != null)
+            {
+                targetUnit = property.Units.FirstOrDefault(u => u.Id == measure.UnitId);
+                comp = targetUnit?.Components.FirstOrDefault(c => c.Category == measure.Category);
+            }
+            else
+            {
+                comp = property.Components.FirstOrDefault(c => c.Category == measure.Category);
+            }
+
             var (minYears, maxYears, _, _) = DefaultComponentCycles.GetCycle(measure.Category);
             var cycle = comp?.ExpectedCycleYears ?? (minYears + maxYears) / 2;
 
@@ -48,7 +61,7 @@ public static class RecurringCapExExpander
             if (intervalYears <= 0) continue;
 
             var renewalCost = PropertyValueForecastCalculator.CalculateComponentRenewalCost(
-                measure.Category, property);
+                measure.Category, property, targetUnit);
             var costPerEvent = Math.Round(renewalCost * measure.RecurringConfig.CostPercent / 100 / 100) * 100;
             if (costPerEvent <= 0) continue;
 
@@ -69,7 +82,8 @@ public static class RecurringCapExExpander
                         Category = measure.Category,
                         TaxClassification = measure.TaxClassification,
                         Name = $"{measure.Name} (#{idx})",
-                        SourceMeasureId = measure.Id
+                        SourceMeasureId = measure.Id,
+                        UnitId = measure.UnitId
                     });
                 }
             }
@@ -101,7 +115,8 @@ public static class RecurringCapExExpander
             TaxClassification = occ.TaxClassification,
             IsExecuted = true,
             IsNecessary = false,
-            Priority = MeasurePriority.Medium
+            Priority = MeasurePriority.Medium,
+            UnitId = occ.UnitId
         }).ToList();
 
         return new CapExConfiguration
