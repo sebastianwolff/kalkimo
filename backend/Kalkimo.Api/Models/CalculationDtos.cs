@@ -39,15 +39,24 @@ public record InvestmentMetricsDto
     public required MoneyDto NpvAfterTax { get; init; }
     public decimal CashOnCashPercent { get; init; }
     public decimal EquityMultiple { get; init; }
-    public decimal DscrMin { get; init; }
-    public decimal DscrAvg { get; init; }
-    public decimal IcrMin { get; init; }
+    public decimal? DscrMin { get; init; }
+    public decimal? DscrAvg { get; init; }
+    public decimal? IcrMin { get; init; }
     public decimal LtvInitialPercent { get; init; }
     public decimal LtvFinalPercent { get; init; }
     public required MoneyDto BreakEvenRent { get; init; }
     public decimal RoiPercent { get; init; }
     public int MaintenanceRiskScore { get; init; }
     public int LiquidityRiskScore { get; init; }
+
+    /// <summary>Exit-Periode für IRR/NPV ("YYYY-MM")</summary>
+    public string? ExitPeriod { get; init; }
+
+    /// <summary>True = geplanter Verkauf, false = fiktiver Verkauf am Horizontende</summary>
+    public bool IsExitPlanned { get; init; }
+
+    /// <summary>Netto-Erlös an das Eigenkapital nach Restschuld und Steuer</summary>
+    public MoneyDto? ExitEquityProceeds { get; init; }
 }
 
 /// <summary>

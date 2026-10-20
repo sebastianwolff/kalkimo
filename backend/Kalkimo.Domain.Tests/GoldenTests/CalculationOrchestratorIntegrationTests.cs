@@ -72,15 +72,20 @@ public class CalculationOrchestratorIntegrationTests
 
         var result = _orchestrator.Calculate(project);
 
-        // NOI = Effective Rent + Service Charge Income - Operating Costs
-        var noiSum = result.NetOperatingIncome.Sum().Amount;
-        var effectiveSum = result.EffectiveRent.Sum().Amount;
-        var serviceChargeSum = result.ServiceChargeIncome.Sum().Amount;
-        var opsSum = result.OperatingCosts.Sum().Amount;
+        // NOI = Effective Rent + min(Service Charge, Transferable, Operating Costs) - Operating Costs
+        foreach (var period in result.NetOperatingIncome.Periods)
+        {
+            var ops = result.OperatingCosts[period].Amount;
+            var recoverable = Math.Max(0m, Math.Min(result.ServiceChargeIncome[period].Amount,
+                Math.Min(result.TransferableCosts[period].Amount, ops)));
+            var expected = result.EffectiveRent[period].Amount + recoverable - ops;
 
-        // Allow small rounding tolerance
-        Assert.True(Math.Abs(noiSum - (effectiveSum + serviceChargeSum - opsSum)) < 1m,
-            $"NOI ({noiSum}) should equal EffectiveRent ({effectiveSum}) + ServiceCharge ({serviceChargeSum}) - OperatingCosts ({opsSum})");
+            Assert.True(Math.Abs(result.NetOperatingIncome[period].Amount - expected) < 0.01m,
+                $"NOI {period}: {result.NetOperatingIncome[period].Amount} != {expected}");
+            Assert.True(result.NetOperatingIncome[period].Amount <= result.EffectiveRent[period].Amount + 0.01m,
+                $"NOI {period} must not exceed effective rent");
+            Assert.True(ops >= 0, $"Operating costs {period} must not be negative");
+        }
     }
 
     [Fact]
@@ -331,8 +336,8 @@ public class CalculationOrchestratorIntegrationTests
 
         var result = _orchestrator.Calculate(project);
 
-        // holdingPeriodYears = endYear - startYear = 2035 - 2025 = 10
-        Assert.Equal(10, result.ExitAnalysis!.HoldingPeriodYears);
+        // Kauf Januar 2025 bis einschließlich Dezember 2035 = 11 volle Jahre
+        Assert.Equal(11, result.ExitAnalysis!.HoldingPeriodYears);
     }
 
     [Fact]

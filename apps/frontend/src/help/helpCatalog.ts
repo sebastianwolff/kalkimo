@@ -43,6 +43,7 @@ export const helpCatalog: HelpEntry[] = [
   { id: 'capex.amount', step: 'capex', category: 'input', i18nKey: 'helpTexts.capex.amount', relatedEntries: ['financing.totalCapitalNeed'] },
   { id: 'capex.scheduledDate', step: 'capex', category: 'input', i18nKey: 'helpTexts.capex.scheduledDate', relatedEntries: ['summary.tax.rule15'] },
   { id: 'capex.taxClassification', step: 'capex', category: 'input', i18nKey: 'helpTexts.capex.taxClassification', relatedEntries: ['glossary.afa', 'tax.section82b'] },
+  { id: 'capex.valueFactor', step: 'capex', category: 'input', i18nKey: 'helpTexts.capex.valueFactor' },
   { id: 'capex.costSavings', step: 'capex', category: 'input', i18nKey: 'helpTexts.capex.costSavings', relatedEntries: ['summary.cf.noi'] },
   { id: 'capex.rentIncrease', step: 'capex', category: 'input', i18nKey: 'helpTexts.capex.rentIncrease' },
   { id: 'capex.rentIncreasePercent', step: 'capex', category: 'input', i18nKey: 'helpTexts.capex.rentIncreasePercent' },

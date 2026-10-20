@@ -75,7 +75,8 @@ public class ExitAnalysisTests
             CreateTimeSeries(2025, 2030, 0),
             CreateTimeSeries(2025, 2030, 0));
 
-        Assert.Equal(5, result.HoldingPeriodYears);
+        // Januar 2025 bis einschließlich Dezember 2030 = 6 volle Jahre
+        Assert.Equal(6, result.HoldingPeriodYears);
         Assert.True(result.IsWithinSpeculationPeriod);
     }
 
@@ -97,8 +98,98 @@ public class ExitAnalysisTests
             CreateTimeSeries(2025, 2035, 0),
             CreateTimeSeries(2025, 2035, 0));
 
-        Assert.Equal(10, result.HoldingPeriodYears);
+        // Januar 2025 bis einschließlich Dezember 2035 = 11 volle Jahre
+        Assert.Equal(11, result.HoldingPeriodYears);
         Assert.False(result.IsWithinSpeculationPeriod);
+    }
+
+    #endregion
+
+    #region Konsistenz mit Orchestrator und gemeinsamer Steuerlogik
+
+    [Fact]
+    public void Calculate_PlannedSale_ExitAnalysisUsesSameTaxAsMetrics()
+    {
+        var orchestrator = new CalculationOrchestrator(new TaxCalculator(new FixedDateProvider(new DateOnly(2025, 1, 1))));
+        var saleDate = new YearMonth(2030, 6);
+        var project = TestProjectBuilder.CreateStandardProject()
+            .WithCapEx(TestProjectBuilder.CreateMeasure(cost: 40_000m, year: 2027, month: 3,
+                taxClass: TaxClassification.ManufacturingCosts));
+        project = project with { Valuation = project.Valuation with { PlannedSaleDate = saleDate } };
+
+        var result = orchestrator.Calculate(project);
+
+        // Gleiche Debt-/Steuerbasis: Exit-Szenario mit identischem Verkaufspreis liefert identische Steuer
+        var salePrice = result.PropertyValue[saleDate].Amount;
+        var taxCalculator = new TaxCalculator(new FixedDateProvider(new DateOnly(2025, 1, 1)));
+        var forecast = CreateForecast(400_000m, ("base", 0m, salePrice));
+        forecast = forecast with
+        {
+            Scenarios = forecast.Scenarios.Select(s => s with
+            {
+                YearlyValues = [new PropertyValueRow { Year = 2030, EstimatedValue = salePrice }]
+            }).ToList()
+        };
+
+        var exit = ExitAnalysisCalculator.Calculate(
+            project, forecast,
+            result.CashflowAfterTax, result.GrossRent, result.OperatingCosts, result.DebtService,
+            new MoneyTimeSeries(project.StartPeriod, project.EndPeriod), result.TaxPayment,
+            result.OutstandingDebt, result.ReserveBalance, result.DepreciationDeduction,
+            taxCalculator, saleDate,
+            project.CapEx!.Measures.Where(m => m.IsExecuted));
+
+        var scenario = exit.Scenarios.Single();
+        Assert.Equal(result.TaxSummary.CapitalGainsTax!.Value.Amount, scenario.CapitalGainsTax);
+        Assert.Equal(result.Metrics.ExitEquityProceeds!.Value.Amount, scenario.NetSaleProceeds, 2);
+        Assert.Equal(result.OutstandingDebt[saleDate].Amount, exit.OutstandingDebtAtExit);
+    }
+
+    [Fact]
+    public void Calculate_Corporation_TaxedEvenAfter10Years()
+    {
+        var project = TestProjectBuilder.CreateStandardProject(startYear: 2025, endYear: 2036);
+        project = project with { TaxProfile = project.TaxProfile with { OwnershipType = OwnershipType.Corporation } };
+        var forecast = CreateForecast(400_000m, ("base", 2m, 600_000m));
+
+        var result = ExitAnalysisCalculator.Calculate(
+            project, forecast,
+            CreateTimeSeries(2025, 2036, 500),
+            CreateTimeSeries(2025, 2036, 2000),
+            CreateTimeSeries(2025, 2036, 300),
+            CreateTimeSeries(2025, 2036, 1500),
+            CreateTimeSeries(2025, 2036, 0),
+            CreateTimeSeries(2025, 2036, 0),
+            CreateDebtSeries(2025, 2036, 300_000, 500),
+            CreateTimeSeries(2025, 2036, 0),
+            CreateTimeSeries(2025, 2036, 0));
+
+        Assert.False(result.IsWithinSpeculationPeriod);
+        Assert.True(result.Scenarios.Single().CapitalGainsTax > 0, "GmbH: Veräußerungsgewinn ist laufender Gewinn");
+    }
+
+    [Fact]
+    public void Calculate_TaxExemptSale_StillReportsEconomicGain()
+    {
+        var project = TestProjectBuilder.CreateStandardProject(startYear: 2025, endYear: 2036);
+        var forecast = CreateForecast(400_000m, ("base", 2m, 600_000m));
+
+        var result = ExitAnalysisCalculator.Calculate(
+            project, forecast,
+            CreateTimeSeries(2025, 2036, 500),
+            CreateTimeSeries(2025, 2036, 2000),
+            CreateTimeSeries(2025, 2036, 300),
+            CreateTimeSeries(2025, 2036, 1500),
+            CreateTimeSeries(2025, 2036, 0),
+            CreateTimeSeries(2025, 2036, 0),
+            CreateDebtSeries(2025, 2036, 300_000, 500),
+            CreateTimeSeries(2025, 2036, 0),
+            CreateTimeSeries(2025, 2036, 0));
+
+        var scenario = result.Scenarios.Single();
+        Assert.Equal(0m, scenario.CapitalGainsTax);
+        // 600.000 − 5% Kosten − (400.000 + aktivierte NK) > 0
+        Assert.True(scenario.CapitalGain > 100_000m);
     }
 
     #endregion

@@ -1,81 +1,98 @@
 <template>
   <ion-page>
-    <AppHeader :title="userDetail?.name ?? t('admin.userDetail')" backHref="/admin" />
+    <AppHeader
+      :title="userDetail?.name ?? t('admin.userDetail')"
+      :eyebrow="t('nav.userAdmin')"
+      back-href="/admin"
+    />
 
-    <ion-content :fullscreen="true" class="ion-padding">
-      <div class="user-detail-page">
-        <div v-if="isLoading" class="loading-state">
-          <ion-spinner name="crescent" />
+    <ion-content>
+      <div class="page-content">
+        <div v-if="isLoading" class="panel loading-state">
+          <ion-spinner name="lines-small" />
         </div>
 
-        <div v-else-if="error" class="error-state">
-          <p>{{ error }}</p>
-          <ion-button fill="outline" size="small" @click="loadUserDetail">
-            {{ t('common.error') }}
-          </ion-button>
+        <div v-else-if="error" class="callout error">
+          <ion-icon :icon="alertCircleOutline" />
+          <div>
+            <p>{{ error }}</p>
+            <button type="button" class="btn btn-outline btn-sm retry-btn" @click="loadUserDetail">
+              {{ t('admin.retry') }}
+            </button>
+          </div>
         </div>
 
         <template v-else-if="userDetail">
-          <!-- User Info -->
-          <KalkCard :title="t('admin.userInfo')">
-            <ion-list>
-              <ion-item>
-                <ion-label>
-                  <h3>{{ t('auth.name') }}</h3>
-                  <p>{{ userDetail.name }}</p>
-                </ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-label>
-                  <h3>{{ t('auth.email') }}</h3>
-                  <p>{{ userDetail.email }}</p>
-                </ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-label>
-                  <h3>{{ t('admin.roles') }}</h3>
-                  <p>
+          <header class="page-head">
+            <div>
+              <span class="eyebrow">{{ t('admin.userDetail') }}</span>
+              <h1 class="page-title">{{ userDetail.name }}</h1>
+              <p class="page-subtitle">{{ userDetail.email }}</p>
+            </div>
+          </header>
+
+          <div class="detail-grid">
+            <section class="panel">
+              <div class="panel-header">
+                <h2 class="panel-title">{{ t('admin.userInfo') }}</h2>
+              </div>
+              <dl class="definition-list">
+                <div class="definition-row">
+                  <dt>{{ t('auth.name') }}</dt>
+                  <dd>{{ userDetail.name }}</dd>
+                </div>
+                <div class="definition-row">
+                  <dt>{{ t('auth.email') }}</dt>
+                  <dd>{{ userDetail.email }}</dd>
+                </div>
+                <div class="definition-row">
+                  <dt>{{ t('admin.roles') }}</dt>
+                  <dd>
                     <span
                       v-for="role in userDetail.roles"
                       :key="role"
-                      class="role-badge"
-                      :class="{ 'role-admin': role === 'Admin' }"
+                      :class="['badge', role === 'Admin' ? 'badge-info' : 'badge-neutral']"
                     >{{ role }}</span>
-                  </p>
-                </ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-label>
-                  <h3>{{ t('admin.registeredAt') }}</h3>
-                  <p>{{ formatDate(userDetail.createdAt) }}</p>
-                </ion-label>
-              </ion-item>
-            </ion-list>
-          </KalkCard>
+                  </dd>
+                </div>
+                <div class="definition-row">
+                  <dt>{{ t('admin.registeredAt') }}</dt>
+                  <dd class="num">{{ formatDate(userDetail.createdAt) }}</dd>
+                </div>
+              </dl>
+            </section>
 
-          <!-- Projects -->
-          <KalkCard :title="t('admin.projects')">
-            <ion-list v-if="userDetail.projects.length > 0">
-              <ion-item
-                v-for="project in userDetail.projects"
-                :key="project.id"
-              >
-                <ion-icon slot="start" :icon="documentOutline" />
-                <ion-label>
-                  <h2>{{ project.name }}</h2>
-                  <p v-if="project.description">{{ project.description }}</p>
-                  <p>
-                    Version {{ project.version }}
-                    &middot;
-                    {{ formatDate(project.updatedAt) }}
-                  </p>
-                </ion-label>
-              </ion-item>
-            </ion-list>
-            <div v-else class="empty-state">
-              <p>{{ t('admin.noProjects') }}</p>
-            </div>
-          </KalkCard>
+            <section class="panel">
+              <div class="panel-header">
+                <h2 class="panel-title">{{ t('admin.projects') }}</h2>
+                <span class="badge badge-neutral">{{ userDetail.projects.length }}</span>
+              </div>
+              <div v-if="userDetail.projects.length > 0" class="table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>{{ t('home.colProject') }}</th>
+                      <th class="num">{{ t('home.colVersion') }}</th>
+                      <th class="num">{{ t('home.colUpdated') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="project in userDetail.projects" :key="project.id">
+                      <td>
+                        <div class="project-cell">
+                          <span class="project-name">{{ project.name }}</span>
+                          <span v-if="project.description" class="project-desc">{{ project.description }}</span>
+                        </div>
+                      </td>
+                      <td class="num">v{{ project.version }}</td>
+                      <td class="num">{{ formatDate(project.updatedAt) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p v-else class="panel-body empty-text">{{ t('admin.noProjects') }}</p>
+            </section>
+          </div>
         </template>
       </div>
     </ion-content>
@@ -86,18 +103,9 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import {
-  IonPage,
-  IonContent,
-  IonList,
-  IonItem,
-  IonIcon,
-  IonLabel,
-  IonButton,
-  IonSpinner
-} from '@ionic/vue';
-import { documentOutline } from 'ionicons/icons';
-import { AppHeader, KalkCard } from '@/components';
+import { IonPage, IonContent, IonIcon, IonSpinner } from '@ionic/vue';
+import { alertCircleOutline } from 'ionicons/icons';
+import { AppHeader } from '@/components';
 import { adminApi, type AdminUserDetail } from '@/api';
 
 const { t, locale } = useI18n();
@@ -130,8 +138,8 @@ async function loadUserDetail() {
 function formatDate(dateStr: string): string {
   return new Intl.DateTimeFormat(locale.value, {
     year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
     hour: '2-digit',
     minute: '2-digit'
   }).format(new Date(dateStr));
@@ -139,66 +147,83 @@ function formatDate(dateStr: string): string {
 </script>
 
 <style scoped>
-.user-detail-page {
-  max-width: 700px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--kalk-space-6);
-}
-
 .loading-state {
   display: flex;
   justify-content: center;
   padding: var(--kalk-space-8);
 }
 
-.error-state {
-  text-align: center;
-  padding: var(--kalk-space-8);
-  color: var(--ion-color-danger);
+.retry-btn {
+  margin-top: var(--kalk-space-2);
 }
 
-.empty-state {
-  text-align: center;
-  padding: var(--kalk-space-6);
-  color: var(--kalk-gray-400);
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: var(--kalk-space-6);
+  align-items: start;
 }
 
-ion-list {
-  background: transparent;
-  padding: 0;
+@media (max-width: 960px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-ion-item {
-  --background: transparent;
-  --padding-start: 0;
-  --inner-padding-end: 0;
+.definition-list {
+  margin: 0;
+  padding: var(--kalk-space-1) var(--kalk-space-5);
 }
 
-ion-item h2 {
-  font-weight: 600;
-  font-size: var(--kalk-text-base);
-}
-
-ion-item h3 {
-  font-weight: 600;
+.definition-row {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: var(--kalk-space-3);
+  padding: var(--kalk-space-3) 0;
+  border-bottom: 1px solid var(--kalk-gray-100);
   font-size: var(--kalk-text-sm);
+}
+
+.definition-row:last-child {
+  border-bottom: 0;
+}
+
+.definition-row dt {
   color: var(--kalk-gray-500);
 }
 
-.role-badge {
-  display: inline-block;
-  padding: 1px 8px;
-  border-radius: var(--kalk-radius-sm);
-  font-size: var(--kalk-text-xs);
-  background: var(--kalk-gray-100);
-  color: var(--kalk-gray-700);
-  margin-right: var(--kalk-space-1);
+.definition-row dd {
+  margin: 0;
+  color: var(--kalk-gray-900);
+  font-weight: 500;
+  word-break: break-word;
 }
 
-.role-admin {
-  background: var(--kalk-accent-100, #e0e7ff);
-  color: var(--kalk-accent-700, #3730a3);
+.badge + .badge {
+  margin-left: 4px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.project-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.project-name {
+  font-weight: 600;
+  color: var(--kalk-navy-900);
+}
+
+.project-desc {
+  font-size: var(--kalk-text-xs);
+  color: var(--kalk-gray-500);
+}
+
+.empty-text {
+  font-size: var(--kalk-text-sm);
+  color: var(--kalk-gray-500);
 }
 </style>

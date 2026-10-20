@@ -69,9 +69,11 @@
     />
 
     <!-- Regional Market Price -->
-    <div class="market-section">
-      <h4 class="section-label">{{ t('property.marketReference.title') }}</h4>
-      <p class="components-hint">{{ t('property.marketReference.hint') }}</p>
+    <section class="step-section">
+      <div class="step-section-head">
+        <h4 class="step-section-title">{{ t('property.marketReference.title') }}</h4>
+        <p class="step-section-desc">{{ t('property.marketReference.hint') }}</p>
+      </div>
       <div class="market-fields">
         <KalkCurrency
           v-model="regionalPricePerSqm"
@@ -81,75 +83,85 @@
           help-key="property.regionalPrice"
         />
       </div>
-    </div>
+    </section>
 
     <!-- Building Components Section -->
-    <div class="components-section">
-      <h4 class="section-label">{{ t('property.components.title') }} <HelpIcon help-key="property.components" /></h4>
-      <p class="components-hint">{{ t('property.components.hint') }}</p>
-
-      <div class="components-table">
-        <div class="components-table-header">
-          <span class="col-category">{{ t('capex.measure.category') }}</span>
-          <span class="col-condition">{{ t('property.components.condition') }}</span>
-          <span class="col-year">{{ t('property.components.lastRenovation') }}</span>
-          <span class="col-cycle">{{ t('property.components.expectedCycle') }}</span>
-        </div>
-
-        <div
-          v-for="comp in components"
-          :key="comp.category"
-          class="component-row"
-        >
-          <span class="col-category component-label">
-            {{ t(`property.components.categories.${comp.category}`) }}
-          </span>
-
-          <div class="col-condition">
-            <select
-              v-model="comp.condition"
-              class="component-select"
-            >
-              <option value="New">{{ t('property.conditions.New') }}</option>
-              <option value="Good">{{ t('property.conditions.Good') }}</option>
-              <option value="Fair">{{ t('property.conditions.Fair') }}</option>
-              <option value="Poor">{{ t('property.conditions.Poor') }}</option>
-              <option value="NeedsRenovation">{{ t('property.conditions.NeedsRenovation') }}</option>
-            </select>
-          </div>
-
-          <div class="col-year">
-            <input
-              v-model.number="comp.lastRenovationYear"
-              type="number"
-              class="component-input"
-              :placeholder="String(constructionYear)"
-              :min="1800"
-              :max="2030"
-            />
-          </div>
-
-          <div class="col-cycle">
-            <input
-              v-model.number="comp.expectedCycleYears"
-              type="number"
-              class="component-input"
-              :min="5"
-              :max="100"
-            />
-          </div>
-        </div>
+    <section class="step-section">
+      <div class="step-section-head">
+        <h4 class="step-section-title">{{ t('property.components.title') }} <HelpIcon help-key="property.components" /></h4>
+        <p class="step-section-desc">{{ t('property.components.hint') }}</p>
       </div>
-    </div>
+
+      <div class="table-scroll">
+        <table class="data-table components-table">
+          <thead>
+            <tr>
+              <th class="col-category">{{ t('capex.measure.category') }}</th>
+              <th class="col-condition">{{ t('property.components.condition') }}</th>
+              <th class="col-year num">{{ t('property.components.lastRenovation') }}</th>
+              <th class="col-cycle num">{{ t('property.components.expectedCycle') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="comp in components" :key="comp.category">
+              <td class="col-category component-label">
+                {{ t(`property.components.categories.${comp.category}`) }}
+              </td>
+              <td class="col-condition">
+                <div class="condition-cell">
+                  <span class="condition-marker" :class="`cond-${comp.condition}`" aria-hidden="true"></span>
+                  <select v-model="comp.condition" class="table-control">
+                    <option value="New">{{ t('property.conditions.New') }}</option>
+                    <option value="Good">{{ t('property.conditions.Good') }}</option>
+                    <option value="Fair">{{ t('property.conditions.Fair') }}</option>
+                    <option value="Poor">{{ t('property.conditions.Poor') }}</option>
+                    <option value="NeedsRenovation">{{ t('property.conditions.NeedsRenovation') }}</option>
+                  </select>
+                </div>
+              </td>
+              <td class="col-year num">
+                <input
+                  v-model.number="comp.lastRenovationYear"
+                  type="number"
+                  class="table-control table-control--num"
+                  :placeholder="String(constructionYear)"
+                  :min="1800"
+                  :max="2030"
+                />
+              </td>
+              <td class="col-cycle num">
+                <input
+                  v-model.number="comp.expectedCycleYears"
+                  type="number"
+                  class="table-control table-control--num"
+                  :min="5"
+                  :max="100"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
     <!-- Unit Management Section -->
-    <div v-if="showUnits" class="units-section">
-      <h4 class="section-label">{{ t('property.units.title') }}</h4>
-      <p class="components-hint">{{ t('property.unitComponents.hint') }}</p>
+    <section v-if="showUnits" class="step-section">
+      <div class="step-section-head">
+        <h4 class="step-section-title">{{ t('property.units.title') }}</h4>
+        <p class="step-section-desc">{{ t('property.unitComponents.hint') }}</p>
+      </div>
 
       <div v-for="(unit, index) in units" :key="unit.id" class="unit-panel">
         <div class="unit-header" @click="toggleUnit(unit.id)">
-          <span class="unit-toggle">{{ expandedUnits.has(unit.id) ? '\u25BE' : '\u25B8' }}</span>
+          <svg
+            class="unit-chevron"
+            :class="{ 'is-expanded': expandedUnits.has(unit.id) }"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+          </svg>
           <span class="unit-title">{{ unit.name || `WE ${index + 1}` }}</span>
           <span class="unit-meta">{{ unit.area }} {{ t('common.sqm') }}</span>
           <button
@@ -158,7 +170,7 @@
             @click.stop="removeUnit(index)"
             :title="t('property.units.removeUnit')"
           >
-            <svg viewBox="0 0 20 20" fill="currentColor">
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
           </button>
@@ -186,72 +198,75 @@
 
           <div class="unit-components-section">
             <h5 class="unit-components-label">{{ t('property.units.components') }}</h5>
-            <p class="components-hint">{{ t('property.units.componentsHint') }}</p>
+            <p class="step-section-desc">{{ t('property.units.componentsHint') }}</p>
 
-            <div class="components-table">
-              <div class="components-table-header">
-                <span class="col-category">{{ t('capex.measure.category') }}</span>
-                <span class="col-condition">{{ t('property.components.condition') }}</span>
-                <span class="col-year">{{ t('property.components.lastRenovation') }}</span>
-                <span class="col-cycle">{{ t('property.components.expectedCycle') }}</span>
-              </div>
-
-              <div
-                v-for="comp in unit.components"
-                :key="comp.category"
-                class="component-row"
-              >
-                <span class="col-category component-label">
-                  {{ t(`property.components.categories.${comp.category}`) }}
-                </span>
-
-                <div class="col-condition">
-                  <select v-model="comp.condition" class="component-select">
-                    <option value="New">{{ t('property.conditions.New') }}</option>
-                    <option value="Good">{{ t('property.conditions.Good') }}</option>
-                    <option value="Fair">{{ t('property.conditions.Fair') }}</option>
-                    <option value="Poor">{{ t('property.conditions.Poor') }}</option>
-                    <option value="NeedsRenovation">{{ t('property.conditions.NeedsRenovation') }}</option>
-                  </select>
-                </div>
-
-                <div class="col-year">
-                  <input
-                    v-model.number="comp.lastRenovationYear"
-                    type="number"
-                    class="component-input"
-                    :placeholder="String(constructionYear)"
-                    :min="1800"
-                    :max="2030"
-                  />
-                </div>
-
-                <div class="col-cycle">
-                  <input
-                    v-model.number="comp.expectedCycleYears"
-                    type="number"
-                    class="component-input"
-                    :min="5"
-                    :max="100"
-                  />
-                </div>
-              </div>
+            <div class="table-scroll">
+              <table class="data-table components-table">
+                <thead>
+                  <tr>
+                    <th class="col-category">{{ t('capex.measure.category') }}</th>
+                    <th class="col-condition">{{ t('property.components.condition') }}</th>
+                    <th class="col-year num">{{ t('property.components.lastRenovation') }}</th>
+                    <th class="col-cycle num">{{ t('property.components.expectedCycle') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="comp in unit.components" :key="comp.category">
+                    <td class="col-category component-label">
+                      {{ t(`property.components.categories.${comp.category}`) }}
+                    </td>
+                    <td class="col-condition">
+                      <div class="condition-cell">
+                        <span class="condition-marker" :class="`cond-${comp.condition}`" aria-hidden="true"></span>
+                        <select v-model="comp.condition" class="table-control">
+                          <option value="New">{{ t('property.conditions.New') }}</option>
+                          <option value="Good">{{ t('property.conditions.Good') }}</option>
+                          <option value="Fair">{{ t('property.conditions.Fair') }}</option>
+                          <option value="Poor">{{ t('property.conditions.Poor') }}</option>
+                          <option value="NeedsRenovation">{{ t('property.conditions.NeedsRenovation') }}</option>
+                        </select>
+                      </div>
+                    </td>
+                    <td class="col-year num">
+                      <input
+                        v-model.number="comp.lastRenovationYear"
+                        type="number"
+                        class="table-control table-control--num"
+                        :placeholder="String(constructionYear)"
+                        :min="1800"
+                        :max="2030"
+                      />
+                    </td>
+                    <td class="col-cycle num">
+                      <input
+                        v-model.number="comp.expectedCycleYears"
+                        type="number"
+                        class="table-control table-control--num"
+                        :min="5"
+                        :max="100"
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       </div>
 
-      <button type="button" class="add-unit-btn" @click="addUnit">
-        <svg class="add-unit-icon" viewBox="0 0 20 20" fill="currentColor">
+      <button type="button" class="btn btn-outline btn-sm add-unit-btn" @click="addUnit">
+        <svg class="add-unit-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
           <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
         </svg>
         {{ t('property.units.addUnit') }}
       </button>
-    </div>
+    </section>
 
     <!-- WEG Configuration for Condominiums -->
-    <div v-if="propertyType === 'Condominium'" class="weg-section">
-      <h4 class="section-label">{{ t('property.weg.title') }}</h4>
+    <section v-if="propertyType === 'Condominium'" class="step-section">
+      <div class="step-section-head">
+        <h4 class="step-section-title">{{ t('property.weg.title') }}</h4>
+      </div>
 
       <KalkInput
         v-model="meaPerMille"
@@ -259,7 +274,7 @@
         type="number"
         :min="1"
         :max="10000"
-        suffix="\u2030"
+        suffix="‰"
         help-key="weg.mea"
       />
 
@@ -269,7 +284,7 @@
         type="number"
         :min="1000"
         :max="10000"
-        suffix="\u2030"
+        suffix="‰"
         help-key="weg.totalMea"
       />
 
@@ -279,7 +294,7 @@
         :currency="currency"
         help-key="weg.reserveBalance"
       />
-    </div>
+    </section>
   </KalkCard>
 </template>
 
@@ -564,166 +579,205 @@ watch(
 );
 </script>
 
+
 <style scoped>
 .area-section {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--kalk-space-4);
 }
 
-@media (max-width: 768px) {
-  .area-section {
-    grid-template-columns: 1fr;
-  }
+/* ------------------------------------------------------------
+ * Sections within the step
+ * ------------------------------------------------------------ */
+.step-section {
+  margin-top: var(--kalk-space-6);
+  padding-top: var(--kalk-space-6);
+  border-top: 1px solid var(--kalk-border);
 }
 
-.market-section {
-  margin-top: var(--kalk-space-8);
-  padding-top: var(--kalk-space-6);
-  border-top: 1px solid var(--kalk-gray-200);
+.step-section-head {
+  margin-bottom: var(--kalk-space-4);
 }
+
+.step-section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--kalk-space-1);
+  font-size: var(--kalk-text-base);
+  font-weight: 600;
+  color: var(--kalk-gray-900);
+  margin: 0;
+}
+
+.step-section-desc {
+  font-size: var(--kalk-text-xs);
+  color: var(--kalk-gray-500);
+  line-height: 1.5;
+  margin: 2px 0 0;
+}
+
 .market-fields {
   max-width: 300px;
 }
 
-.weg-section {
-  margin-top: var(--kalk-space-8);
-  padding-top: var(--kalk-space-6);
-  border-top: 1px solid var(--kalk-gray-200);
-}
-
-.section-label {
-  font-size: var(--kalk-text-base);
-  font-weight: 600;
-  color: var(--kalk-gray-900);
-  margin-bottom: var(--kalk-space-4);
-}
-
-/* Building Components */
-.components-section {
-  margin-top: var(--kalk-space-8);
-  padding-top: var(--kalk-space-6);
-  border-top: 1px solid var(--kalk-gray-200);
-}
-
-.components-hint {
-  font-size: var(--kalk-text-xs);
-  color: var(--kalk-gray-500);
-  margin-top: var(--kalk-space-1);
-  margin-bottom: var(--kalk-space-4);
+/* ------------------------------------------------------------
+ * Components table
+ * ------------------------------------------------------------ */
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--kalk-border);
+  border-radius: var(--kalk-radius-lg);
+  background: var(--kalk-surface);
 }
 
 .components-table {
-  margin-top: var(--kalk-space-2);
+  min-width: 560px;
 }
 
-.components-table-header {
-  display: grid;
-  grid-template-columns: 2fr 1.5fr 1fr 1fr;
-  gap: var(--kalk-space-3);
-  padding: var(--kalk-space-2) var(--kalk-space-3);
-  font-size: var(--kalk-text-xs);
-  font-weight: 600;
-  color: var(--kalk-gray-600);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid var(--kalk-gray-200);
+.components-table select.table-control {
+  min-width: 150px;
 }
 
-.component-row {
-  display: grid;
-  grid-template-columns: 2fr 1.5fr 1fr 1fr;
-  gap: var(--kalk-space-3);
-  padding: var(--kalk-space-2) var(--kalk-space-3);
-  align-items: center;
-  border-bottom: 1px solid var(--kalk-gray-100);
-  transition: background 0.1s;
+.components-table .table-control--num {
+  min-width: 80px;
 }
 
-.component-row:hover {
-  background: var(--kalk-gray-50);
+.components-table th,
+.components-table td {
+  vertical-align: middle;
+}
+
+.components-table td {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.components-table .col-category {
+  width: 34%;
+}
+
+.components-table .col-condition {
+  width: 30%;
+}
+
+.components-table .col-year,
+.components-table .col-cycle {
+  width: 18%;
 }
 
 .component-label {
-  font-size: var(--kalk-text-sm);
   font-weight: 500;
   color: var(--kalk-gray-800);
+  white-space: nowrap;
 }
 
-.component-select {
+.condition-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--kalk-space-2);
+}
+
+/* Small rectangular status marker, muted semantic colors */
+.condition-marker {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  border: 1px solid var(--kalk-border-strong);
+  background: var(--kalk-gray-100);
+}
+
+.condition-marker.cond-New,
+.condition-marker.cond-Good {
+  background: var(--kalk-positive-bg);
+  border-color: var(--kalk-positive);
+}
+
+.condition-marker.cond-Fair {
+  background: var(--kalk-caution-bg);
+  border-color: var(--kalk-caution);
+}
+
+.condition-marker.cond-Poor,
+.condition-marker.cond-NeedsRenovation {
+  background: var(--kalk-negative-bg);
+  border-color: var(--kalk-negative);
+}
+
+.table-control {
   width: 100%;
-  padding: var(--kalk-space-1) var(--kalk-space-2);
-  font-family: var(--kalk-font-family);
+  height: 32px;
+  padding: 0 var(--kalk-space-2);
+  font: inherit;
   font-size: var(--kalk-text-sm);
-  color: var(--kalk-gray-800);
-  background: #ffffff;
-  border: 1px solid var(--kalk-gray-300);
-  border-radius: var(--kalk-radius-sm);
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-.component-select:focus {
-  border-color: var(--kalk-accent-500);
-}
-
-.component-input {
-  width: 100%;
-  padding: var(--kalk-space-1) var(--kalk-space-2);
-  font-family: var(--kalk-font-family);
-  font-size: var(--kalk-text-sm);
-  color: var(--kalk-gray-800);
-  background: #ffffff;
-  border: 1px solid var(--kalk-gray-300);
-  border-radius: var(--kalk-radius-sm);
-  outline: none;
-  transition: border-color 0.15s;
-  text-align: right;
-}
-
-.component-input:focus {
-  border-color: var(--kalk-accent-500);
-}
-
-.component-input::placeholder {
-  color: var(--kalk-gray-400);
-  text-align: right;
-}
-
-/* Unit Management */
-.units-section {
-  margin-top: var(--kalk-space-8);
-  padding-top: var(--kalk-space-6);
-  border-top: 1px solid var(--kalk-gray-200);
-}
-
-.unit-panel {
-  background: var(--kalk-gray-50);
-  border: 1px solid var(--kalk-gray-200);
+  color: var(--kalk-gray-900);
+  background-color: var(--kalk-surface);
+  border: 1px solid var(--kalk-border-strong);
   border-radius: var(--kalk-radius-md);
-  margin-bottom: var(--kalk-space-3);
+  outline: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.table-control:hover {
+  border-color: var(--kalk-gray-400);
+}
+
+.table-control:focus {
+  border-color: var(--kalk-navy-600);
+  box-shadow: 0 0 0 3px var(--kalk-ring-color);
+}
+
+select.table-control {
+  cursor: pointer;
+}
+
+.table-control--num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.table-control::placeholder {
+  color: var(--kalk-gray-400);
+}
+
+/* ------------------------------------------------------------
+ * Unit management
+ * ------------------------------------------------------------ */
+.unit-panel {
+  background: var(--kalk-surface);
+  border: 1px solid var(--kalk-border);
+  border-radius: var(--kalk-radius-lg);
+  margin-bottom: var(--kalk-space-2);
   overflow: hidden;
 }
 
 .unit-header {
   display: flex;
   align-items: center;
-  gap: var(--kalk-space-3);
-  padding: var(--kalk-space-3) var(--kalk-space-4);
+  gap: var(--kalk-space-2);
+  padding: var(--kalk-space-2) var(--kalk-space-3);
+  background: var(--kalk-gray-50);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background-color 0.12s;
 }
 
 .unit-header:hover {
   background: var(--kalk-gray-100);
 }
 
-.unit-toggle {
-  font-size: var(--kalk-text-sm);
-  color: var(--kalk-gray-500);
+.unit-chevron {
   width: 16px;
-  text-align: center;
+  height: 16px;
+  color: var(--kalk-gray-500);
   flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.unit-chevron.is-expanded {
+  transform: rotate(90deg);
 }
 
 .unit-title {
@@ -731,11 +785,16 @@ watch(
   font-weight: 600;
   color: var(--kalk-gray-900);
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .unit-meta {
   font-size: var(--kalk-text-xs);
   color: var(--kalk-gray-500);
+  font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
 
@@ -747,17 +806,18 @@ watch(
   height: 28px;
   padding: 0;
   background: transparent;
-  border: none;
-  border-radius: var(--kalk-radius-sm);
-  color: var(--kalk-gray-400);
+  border: 1px solid transparent;
+  border-radius: var(--kalk-radius-md);
+  color: var(--kalk-gray-500);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background-color 0.12s, color 0.12s, border-color 0.12s;
   flex-shrink: 0;
 }
 
 .unit-delete-btn:hover {
-  background: var(--kalk-error-bg, #fef2f2);
-  color: var(--kalk-error, #ef4444);
+  background: var(--kalk-negative-bg);
+  border-color: var(--kalk-negative-border);
+  color: var(--kalk-negative);
 }
 
 .unit-delete-btn svg {
@@ -767,77 +827,54 @@ watch(
 
 .unit-body {
   padding: 0 var(--kalk-space-4) var(--kalk-space-4);
-  border-top: 1px solid var(--kalk-gray-200);
-  background: #ffffff;
+  border-top: 1px solid var(--kalk-border);
 }
 
 .unit-fields {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--kalk-space-4);
   padding-top: var(--kalk-space-4);
 }
 
 .unit-components-section {
-  margin-top: var(--kalk-space-4);
+  margin-top: var(--kalk-space-2);
   padding-top: var(--kalk-space-4);
   border-top: 1px solid var(--kalk-gray-100);
+}
+
+.unit-components-section .step-section-desc {
+  margin-bottom: var(--kalk-space-3);
 }
 
 .unit-components-label {
   font-size: var(--kalk-text-sm);
   font-weight: 600;
   color: var(--kalk-gray-800);
-  margin-bottom: var(--kalk-space-2);
+  margin: 0;
 }
 
 .add-unit-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--kalk-space-2);
-  padding: var(--kalk-space-2) var(--kalk-space-4);
-  font-family: var(--kalk-font-family);
-  font-size: var(--kalk-text-sm);
-  font-weight: 500;
-  color: var(--kalk-accent-600);
-  background: transparent;
-  border: 1.5px dashed var(--kalk-accent-300);
-  border-radius: var(--kalk-radius-md);
-  cursor: pointer;
-  transition: all 0.15s;
-  width: 100%;
-  justify-content: center;
-}
-
-.add-unit-btn:hover {
-  background: var(--kalk-accent-50);
-  border-color: var(--kalk-accent-500);
-  color: var(--kalk-accent-700);
+  margin-top: var(--kalk-space-1);
 }
 
 .add-unit-icon {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 @media (max-width: 768px) {
-  .components-table-header {
-    display: none;
-  }
-
-  .component-row {
-    grid-template-columns: 1fr 1fr;
-    gap: var(--kalk-space-2);
-    padding: var(--kalk-space-3);
-  }
-
-  .component-label {
-    grid-column: 1 / -1;
-    font-weight: 600;
-  }
-
+  .area-section,
   .unit-fields {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .market-fields {
+    max-width: none;
+  }
+
+  .unit-body {
+    padding: 0 var(--kalk-space-3) var(--kalk-space-3);
   }
 }
 </style>

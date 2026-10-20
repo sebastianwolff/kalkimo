@@ -15,6 +15,7 @@ public static class InvestorCalculator
         Financing financing,
         MoneyTimeSeries cashflowBeforeTax,
         Money? saleNetProceeds,
+        YearMonth? exitPeriod,
         decimal discountRate,
         YearMonth startPeriod,
         YearMonth endPeriod,
@@ -42,9 +43,9 @@ public static class InvestorCalculator
                 ? contribution
                 : Money.Zero(currency);
 
-            // Calculate pro-rata cashflow
+            // Calculate pro-rata cashflow (nach dem Exit keine Cashflows mehr)
             var proRataCashflow = CalculateProRataCashflow(
-                cashflowBeforeTax, shareRatio, startPeriod, endPeriod, currency);
+                cashflowBeforeTax, shareRatio, exitPeriod, startPeriod, endPeriod, currency);
 
             // Calculate distributions according to policy
             var distributions = CalculateDistributions(
@@ -61,10 +62,10 @@ public static class InvestorCalculator
 
             // Calculate investor-specific metrics
             var irrBeforeTax = CalculateInvestorIrr(
-                equityContribution, proRataCashflow, saleNetProceeds, shareRatio);
+                equityContribution, proRataCashflow, saleNetProceeds, shareRatio, exitPeriod);
 
             var npvBeforeTax = CalculateInvestorNpv(
-                equityContribution, proRataCashflow, saleNetProceeds, shareRatio, discountRate, currency);
+                equityContribution, proRataCashflow, saleNetProceeds, shareRatio, discountRate, currency, exitPeriod);
 
             var equityMultiple = equityContribution.Amount > 0
                 ? totalDistributions.Amount / equityContribution.Amount
@@ -103,6 +104,7 @@ public static class InvestorCalculator
     private static MoneyTimeSeries CalculateProRataCashflow(
         MoneyTimeSeries totalCashflow,
         decimal shareRatio,
+        YearMonth? exitPeriod,
         YearMonth startPeriod,
         YearMonth endPeriod,
         string currency)
@@ -111,7 +113,9 @@ public static class InvestorCalculator
 
         foreach (var period in result.Periods)
         {
-            result[period] = (totalCashflow[period] * shareRatio).Round();
+            result[period] = exitPeriod.HasValue && period > exitPeriod.Value
+                ? Money.Zero(currency)
+                : (totalCashflow[period] * shareRatio).Round();
         }
 
         return result;
@@ -167,14 +171,15 @@ public static class InvestorCalculator
         Money equityContribution,
         MoneyTimeSeries cashflows,
         Money? saleProceeds,
-        decimal shareRatio)
+        decimal shareRatio,
+        YearMonth? exitPeriod)
     {
         // Terminal value is the pro-rata share of sale proceeds
         var terminalValue = saleProceeds.HasValue
             ? saleProceeds.Value * shareRatio
             : (Money?)null;
 
-        return MetricsCalculator.CalculateIrr(equityContribution, cashflows, terminalValue);
+        return MetricsCalculator.CalculateIrr(equityContribution, cashflows, terminalValue, exitPeriod);
     }
 
     /// <summary>
@@ -186,7 +191,8 @@ public static class InvestorCalculator
         Money? saleProceeds,
         decimal shareRatio,
         decimal annualDiscountRate,
-        string currency)
+        string currency,
+        YearMonth? exitPeriod)
     {
         var terminalValue = saleProceeds.HasValue
             ? saleProceeds.Value * shareRatio
@@ -197,6 +203,7 @@ public static class InvestorCalculator
             cashflows,
             annualDiscountRate,
             terminalValue,
-            currency);
+            currency,
+            exitPeriod);
     }
 }

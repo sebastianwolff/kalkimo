@@ -117,7 +117,7 @@ function showHelp() {
 }
 
 .help-button:hover {
-  color: var(--kalk-accent-500);
+  color: var(--kalk-navy-600);
 }
 
 .help-icon {
@@ -136,17 +136,17 @@ function showHelp() {
   font-family: var(--kalk-font-family);
   font-size: var(--kalk-text-base);
   color: var(--kalk-gray-900);
-  background-color: #ffffff;
-  border: 1.5px solid var(--kalk-gray-200);
+  background-color: var(--kalk-surface);
+  border: 1px solid var(--kalk-border-strong);
   border-radius: var(--kalk-radius-md);
   appearance: none;
   cursor: pointer;
-  min-height: 48px;
+  min-height: 42px;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .form-select:hover {
-  border-color: var(--kalk-gray-300);
+  border-color: var(--kalk-gray-400);
 }
 
 .form-select:focus {
@@ -166,7 +166,7 @@ function showHelp() {
 }
 
 .form-select.has-error:focus {
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+  box-shadow: 0 0 0 3px rgba(161, 44, 44, 0.18);
 }
 
 .select-chevron {

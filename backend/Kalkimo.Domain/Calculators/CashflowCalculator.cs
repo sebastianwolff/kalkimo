@@ -96,8 +96,39 @@ public static class CashflowCalculator
     }
 
     /// <summary>
+    /// Überträgt Mietanpassungen (z.B. aus Maßnahmen) auf die effektive Miete.
+    /// Die Anpassung unterliegt im jeweiligen Monat demselben Ausfallanteil wie die Basismiete;
+    /// ohne Basismiete gilt die pauschale Leerstandsquote.
+    /// </summary>
+    public static MoneyTimeSeries ApplyRentAdjustment(
+        MoneyTimeSeries baseGrossRent,
+        MoneyTimeSeries baseEffectiveRent,
+        MoneyTimeSeries rentAdjustment,
+        decimal vacancyRatePercent)
+    {
+        var result = new MoneyTimeSeries(baseEffectiveRent.StartPeriod, baseEffectiveRent.EndPeriod, baseEffectiveRent.Currency);
+
+        foreach (var period in result.Periods)
+        {
+            var gross = baseGrossRent[period].Amount;
+            var collectionRatio = gross > 0
+                ? baseEffectiveRent[period].Amount / gross
+                : 1 - vacancyRatePercent / 100;
+
+            result[period] = (baseEffectiveRent[period] + rentAdjustment[period] * collectionRatio).Round();
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Berechnet die effektive Miete nach Mietausfall/Leerstand
     /// </summary>
+    /// <remarks>
+    /// Rechnet die Miete je Mietverhältnis neu (für einheitenbezogene Leerstände);
+    /// <paramref name="grossRent"/> wird nicht verwendet. Mietanpassungen über
+    /// <see cref="ApplyRentAdjustment"/> übertragen.
+    /// </remarks>
     public static MoneyTimeSeries CalculateEffectiveRent(
         MoneyTimeSeries grossRent,
         RentConfiguration rentConfig,
@@ -209,11 +240,15 @@ public static class CashflowCalculator
     }
 
     /// <summary>
-    /// Berechnet das Net Operating Income (NOI)
+    /// Berechnet das Net Operating Income (NOI).
+    /// NK-Vorauszahlungen sind ein durchlaufender Posten: Sie decken höchstens die
+    /// umlagefähigen Kosten (Überschuss wird mit der NK-Abrechnung erstattet),
+    /// eine Unterdeckung trägt der Vermieter.
     /// </summary>
     public static MoneyTimeSeries CalculateNoi(
         MoneyTimeSeries effectiveRent,
         MoneyTimeSeries serviceChargeIncome,
+        MoneyTimeSeries transferableCosts,
         MoneyTimeSeries operatingCosts,
         YearMonth startPeriod,
         YearMonth endPeriod,
@@ -223,8 +258,14 @@ public static class CashflowCalculator
 
         foreach (var period in result.Periods)
         {
-            // NOI = Effective Rent + Service Charge Income - Operating Costs
-            result[period] = effectiveRent[period] + serviceChargeIncome[period] - operatingCosts[period];
+            // Umgelegt werden kann höchstens, was an umlagefähigen (bzw. insgesamt) Kosten anfällt
+            var recoverable = Math.Min(
+                serviceChargeIncome[period].Amount,
+                Math.Min(transferableCosts[period].Amount, operatingCosts[period].Amount));
+            recoverable = Math.Max(0m, recoverable);
+
+            // NOI = Effective Rent + umgelegte Nebenkosten - Operating Costs
+            result[period] = effectiveRent[period] + new Money(recoverable, currency) - operatingCosts[period];
         }
 
         return result;

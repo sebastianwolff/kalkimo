@@ -149,11 +149,16 @@ public static class YearlyAggregationService
     /// <summary>
     /// Aggregiert zu jährlichen Tax-Bridge-Zeilen
     /// </summary>
+    /// <param name="grossRent">Steuerliche Einnahmen (vereinnahmte Miete + Umlagen)</param>
+    /// <param name="operatingDeductions">Abzugsfähige Betriebskosten/sonstige Werbungskosten (Default: OperatingCosts)</param>
     public static IReadOnlyList<TaxBridgeRow> AggregateToTaxBridgeRows(
         CalculationResult result,
         MoneyTimeSeries grossRent,
-        MoneyTimeSeries maintenanceExpense)
+        MoneyTimeSeries maintenanceExpense,
+        MoneyTimeSeries? operatingDeductions = null)
     {
+        var deductions = operatingDeductions ?? result.OperatingCosts;
+
         var rows = new List<TaxBridgeRow>();
         var startYear = result.GrossRent.StartPeriod.Year;
         var endYear = result.GrossRent.EndPeriod.Year;
@@ -167,7 +172,7 @@ public static class YearlyAggregationService
                 Depreciation = result.DepreciationDeduction.SumForYear(year).Amount,
                 InterestExpense = result.InterestExpense.SumForYear(year).Amount,
                 MaintenanceExpense = maintenanceExpense.SumForYear(year).Amount,
-                OperatingExpenses = result.OperatingCosts.SumForYear(year).Amount,
+                OperatingExpenses = deductions.SumForYear(year).Amount,
                 MaintenanceReserve = 0, // Reserve is not a tax deduction
                 TaxableIncome = result.TaxableIncome.SumForYear(year).Amount,
                 TaxPayment = result.TaxPayment.SumForYear(year).Amount

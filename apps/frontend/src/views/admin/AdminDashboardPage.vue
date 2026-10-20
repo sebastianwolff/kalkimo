@@ -2,59 +2,95 @@
   <ion-page>
     <AppHeader :title="t('admin.title')" />
 
-    <ion-content :fullscreen="true" class="ion-padding">
-      <div class="admin-dashboard">
-        <!-- Summary Cards -->
-        <div class="summary-cards">
-          <KalkCard :title="t('admin.userCount')">
-            <div class="summary-value">{{ users.length }}</div>
-          </KalkCard>
-          <KalkCard :title="t('admin.projectCount')">
-            <div class="summary-value">{{ totalProjects }}</div>
-          </KalkCard>
+    <ion-content>
+      <div class="page-content">
+        <header class="page-head">
+          <div>
+            <span class="eyebrow">{{ t('admin.title') }}</span>
+            <h1 class="page-title">{{ t('nav.userAdmin') }}</h1>
+            <p class="page-subtitle">{{ t('admin.subtitle') }}</p>
+          </div>
+        </header>
+
+        <div class="kpi-grid kpi-row">
+          <div class="kpi">
+            <div class="kpi-label">{{ t('admin.userCount') }}</div>
+            <div class="kpi-value">{{ isLoading ? '–' : users.length }}</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">{{ t('admin.projectCount') }}</div>
+            <div class="kpi-value">{{ isLoading ? '–' : totalProjects }}</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">{{ t('admin.adminCount') }}</div>
+            <div class="kpi-value">{{ isLoading ? '–' : adminCount }}</div>
+          </div>
         </div>
 
-        <!-- User List -->
-        <KalkCard :title="t('admin.users')">
-          <div v-if="isLoading" class="loading-state">
-            <ion-spinner name="crescent" />
+        <section class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">{{ t('admin.users') }}</h2>
           </div>
 
-          <div v-else-if="error" class="error-state">
-            <p>{{ error }}</p>
-            <ion-button fill="outline" size="small" @click="loadUsers">
-              {{ t('common.error') }}
-            </ion-button>
+          <div v-if="isLoading" class="panel-body loading-state">
+            <ion-spinner name="lines-small" />
           </div>
 
-          <ion-list v-else>
-            <ion-item
-              v-for="user in users"
-              :key="user.id"
-              button
-              @click="openUserDetail(user.id)"
-              detail
-            >
-              <ion-icon slot="start" :icon="personOutline" />
-              <ion-label>
-                <h2>{{ user.name }}</h2>
-                <h3>{{ user.email }}</h3>
-                <p>
-                  <span
-                    v-for="role in user.roles"
-                    :key="role"
-                    class="role-badge"
-                    :class="{ 'role-admin': role === 'Admin' }"
-                  >{{ role }}</span>
-                  <span class="project-count">
-                    {{ user.projectCount }} {{ user.projectCount === 1 ? 'Projekt' : 'Projekte' }}
-                  </span>
-                </p>
-              </ion-label>
-              <ion-note slot="end">{{ formatDate(user.createdAt) }}</ion-note>
-            </ion-item>
-          </ion-list>
-        </KalkCard>
+          <div v-else-if="error" class="panel-body">
+            <div class="callout error">
+              <ion-icon :icon="alertCircleOutline" />
+              <div>
+                <p>{{ error }}</p>
+                <button type="button" class="btn btn-outline btn-sm retry-btn" @click="loadUsers">
+                  {{ t('admin.retry') }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>{{ t('admin.colUser') }}</th>
+                  <th>{{ t('admin.roles') }}</th>
+                  <th class="num">{{ t('admin.colProjects') }}</th>
+                  <th class="num hide-sm">{{ t('admin.registeredAt') }}</th>
+                  <th aria-hidden="true"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="user in users"
+                  :key="user.id"
+                  class="clickable-row"
+                  tabindex="0"
+                  @click="openUserDetail(user.id)"
+                  @keydown.enter="openUserDetail(user.id)"
+                >
+                  <td>
+                    <div class="user-cell">
+                      <span class="user-name">{{ user.name }}</span>
+                      <span class="user-email">{{ user.email }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span
+                      v-for="role in user.roles"
+                      :key="role"
+                      :class="['badge', role === 'Admin' ? 'badge-info' : 'badge-neutral']"
+                    >{{ role }}</span>
+                  </td>
+                  <td class="num">{{ user.projectCount }}</td>
+                  <td class="num hide-sm">{{ formatDate(user.createdAt) }}</td>
+                  <td class="row-chevron">
+                    <ion-icon :icon="chevronForwardOutline" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
     </ion-content>
   </ion-page>
@@ -64,19 +100,9 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import {
-  IonPage,
-  IonContent,
-  IonList,
-  IonItem,
-  IonIcon,
-  IonLabel,
-  IonNote,
-  IonButton,
-  IonSpinner
-} from '@ionic/vue';
-import { personOutline } from 'ionicons/icons';
-import { AppHeader, KalkCard } from '@/components';
+import { IonPage, IonContent, IonIcon, IonSpinner } from '@ionic/vue';
+import { chevronForwardOutline, alertCircleOutline } from 'ionicons/icons';
+import { AppHeader } from '@/components';
 import { adminApi, type AdminUserSummary } from '@/api';
 
 const { t, locale } = useI18n();
@@ -88,6 +114,10 @@ const error = ref<string | null>(null);
 
 const totalProjects = computed(() =>
   users.value.reduce((sum, user) => sum + user.projectCount, 0)
+);
+
+const adminCount = computed(() =>
+  users.value.filter(user => user.roles.includes('Admin')).length
 );
 
 onMounted(() => {
@@ -114,91 +144,71 @@ function openUserDetail(userId: string) {
 function formatDate(dateStr: string): string {
   return new Intl.DateTimeFormat(locale.value, {
     year: 'numeric',
-    month: 'short',
-    day: 'numeric'
+    month: '2-digit',
+    day: '2-digit'
   }).format(new Date(dateStr));
 }
 </script>
 
 <style scoped>
-.admin-dashboard {
-  max-width: 900px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--kalk-space-6);
-}
-
-.summary-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: var(--kalk-space-4);
-}
-
-.summary-value {
-  font-size: var(--kalk-text-3xl);
-  font-weight: 700;
-  color: var(--kalk-primary-900);
-  text-align: center;
-  padding: var(--kalk-space-4) 0;
+.kpi-row {
+  margin-bottom: var(--kalk-space-6);
 }
 
 .loading-state {
   display: flex;
   justify-content: center;
-  padding: var(--kalk-space-8);
 }
 
-.error-state {
-  text-align: center;
-  padding: var(--kalk-space-8);
-  color: var(--ion-color-danger);
+.retry-btn {
+  margin-top: var(--kalk-space-2);
 }
 
-ion-list {
-  background: transparent;
-  padding: 0;
+.table-scroll {
+  overflow-x: auto;
 }
 
-ion-item {
-  --background: transparent;
-  --padding-start: 0;
-  --inner-padding-end: 0;
+.clickable-row {
+  cursor: pointer;
 }
 
-ion-item h2 {
+.clickable-row:focus-visible {
+  outline: 2px solid var(--kalk-navy-500);
+  outline-offset: -2px;
+}
+
+.user-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
   font-weight: 600;
-  font-size: var(--kalk-text-base);
+  color: var(--kalk-navy-900);
 }
 
-ion-item h3 {
+.user-email {
+  font-size: var(--kalk-text-xs);
   color: var(--kalk-gray-500);
-  font-size: var(--kalk-text-sm);
 }
 
-.role-badge {
-  display: inline-block;
-  padding: 1px 8px;
-  border-radius: var(--kalk-radius-sm);
-  font-size: var(--kalk-text-xs);
-  background: var(--kalk-gray-100);
-  color: var(--kalk-gray-700);
-  margin-right: var(--kalk-space-1);
+.badge + .badge {
+  margin-left: 4px;
 }
 
-.role-admin {
-  background: var(--kalk-accent-100, #e0e7ff);
-  color: var(--kalk-accent-700, #3730a3);
-}
-
-.project-count {
-  font-size: var(--kalk-text-xs);
+.row-chevron {
+  width: 36px;
+  text-align: right;
   color: var(--kalk-gray-400);
-  margin-left: var(--kalk-space-2);
 }
 
-ion-note {
-  font-size: var(--kalk-text-xs);
-  color: var(--kalk-gray-400);
+.clickable-row:hover .row-chevron {
+  color: var(--kalk-navy-700);
+}
+
+@media (max-width: 640px) {
+  .hide-sm {
+    display: none;
+  }
 }
 </style>

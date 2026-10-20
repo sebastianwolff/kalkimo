@@ -1,22 +1,23 @@
 <template>
   <ion-page>
     <AppHeader
-      :title="t('wizard.title')"
+      :title="projectTitle"
+      :eyebrow="t('wizard.title')"
       :show-menu-button="false"
       :show-back-button="true"
       :back-href="backHref"
       :show-undo-redo="true"
-      :show-progress="true"
     >
       <template #actions>
         <ion-button
-          fill="clear"
+          fill="outline"
+          size="small"
           :disabled="isLoading"
           @click="handleCloseProject"
           class="close-project-btn"
         >
           <ion-icon slot="start" :icon="saveOutline" />
-          {{ t('common.closeProject') }}
+          <span class="btn-text">{{ t('common.closeProject') }}</span>
         </ion-button>
       </template>
     </AppHeader>
@@ -77,6 +78,7 @@ const isLoading = ref(false);
 
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 const backHref = computed(() => isAuthenticated.value ? '/projects' : '/home');
+const projectTitle = computed(() => projectStore.currentProject?.name || t('wizard.title'));
 
 // Map step IDs to components
 const stepComponents: Record<string, Component> = {
@@ -146,22 +148,28 @@ async function handleCloseProject() {
 
 <style scoped>
 .wizard-content {
-  padding: var(--kalk-space-lg);
-  padding-bottom: 100px; /* Space for navigation */
+  max-width: var(--kalk-content-max);
+  margin: 0 auto;
+  padding: var(--kalk-space-6) var(--kalk-space-8) var(--kalk-space-12);
 }
 
-@media (min-width: 768px) {
+@media (max-width: 768px) {
   .wizard-content {
-    max-width: 1024px;
-    margin: 0 auto;
+    padding: var(--kalk-space-4) var(--kalk-space-3) var(--kalk-space-10);
   }
 }
 
 .close-project-btn {
-  --color: rgba(255, 255, 255, 0.85);
+  --color: var(--kalk-gray-800);
+  --border-color: var(--kalk-border-strong);
   font-size: var(--kalk-text-xs);
   font-weight: 500;
-  text-transform: none;
-  letter-spacing: normal;
+  margin-right: var(--kalk-space-2);
+}
+
+@media (max-width: 640px) {
+  .close-project-btn .btn-text {
+    display: none;
+  }
 }
 </style>

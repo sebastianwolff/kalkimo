@@ -31,72 +31,74 @@
 
     <!-- Purchase Costs Section -->
     <div class="costs-section">
-      <div class="section-header">
-        <h4 class="section-label">{{ t('purchase.costs') }} <HelpIcon help-key="purchase.costs" /></h4>
+      <div class="block-header">
+        <h4 class="section-title">{{ t('purchase.costs') }} <HelpIcon help-key="purchase.costs" /></h4>
         <button type="button" class="btn btn-outline btn-sm" @click="addCostItem">
-          <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
           </svg>
           {{ t('purchase.addCost') }}
         </button>
       </div>
 
-      <div v-if="costs.length === 0" class="empty-state">
-        <p>{{ t('purchase.noCosts') || 'Keine Kaufnebenkosten hinzugefügt' }}</p>
-        <button type="button" class="btn btn-accent btn-sm" @click="addDefaultCosts">
+      <div v-if="costs.length === 0" class="empty-row">
+        <span>{{ t('purchase.noCosts') || 'Keine Kaufnebenkosten hinzugefügt' }}</span>
+        <button type="button" class="btn btn-ghost btn-sm" @click="addDefaultCosts">
           Typische Kosten hinzufügen
         </button>
       </div>
 
-      <div v-else class="costs-list">
+      <div v-else class="line-list">
         <div
           v-for="cost in costs"
           :key="cost.id"
-          class="cost-card"
+          class="line-row"
         >
-          <div class="cost-card-content">
-            <div class="cost-name-row">
-              <input
-                v-model="cost.name"
-                type="text"
-                class="cost-name-input"
-                placeholder="Kostenart"
-              />
-              <button
-                type="button"
-                class="delete-btn"
-                @click="removeCostItem(cost.id)"
-                :title="t('common.delete')"
-              >
-                <svg viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
-              </button>
-            </div>
-            <div class="cost-amount-row">
-              <KalkAmountInput
-                v-model="cost.amount"
-                v-model:model-mode="cost.mode"
-                :base-value="purchasePrice"
-                :currency="currency"
-                :show-calculated="true"
-                default-mode="percent"
-              />
-            </div>
+          <input
+            v-model="cost.name"
+            type="text"
+            class="form-input line-name"
+            placeholder="Kostenart"
+          />
+          <div class="line-amount">
+            <KalkAmountInput
+              v-model="cost.amount"
+              v-model:model-mode="cost.mode"
+              :base-value="purchasePrice"
+              :currency="currency"
+              :show-calculated="true"
+              default-mode="percent"
+            />
           </div>
+          <button
+            type="button"
+            class="icon-btn"
+            @click="removeCostItem(cost.id)"
+            :title="t('common.delete')"
+            :aria-label="t('common.delete')"
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+          </button>
         </div>
-      </div>
-
-      <div v-if="costs.length > 0" class="costs-summary">
-        <span>{{ t('purchase.totalCosts') }}:</span>
-        <strong>{{ formatCurrency(totalCosts) }}</strong>
       </div>
     </div>
 
     <!-- Total Investment -->
-    <div class="investment-summary">
-      <span>{{ t('purchase.totalInvestment') }}: <HelpIcon help-key="purchase.totalInvestment" /></span>
-      <strong class="total-amount">{{ formatCurrency(totalInvestment) }}</strong>
+    <div class="summary-box statement">
+      <div class="data-row">
+        <span class="data-label">{{ t('purchase.price') }}</span>
+        <span class="data-value">{{ formatCurrency(purchasePrice || 0) }}</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">{{ t('purchase.totalCosts') }}</span>
+        <span class="data-value">{{ formatCurrency(totalCosts) }}</span>
+      </div>
+      <div class="data-row total">
+        <span class="data-label">{{ t('purchase.totalInvestment') }} <HelpIcon help-key="purchase.totalInvestment" /></span>
+        <span class="data-value">{{ formatCurrency(totalInvestment) }}</span>
+      </div>
     </div>
   </KalkCard>
 </template>
@@ -278,203 +280,148 @@ watch(
 
 <style scoped>
 .costs-section {
-  margin-top: var(--kalk-space-8);
-  padding-top: var(--kalk-space-6);
-  border-top: 1px solid var(--kalk-gray-200);
+  margin-top: var(--kalk-space-6);
+  padding-top: var(--kalk-space-5);
+  border-top: 1px solid var(--kalk-border);
 }
 
-.section-header {
+.block-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--kalk-space-4);
-}
-
-.section-label {
-  font-size: var(--kalk-text-base);
-  font-weight: 600;
-  color: var(--kalk-gray-900);
-  margin: 0;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--kalk-space-2);
-  font-family: var(--kalk-font-family);
-  font-weight: 600;
-  border-radius: var(--kalk-radius-md);
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.btn-sm {
-  height: 36px;
-  padding: 0 var(--kalk-space-4);
-  font-size: var(--kalk-text-xs);
-}
-
-.btn-outline {
-  background: #ffffff;
-  color: var(--kalk-gray-700);
-  border: 1.5px solid var(--kalk-gray-300);
-}
-
-.btn-outline:hover {
-  background: var(--kalk-gray-50);
-  border-color: var(--kalk-gray-400);
-}
-
-.btn-accent {
-  background: var(--kalk-accent-500);
-  color: #ffffff;
-}
-
-.btn-accent:hover {
-  background: var(--kalk-accent-600);
-}
-
-.btn-icon {
-  width: 16px;
-  height: 16px;
-}
-
-.empty-state {
-  text-align: center;
-  padding: var(--kalk-space-8);
-  background: var(--kalk-gray-50);
-  border-radius: var(--kalk-radius-md);
-  border: 2px dashed var(--kalk-gray-200);
-}
-
-.empty-state p {
-  color: var(--kalk-gray-500);
-  margin: 0 0 var(--kalk-space-4);
-}
-
-.costs-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--kalk-space-3);
-}
-
-.cost-card {
-  background: #ffffff;
-  border: 1px solid var(--kalk-gray-200);
-  border-radius: var(--kalk-radius-md);
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.cost-card:hover {
-  border-color: var(--kalk-gray-300);
-  box-shadow: var(--kalk-shadow-sm);
-}
-
-.cost-card-content {
-  padding: var(--kalk-space-4);
-}
-
-.cost-name-row {
-  display: flex;
   align-items: center;
   gap: var(--kalk-space-3);
   margin-bottom: var(--kalk-space-3);
 }
 
-.cost-name-input {
-  flex: 1;
-  padding: var(--kalk-space-2) var(--kalk-space-3);
-  font-family: var(--kalk-font-family);
+.block-header .section-title {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.empty-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--kalk-space-2) var(--kalk-space-4);
+  padding: var(--kalk-space-3) var(--kalk-space-4);
+  font-size: var(--kalk-text-sm);
+  color: var(--kalk-gray-500);
+  background: var(--kalk-gray-50);
+  border: 1px solid var(--kalk-border);
+  border-radius: var(--kalk-radius-md);
+}
+
+.empty-row .btn-ghost {
+  color: var(--kalk-navy-700);
+  padding: 0 var(--kalk-space-2);
+}
+
+/* Positionsliste: eine umrandete Tabelle statt einzelner Karten */
+.line-list {
+  border: 1px solid var(--kalk-border);
+  border-radius: var(--kalk-radius-md);
+  background: var(--kalk-surface);
+}
+
+.line-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) 32px;
+  gap: var(--kalk-space-3);
+  align-items: start;
+  padding: var(--kalk-space-3) var(--kalk-space-3) var(--kalk-space-3) var(--kalk-space-4);
+  border-bottom: 1px solid var(--kalk-gray-100);
+}
+
+.line-row:last-child {
+  border-bottom: none;
+}
+
+.line-name {
+  height: 40px;
   font-size: var(--kalk-text-sm);
   font-weight: 500;
-  color: var(--kalk-gray-900);
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--kalk-gray-200);
-  outline: none;
-  transition: border-color 0.15s;
 }
 
-.cost-name-input:focus {
-  border-bottom-color: var(--kalk-accent-500);
+.line-amount {
+  min-width: 0;
 }
 
-.cost-name-input::placeholder {
-  color: var(--kalk-gray-400);
+.line-amount :deep(.form-group) {
+  margin-bottom: 0;
 }
 
-.delete-btn {
+/* Kompakte Eingabe innerhalb der Tabellenzeile */
+.line-amount :deep(.amount-input) {
+  min-height: 0;
+  height: 38px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.line-amount :deep(.toggle-btn) {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
+  margin-top: 4px;
   padding: 0;
   background: transparent;
-  border: none;
-  border-radius: var(--kalk-radius-sm);
+  border: 1px solid transparent;
+  border-radius: var(--kalk-radius-md);
   color: var(--kalk-gray-400);
   cursor: pointer;
-  transition: all 0.15s;
-  flex-shrink: 0;
+  transition: color 0.12s, background-color 0.12s, border-color 0.12s;
 }
 
-.delete-btn:hover {
-  background: var(--kalk-error-bg);
-  color: var(--kalk-error);
+.icon-btn:hover {
+  color: var(--kalk-negative);
+  background: var(--kalk-negative-bg);
+  border-color: var(--kalk-negative-border);
 }
 
-.delete-btn svg {
-  width: 18px;
-  height: 18px;
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
-.cost-amount-row {
-  /* KalkAmountInput has its own margin-bottom, remove it here */
+@media (max-width: 600px) {
+  .line-row {
+    grid-template-columns: minmax(0, 1fr) 32px;
+    padding: var(--kalk-space-3);
+  }
+
+  .line-amount {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .icon-btn {
+    margin-top: 4px;
+  }
 }
 
-.cost-amount-row :deep(.form-group) {
-  margin-bottom: 0;
+.statement {
+  margin-top: var(--kalk-space-6);
+  background: var(--kalk-surface);
 }
 
-.costs-summary {
-  display: flex;
-  justify-content: space-between;
+.statement .data-row.total .data-value {
+  font-size: var(--kalk-text-lg);
+  color: var(--kalk-navy-900);
+}
+
+.statement .data-label {
+  display: inline-flex;
   align-items: center;
-  padding: var(--kalk-space-4);
-  background: var(--kalk-gray-50);
-  border-radius: var(--kalk-radius-md);
-  margin-top: var(--kalk-space-4);
-  font-size: var(--kalk-text-sm);
-  color: var(--kalk-gray-700);
-}
-
-.costs-summary strong {
-  font-variant-numeric: tabular-nums;
-  color: var(--kalk-gray-900);
-}
-
-.investment-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--kalk-space-6);
-  background: var(--kalk-primary-900);
-  color: #ffffff;
-  border-radius: var(--kalk-radius-md);
-  margin-top: var(--kalk-space-8);
-}
-
-.investment-summary span {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.total-amount {
-  color: #ffffff;
-  font-size: var(--kalk-text-xl);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+  gap: 2px;
 }
 </style>

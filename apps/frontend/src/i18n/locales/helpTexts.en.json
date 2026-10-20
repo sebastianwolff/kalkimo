@@ -143,6 +143,11 @@
       "summary": "Determines how the investment is treated for tax purposes – immediately deductible, distributed, or capitalized.",
       "detail": "The tax classification significantly impacts the after-tax cashflow:<br><br><b>Classifications:</b><ul><li><b>Immediately deductible:</b> Full deduction as expenses in the year of payment</li><li><b>§82b distribution:</b> Distribution over 2–5 years (for larger maintenance expenses)</li><li><b>Capitalization (modernization):</b> Depreciation over remaining useful life</li><li><b>Acquisition-related:</b> Mandatory capitalization when 15% threshold exceeded</li></ul>"
     },
+    "valueFactor": {
+      "title": "Value Effect",
+      "summary": "Share of the cost that is reflected in the property value – independent of the tax treatment.",
+      "detail": "Not every euro invested raises the sale price 1:1. The value effect defines which share of the cost enters the value forecast.<br><br><b>Guidelines:</b><ul><li><b>Modernization</b> (e.g. new bathroom, energy retrofit, better layout): 70–90%</li><li><b>Component renewal</b> (e.g. roof, heating): 50–70%</li><li><b>Pure repair</b>: 20–40%</li><li><b>Cosmetic / taste-driven</b>: 0–20%</li></ul>Default: 70%. The tax classification (e.g. 15% rule) does not affect this value."
+    },
     "costSavings": {
       "title": "Operating Cost Savings",
       "summary": "Monthly savings from the measure – improves NOI.",

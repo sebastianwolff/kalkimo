@@ -1,32 +1,33 @@
 <template>
   <KalkCard :title="t('rent.title')">
     <div class="rent-units-section">
-      <div class="section-header">
-        <h4 class="section-label">{{ t('rent.units') }}</h4>
+      <div class="block-header">
+        <h4 class="section-title">{{ t('rent.units') }}</h4>
         <button type="button" class="btn btn-outline btn-sm" @click="addRentUnit">
-          <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
           </svg>
           {{ t('rent.addUnit') }}
         </button>
       </div>
 
-      <div v-if="rentUnits.length === 0" class="empty-state">
-        <p>Keine Mieteinheiten konfiguriert</p>
+      <div v-if="rentUnits.length === 0" class="empty-row">
+        Keine Mieteinheiten konfiguriert
       </div>
 
       <div v-else class="units-list">
         <div
           v-for="(unit, index) in rentUnits"
           :key="unit.unitId"
-          class="unit-card"
+          class="panel item-panel"
         >
-          <div class="unit-header">
+          <div class="item-header">
+            <span class="item-index">{{ String(index + 1).padStart(2, '0') }}</span>
             <template v-if="propertyUnits.length > 0">
               <select
                 :value="unit.unitId"
                 @change="assignPropertyUnit(unit, ($event.target as HTMLSelectElement).value)"
-                class="unit-name-input unit-select"
+                class="item-name-input item-select"
               >
                 <option value="" disabled>{{ t('rent.selectUnit') }}</option>
                 <option
@@ -42,123 +43,129 @@
               <input
                 v-model="unit.name"
                 type="text"
-                class="unit-name-input"
+                class="item-name-input"
                 :placeholder="`Einheit ${index + 1}`"
               />
             </template>
             <button
               type="button"
-              class="delete-btn"
+              class="icon-btn"
               @click="removeRentUnit(unit.unitId)"
               :title="t('common.delete')"
+              :aria-label="t('common.delete')"
             >
-              <svg viewBox="0 0 20 20" fill="currentColor">
+              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
               </svg>
             </button>
           </div>
 
-          <div class="unit-fields">
-            <KalkCurrency
-              v-model="unit.monthlyRent"
-              :label="t('rent.unit.monthlyRent')"
-              :currency="currency"
-              help-key="rent.monthlyRent"
-            />
-            <KalkCurrency
-              v-model="unit.serviceCharge"
-              :label="t('rent.unit.serviceCharge')"
-              :currency="currency"
-              help-key="rent.serviceCharge"
-            />
-          </div>
-
-          <div class="rent-increase-section">
-            <div class="increase-type-toggle">
-              <button
-                type="button"
-                :class="['toggle-option', { active: unit.increaseType === 'percent' }]"
-                @click="unit.increaseType = 'percent'"
-              >
-                Jährl. Steigerung
-              </button>
-              <button
-                type="button"
-                :class="['toggle-option', { active: unit.increaseType === 'schedule' }]"
-                @click="unit.increaseType = 'schedule'"
-              >
-                Mietstaffel
-              </button>
-            </div>
-
-            <div v-if="unit.increaseType === 'percent'" class="increase-percent">
-              <KalkPercent
-                v-model="unit.annualIncrease"
-                :label="'Jährliche Mietsteigerung'"
-                :min="0"
-                :max="10"
-                help-key="rent.annualIncrease"
+          <div class="item-body">
+            <div class="unit-fields">
+              <KalkCurrency
+                v-model="unit.monthlyRent"
+                :label="t('rent.unit.monthlyRent')"
+                :currency="currency"
+                help-key="rent.monthlyRent"
+              />
+              <KalkCurrency
+                v-model="unit.serviceCharge"
+                :label="t('rent.unit.serviceCharge')"
+                :currency="currency"
+                help-key="rent.serviceCharge"
               />
             </div>
 
-            <div v-else class="rent-schedule">
-              <div class="schedule-header">
-                <span class="schedule-label">Mietstaffel</span>
+            <div class="rent-increase-section">
+              <div class="segmented" role="group">
                 <button
                   type="button"
-                  class="add-schedule-btn"
-                  @click="addScheduleEntry(unit)"
+                  :class="['segment', { active: unit.increaseType === 'percent' }]"
+                  :aria-pressed="unit.increaseType === 'percent'"
+                  @click="unit.increaseType = 'percent'"
                 >
-                  <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                  </svg>
-                  Stufe hinzufügen
+                  Jährl. Steigerung
+                </button>
+                <button
+                  type="button"
+                  :class="['segment', { active: unit.increaseType === 'schedule' }]"
+                  :aria-pressed="unit.increaseType === 'schedule'"
+                  @click="unit.increaseType = 'schedule'"
+                >
+                  Mietstaffel
                 </button>
               </div>
 
-              <div v-if="!unit.schedule || unit.schedule.length === 0" class="schedule-empty">
-                <p>Keine Mietstaffeln definiert</p>
+              <div v-if="unit.increaseType === 'percent'" class="increase-percent">
+                <KalkPercent
+                  v-model="unit.annualIncrease"
+                  :label="'Jährliche Mietsteigerung'"
+                  :min="0"
+                  :max="10"
+                  help-key="rent.annualIncrease"
+                />
               </div>
 
-              <div v-else class="schedule-list">
-                <div
-                  v-for="(entry, idx) in unit.schedule"
-                  :key="idx"
-                  class="schedule-entry"
-                >
-                  <div class="schedule-entry-fields">
-                    <div class="schedule-field">
-                      <label class="schedule-field-label">Ab Jahr</label>
-                      <input
-                        v-model.number="entry.fromYear"
-                        type="number"
-                        class="schedule-input"
-                        :min="1"
-                        :max="30"
-                      />
-                    </div>
-                    <div class="schedule-field">
-                      <label class="schedule-field-label">Neue Kaltmiete</label>
-                      <div class="schedule-currency-input">
-                        <input
-                          v-model.number="entry.newRent"
-                          type="number"
-                          class="schedule-input"
-                          :min="0"
-                        />
-                        <span class="schedule-currency">€</span>
-                      </div>
-                    </div>
-                  </div>
+              <div v-else class="rent-schedule">
+                <div class="schedule-header">
+                  <span class="schedule-label">Mietstaffel</span>
                   <button
                     type="button"
-                    class="schedule-delete-btn"
-                    @click="removeScheduleEntry(unit, idx)"
+                    class="btn btn-ghost btn-sm"
+                    @click="addScheduleEntry(unit)"
                   >
-                    <svg viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                     </svg>
+                    Stufe hinzufügen
                   </button>
+                </div>
+
+                <div v-if="!unit.schedule || unit.schedule.length === 0" class="schedule-empty">
+                  Keine Mietstaffeln definiert
+                </div>
+
+                <div v-else class="schedule-table">
+                  <div class="schedule-row schedule-head">
+                    <span>Ab Jahr</span>
+                    <span class="num">Neue Kaltmiete</span>
+                    <span></span>
+                  </div>
+                  <div
+                    v-for="(entry, idx) in unit.schedule"
+                    :key="idx"
+                    class="schedule-row"
+                  >
+                    <input
+                      v-model.number="entry.fromYear"
+                      type="number"
+                      class="schedule-input"
+                      aria-label="Ab Jahr"
+                      :min="1"
+                      :max="30"
+                    />
+                    <div class="schedule-currency-input">
+                      <input
+                        v-model.number="entry.newRent"
+                        type="number"
+                        class="schedule-input"
+                        aria-label="Neue Kaltmiete"
+                        :min="0"
+                      />
+                      <span class="schedule-currency">€</span>
+                    </div>
+                    <button
+                      type="button"
+                      class="icon-btn icon-btn-sm"
+                      :title="t('common.delete')"
+                      :aria-label="t('common.delete')"
+                      @click="removeScheduleEntry(unit, idx)"
+                    >
+                      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -187,14 +194,14 @@
       />
     </div>
 
-    <div class="rent-summary">
-      <div class="summary-row">
-        <span>{{ t('rent.totalMonthlyRent') }}:</span>
-        <strong>{{ formatCurrency(totalMonthlyRent) }}</strong>
+    <div class="summary-box statement">
+      <div class="data-row">
+        <span class="data-label">{{ t('rent.totalMonthlyRent') }}</span>
+        <span class="data-value">{{ formatCurrency(totalMonthlyRent) }}</span>
       </div>
-      <div class="summary-row">
-        <span>{{ t('rent.totalAnnualRent') }}:</span>
-        <strong>{{ formatCurrency(totalMonthlyRent * 12) }}</strong>
+      <div class="data-row total">
+        <span class="data-label">{{ t('rent.totalAnnualRent') }}</span>
+        <span class="data-value">{{ formatCurrency(totalMonthlyRent * 12) }}</span>
       </div>
     </div>
   </KalkCard>
@@ -347,69 +354,28 @@ watch(
 
 <style scoped>
 .rent-units-section {
-  margin-bottom: var(--kalk-space-8);
+  margin-bottom: var(--kalk-space-6);
 }
 
-.section-header {
+.block-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--kalk-space-4);
+  gap: var(--kalk-space-3);
+  margin-bottom: var(--kalk-space-3);
 }
 
-.section-label {
-  font-size: var(--kalk-text-base);
-  font-weight: 600;
-  color: var(--kalk-gray-900);
+.block-header .section-title {
   margin: 0;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--kalk-space-2);
-  font-family: var(--kalk-font-family);
-  font-weight: 600;
-  border-radius: var(--kalk-radius-md);
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.btn-sm {
-  height: 36px;
-  padding: 0 var(--kalk-space-4);
-  font-size: var(--kalk-text-xs);
-}
-
-.btn-outline {
-  background: #ffffff;
-  color: var(--kalk-gray-700);
-  border: 1.5px solid var(--kalk-gray-300);
-}
-
-.btn-outline:hover {
-  background: var(--kalk-gray-50);
-  border-color: var(--kalk-gray-400);
-}
-
-.btn-icon {
-  width: 16px;
-  height: 16px;
-}
-
-.empty-state {
-  text-align: center;
-  padding: var(--kalk-space-8);
-  background: var(--kalk-gray-50);
-  border-radius: var(--kalk-radius-md);
-  border: 2px dashed var(--kalk-gray-200);
-}
-
-.empty-state p {
+.empty-row {
+  padding: var(--kalk-space-3) var(--kalk-space-4);
+  font-size: var(--kalk-text-sm);
   color: var(--kalk-gray-500);
-  margin: 0;
+  background: var(--kalk-gray-50);
+  border: 1px solid var(--kalk-border);
+  border-radius: var(--kalk-radius-md);
 }
 
 .units-list {
@@ -418,63 +384,65 @@ watch(
   gap: var(--kalk-space-3);
 }
 
-.unit-card {
-  background: #ffffff;
-  border: 1px solid var(--kalk-gray-200);
+.item-panel {
   border-radius: var(--kalk-radius-md);
-  padding: var(--kalk-space-4);
-  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.unit-card:hover {
-  border-color: var(--kalk-gray-300);
-  box-shadow: var(--kalk-shadow-sm);
-}
-
-.unit-header {
+.item-header {
   display: flex;
   align-items: center;
   gap: var(--kalk-space-3);
-  margin-bottom: var(--kalk-space-4);
-  padding-bottom: var(--kalk-space-3);
-  border-bottom: 1px solid var(--kalk-gray-100);
+  padding: var(--kalk-space-1) var(--kalk-space-2) var(--kalk-space-1) var(--kalk-space-4);
+  background: var(--kalk-gray-50);
+  border-bottom: 1px solid var(--kalk-border);
 }
 
-.unit-name-input {
+.item-index {
+  font-size: var(--kalk-text-xs);
+  font-weight: 600;
+  color: var(--kalk-gray-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.item-name-input {
   flex: 1;
-  padding: var(--kalk-space-2) var(--kalk-space-3);
+  min-width: 0;
+  height: 32px;
+  padding: 0 var(--kalk-space-2);
+  margin-left: calc(-1 * var(--kalk-space-2));
   font-family: var(--kalk-font-family);
   font-size: var(--kalk-text-sm);
   font-weight: 600;
   color: var(--kalk-gray-900);
   background: transparent;
-  border: none;
-  border-bottom: 1px solid transparent;
+  border: 1px solid transparent;
+  border-radius: var(--kalk-radius-sm);
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.12s, background-color 0.12s;
 }
 
-.unit-name-input:focus {
-  border-bottom-color: var(--kalk-accent-500);
+.item-name-input:hover {
+  border-color: var(--kalk-border);
 }
 
-.unit-name-input::placeholder {
+.item-name-input:focus {
+  background: var(--kalk-surface);
+  border-color: var(--kalk-navy-600);
+}
+
+.item-name-input::placeholder {
   color: var(--kalk-gray-400);
   font-weight: 500;
 }
 
-.unit-select {
+.item-select {
+  margin-left: 0;
   cursor: pointer;
-  border: 1px solid var(--kalk-gray-300);
-  border-radius: var(--kalk-radius-sm);
-  padding: var(--kalk-space-2) var(--kalk-space-3);
+  background: var(--kalk-surface);
+  border-color: var(--kalk-border-strong);
 }
 
-.unit-select:focus {
-  border-color: var(--kalk-accent-500);
-}
-
-.delete-btn {
+.icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -482,267 +450,240 @@ watch(
   height: 32px;
   padding: 0;
   background: transparent;
-  border: none;
-  border-radius: var(--kalk-radius-sm);
+  border: 1px solid transparent;
+  border-radius: var(--kalk-radius-md);
   color: var(--kalk-gray-400);
   cursor: pointer;
-  transition: all 0.15s;
   flex-shrink: 0;
+  transition: color 0.12s, background-color 0.12s, border-color 0.12s;
 }
 
-.delete-btn:hover {
-  background: var(--kalk-error-bg);
-  color: var(--kalk-error);
+.icon-btn:hover {
+  color: var(--kalk-negative);
+  background: var(--kalk-negative-bg);
+  border-color: var(--kalk-negative-border);
 }
 
-.delete-btn svg {
-  width: 18px;
-  height: 18px;
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-btn-sm svg {
+  width: 14px;
+  height: 14px;
+}
+
+.item-body {
+  padding: var(--kalk-space-4) var(--kalk-space-4) 0;
 }
 
 .unit-fields {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--kalk-space-4);
-}
-
-@media (max-width: 600px) {
-  .unit-fields {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--kalk-space-4);
 }
 
 .rent-increase-section {
-  margin-top: var(--kalk-space-4);
-  padding-top: var(--kalk-space-4);
+  padding: var(--kalk-space-4) 0;
   border-top: 1px solid var(--kalk-gray-100);
 }
 
-.increase-type-toggle {
-  display: flex;
-  background: var(--kalk-gray-100);
-  border-radius: var(--kalk-radius-md);
-  padding: 3px;
+.segmented {
+  display: inline-flex;
+  max-width: 100%;
   margin-bottom: var(--kalk-space-4);
+  border: 1px solid var(--kalk-border-strong);
+  border-radius: var(--kalk-radius-md);
+  overflow: hidden;
 }
 
-.toggle-option {
-  flex: 1;
-  padding: var(--kalk-space-2) var(--kalk-space-3);
+.segment {
+  height: 32px;
+  padding: 0 var(--kalk-space-4);
   font-family: var(--kalk-font-family);
   font-size: var(--kalk-text-xs);
   font-weight: 500;
   color: var(--kalk-gray-600);
-  background: transparent;
+  background: var(--kalk-surface);
   border: none;
-  border-radius: var(--kalk-radius-sm);
   cursor: pointer;
-  transition: all 0.15s;
+  white-space: nowrap;
+  transition: background-color 0.12s, color 0.12s;
 }
 
-.toggle-option:hover:not(.active) {
+.segment + .segment {
+  border-left: 1px solid var(--kalk-border-strong);
+}
+
+.segment:hover:not(.active) {
+  background: var(--kalk-gray-50);
   color: var(--kalk-gray-900);
 }
 
-.toggle-option.active {
-  background: #ffffff;
-  color: var(--kalk-gray-900);
-  box-shadow: var(--kalk-shadow-sm);
+.segment.active {
+  background: var(--kalk-navy-800);
+  color: var(--kalk-surface);
+}
+
+.segment:focus-visible {
+  outline: 2px solid var(--kalk-navy-500);
+  outline-offset: -2px;
 }
 
 .increase-percent {
   max-width: 280px;
 }
 
+.increase-percent :deep(.form-group) {
+  margin-bottom: 0;
+}
+
 .rent-schedule {
-  background: var(--kalk-gray-50);
+  border: 1px solid var(--kalk-border);
   border-radius: var(--kalk-radius-md);
-  padding: var(--kalk-space-4);
 }
 
 .schedule-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--kalk-space-3);
+  padding: var(--kalk-space-1) var(--kalk-space-1) var(--kalk-space-1) var(--kalk-space-3);
+  border-bottom: 1px solid var(--kalk-border);
 }
 
 .schedule-label {
   font-size: var(--kalk-text-sm);
-  font-weight: 500;
-  color: var(--kalk-gray-700);
+  font-weight: 600;
+  color: var(--kalk-gray-800);
 }
 
-.add-schedule-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--kalk-space-1);
-  padding: var(--kalk-space-1) var(--kalk-space-2);
-  font-family: var(--kalk-font-family);
-  font-size: var(--kalk-text-xs);
-  font-weight: 500;
-  color: var(--kalk-accent-600);
-  background: transparent;
-  border: none;
-  border-radius: var(--kalk-radius-sm);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.add-schedule-btn:hover {
-  background: var(--kalk-accent-50);
-}
-
-.add-schedule-btn .btn-icon {
-  width: 14px;
-  height: 14px;
+.schedule-header .btn-ghost {
+  color: var(--kalk-navy-700);
 }
 
 .schedule-empty {
-  text-align: center;
-  padding: var(--kalk-space-4);
-  color: var(--kalk-gray-400);
+  padding: var(--kalk-space-3);
+  color: var(--kalk-gray-500);
   font-size: var(--kalk-text-sm);
 }
 
-.schedule-empty p {
-  margin: 0;
-}
-
-.schedule-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--kalk-space-2);
-}
-
-.schedule-entry {
-  display: flex;
+.schedule-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) 28px;
+  gap: var(--kalk-space-3);
   align-items: center;
-  gap: var(--kalk-space-3);
-  padding: var(--kalk-space-2);
-  background: #ffffff;
-  border-radius: var(--kalk-radius-sm);
+  padding: var(--kalk-space-2) var(--kalk-space-2) var(--kalk-space-2) var(--kalk-space-3);
+  border-bottom: 1px solid var(--kalk-gray-100);
 }
 
-.schedule-entry-fields {
-  display: flex;
-  gap: var(--kalk-space-3);
-  flex: 1;
+.schedule-row:last-child {
+  border-bottom: none;
 }
 
-.schedule-field {
-  flex: 1;
+.schedule-head {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  background: var(--kalk-gray-50);
+  border-bottom: 1px solid var(--kalk-border);
 }
 
-.schedule-field-label {
-  display: block;
-  font-size: var(--kalk-text-xs);
-  font-weight: 500;
+.schedule-head span {
+  font-size: var(--kalk-text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--kalk-tracking-caps);
+  text-transform: uppercase;
   color: var(--kalk-gray-500);
-  margin-bottom: var(--kalk-space-1);
+}
+
+.schedule-head .num {
+  text-align: right;
+}
+
+.schedule-row .icon-btn {
+  width: 28px;
+  height: 28px;
 }
 
 .schedule-input {
   width: 100%;
-  padding: var(--kalk-space-2);
+  min-width: 0;
+  height: 34px;
+  padding: 0 var(--kalk-space-2);
   font-family: var(--kalk-font-family);
   font-size: var(--kalk-text-sm);
+  font-variant-numeric: tabular-nums;
   color: var(--kalk-gray-900);
-  background: var(--kalk-gray-50);
-  border: 1px solid var(--kalk-gray-200);
-  border-radius: var(--kalk-radius-sm);
+  background: var(--kalk-surface);
+  border: 1px solid var(--kalk-border-strong);
+  border-radius: var(--kalk-radius-md);
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.12s, box-shadow 0.12s;
 }
 
 .schedule-input:focus {
-  border-color: var(--kalk-accent-500);
+  border-color: var(--kalk-navy-600);
+  box-shadow: 0 0 0 3px var(--kalk-ring-color);
 }
 
 .schedule-currency-input {
   display: flex;
   align-items: center;
-  background: var(--kalk-gray-50);
-  border: 1px solid var(--kalk-gray-200);
-  border-radius: var(--kalk-radius-sm);
-  transition: border-color 0.15s;
+  min-width: 0;
+  background: var(--kalk-surface);
+  border: 1px solid var(--kalk-border-strong);
+  border-radius: var(--kalk-radius-md);
+  transition: border-color 0.12s, box-shadow 0.12s;
 }
 
 .schedule-currency-input:focus-within {
-  border-color: var(--kalk-accent-500);
+  border-color: var(--kalk-navy-600);
+  box-shadow: 0 0 0 3px var(--kalk-ring-color);
 }
 
 .schedule-currency-input .schedule-input {
   border: none;
-  background: transparent;
+  text-align: right;
+}
+
+.schedule-currency-input .schedule-input:focus {
+  box-shadow: none;
 }
 
 .schedule-currency {
-  padding: 0 var(--kalk-space-2);
+  padding: 0 var(--kalk-space-2) 0 0;
   color: var(--kalk-gray-500);
   font-size: var(--kalk-text-sm);
 }
 
-.schedule-delete-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  border-radius: var(--kalk-radius-sm);
-  color: var(--kalk-gray-400);
-  cursor: pointer;
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
-
-.schedule-delete-btn:hover {
-  background: var(--kalk-error-bg);
-  color: var(--kalk-error);
-}
-
-.schedule-delete-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
 .global-settings {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--kalk-space-4);
-  margin-bottom: var(--kalk-space-8);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--kalk-space-4);
 }
 
 @media (max-width: 600px) {
+  .unit-fields,
   .global-settings {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .segmented {
+    display: flex;
+  }
+
+  .segment {
+    flex: 1;
+    padding: 0 var(--kalk-space-2);
   }
 }
 
-.rent-summary {
-  padding: var(--kalk-space-6);
-  background: var(--kalk-accent-600);
-  color: #ffffff;
-  border-radius: var(--kalk-radius-md);
+.statement {
+  margin-top: var(--kalk-space-2);
+  background: var(--kalk-surface);
 }
 
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--kalk-space-1) 0;
-}
-
-.summary-row span {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: var(--kalk-text-sm);
-}
-
-.summary-row strong {
-  color: #ffffff;
-  font-variant-numeric: tabular-nums;
+.statement .data-row.total .data-value {
+  font-size: var(--kalk-text-lg);
 }
 </style>

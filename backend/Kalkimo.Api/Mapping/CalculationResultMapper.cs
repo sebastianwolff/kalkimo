@@ -48,7 +48,10 @@ public static class CalculationResultMapper
         BreakEvenRent = MapMoney(m.BreakEvenRent),
         RoiPercent = m.RoiPercent,
         MaintenanceRiskScore = m.MaintenanceRiskScore,
-        LiquidityRiskScore = m.LiquidityRiskScore
+        LiquidityRiskScore = m.LiquidityRiskScore,
+        ExitPeriod = m.ExitPeriod?.ToString(),
+        IsExitPlanned = m.IsExitPlanned,
+        ExitEquityProceeds = m.ExitEquityProceeds.HasValue ? MapMoney(m.ExitEquityProceeds.Value) : null
     };
 
     // === Yearly Cashflow ===

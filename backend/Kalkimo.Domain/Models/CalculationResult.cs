@@ -80,6 +80,15 @@ public record InvestmentMetrics
     /// <summary>Kapitalwert nach Steuern</summary>
     public Money NpvAfterTax { get; init; }
 
+    /// <summary>Exit-Periode für IRR/NPV (geplanter Verkauf oder fiktiv am Horizontende)</summary>
+    public YearMonth? ExitPeriod { get; init; }
+
+    /// <summary>True = geplanter Verkauf, false = fiktiver Verkauf am Horizontende</summary>
+    public bool IsExitPlanned { get; init; }
+
+    /// <summary>Netto-Erlös an das Eigenkapital (Verkaufspreis − Kosten − Steuer − Restschuld)</summary>
+    public Money? ExitEquityProceeds { get; init; }
+
     /// <summary>Eigenkapitalrendite p.a. (%)</summary>
     public decimal RoiPercent { get; init; }
 
@@ -90,14 +99,14 @@ public record InvestmentMetrics
     public decimal EquityMultiple { get; init; }
 
     // === Bankkennzahlen ===
-    /// <summary>DSCR (Debt Service Coverage Ratio) Minimum</summary>
-    public decimal DscrMin { get; init; }
+    /// <summary>DSCR (Debt Service Coverage Ratio) Minimum (null = kein Kapitaldienst)</summary>
+    public decimal? DscrMin { get; init; }
 
-    /// <summary>DSCR Durchschnitt</summary>
-    public decimal DscrAvg { get; init; }
+    /// <summary>DSCR Durchschnitt (null = kein Kapitaldienst)</summary>
+    public decimal? DscrAvg { get; init; }
 
-    /// <summary>ICR (Interest Coverage Ratio) Minimum</summary>
-    public decimal IcrMin { get; init; }
+    /// <summary>ICR (Interest Coverage Ratio) Minimum (null = keine Zinsen)</summary>
+    public decimal? IcrMin { get; init; }
 
     /// <summary>LTV (Loan to Value) Initial (%)</summary>
     public decimal LtvInitialPercent { get; init; }
@@ -221,7 +230,8 @@ public enum WarningType
     DeferredMaintenance,
     HighLtv,
     NegativeCashflow,
-    TaxLossCarryforward
+    TaxLossCarryforward,
+    RefinancingAssumed
 }
 
 public enum WarningSeverity

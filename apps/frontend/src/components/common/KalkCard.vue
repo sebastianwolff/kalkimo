@@ -32,35 +32,33 @@ withDefaults(defineProps<{
 
 <style scoped>
 .kalk-card {
-  background: #ffffff;
+  background: var(--kalk-surface);
   border-radius: var(--kalk-radius-lg);
-  border: 1px solid var(--kalk-gray-100);
+  border: 1px solid var(--kalk-border);
   overflow: hidden;
-}
-
-.kalk-card.has-shadow {
-  box-shadow: var(--kalk-shadow-sm);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  padding: var(--kalk-space-5) var(--kalk-space-6);
-  border-bottom: 1px solid var(--kalk-gray-100);
+  align-items: center;
+  gap: var(--kalk-space-4);
+  padding: var(--kalk-space-4) var(--kalk-space-5);
+  border-bottom: 1px solid var(--kalk-border);
 }
 
 .card-title {
   margin: 0;
   font-family: var(--kalk-font-family);
-  font-size: var(--kalk-text-lg);
+  font-size: var(--kalk-text-base);
   font-weight: 600;
   color: var(--kalk-gray-900);
+  letter-spacing: 0;
 }
 
 .card-subtitle {
-  margin: var(--kalk-space-1) 0 0;
-  font-size: var(--kalk-text-sm);
+  margin: 2px 0 0;
+  font-size: var(--kalk-text-xs);
   color: var(--kalk-gray-500);
 }
 
@@ -70,12 +68,17 @@ withDefaults(defineProps<{
 }
 
 .card-content {
-  padding: var(--kalk-space-6);
+  padding: var(--kalk-space-5);
 }
 
 .card-footer {
-  padding: var(--kalk-space-4) var(--kalk-space-6);
-  border-top: 1px solid var(--kalk-gray-100);
+  padding: var(--kalk-space-3) var(--kalk-space-5);
+  border-top: 1px solid var(--kalk-border);
   background: var(--kalk-gray-50);
+}
+
+@media (max-width: 640px) {
+  .card-header { padding: var(--kalk-space-3) var(--kalk-space-4); }
+  .card-content { padding: var(--kalk-space-4); }
 }
 </style>

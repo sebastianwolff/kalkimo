@@ -36,8 +36,28 @@ public record Purchase
             .Where(c => c.IsCapitalizable)
             .Aggregate(Money.Zero(), (sum, cost) => sum + cost.Amount);
 
-    /// <summary>AfA-Bemessungsgrundlage (Gebäude + aktivierbare NK)</summary>
-    public Money DepreciationBase => BuildingValue + CapitalizableAcquisitionCosts;
+    /// <summary>
+    /// Nicht aktivierungspflichtige Nebenkosten (z.B. Grundschuldbestellung, Finanzierungsvermittlung):
+    /// sofort abziehbare Werbungskosten
+    /// </summary>
+    public Money ImmediatelyDeductibleAcquisitionCosts =>
+        AcquisitionCosts
+            .Where(c => !c.IsCapitalizable)
+            .Aggregate(Money.Zero(), (sum, cost) => sum + cost.Amount);
+
+    /// <summary>Gebäudeanteil am Kaufpreis (Aufteilungsschlüssel für Nebenkosten)</summary>
+    public decimal BuildingShare => PurchasePrice.Amount > 0
+        ? BuildingValue.Amount / PurchasePrice.Amount
+        : 0m;
+
+    /// <summary>
+    /// AfA-Bemessungsgrundlage: Gebäudewert + anteilige aktivierungspflichtige NK.
+    /// Der auf Grund und Boden entfallende NK-Anteil ist nicht abschreibbar.
+    /// </summary>
+    public Money DepreciationBase => BuildingValue + CapitalizableAcquisitionCosts * BuildingShare;
+
+    /// <summary>Anschaffungskosten (Kaufpreis + aktivierungspflichtige NK), Basis für §23 EStG</summary>
+    public Money AcquisitionCostBasis => PurchasePrice + CapitalizableAcquisitionCosts;
 }
 
 /// <summary>

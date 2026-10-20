@@ -218,6 +218,72 @@ export const useProjectStore = defineStore('project', () => {
     }
   }
 
+  /**
+   * Übernimmt lokal angelegte Gast-Projekte nach dem Login in das Benutzerkonto.
+   * Gast-Projekte liegen unter den nicht user-gescopten localStorage-Keys und
+   * würden sonst als "Geister-Projekte" ohne Server-Pendant angezeigt.
+   * Erfolgreich hochgeladene Projekte werden aus dem Gast-Speicher entfernt.
+   */
+  function hasGuestProjects(): boolean {
+    return localStorage.getItem(LOCAL_PROJECTS_KEY) !== null || localStorage.getItem(LOCAL_PROJECT_KEY) !== null;
+  }
+
+  async function adoptGuestProjects(): Promise<number> {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) return 0;
+
+    const guestProjects = new Map<string, Project>();
+    try {
+      const storedProjects = localStorage.getItem(LOCAL_PROJECTS_KEY);
+      if (storedProjects) {
+        for (const p of JSON.parse(storedProjects) as Project[]) guestProjects.set(p.id, p);
+      }
+      // Aktuelles Projekt hat ggf. neuere Änderungen als die Liste
+      const storedCurrent = localStorage.getItem(LOCAL_PROJECT_KEY);
+      if (storedCurrent) {
+        const p = JSON.parse(storedCurrent) as Project;
+        guestProjects.set(p.id, p);
+      }
+    } catch (e) {
+      console.warn('Failed to read guest projects from localStorage:', e);
+    }
+
+    const failed: Project[] = [];
+    let adopted = 0;
+    for (const project of guestProjects.values()) {
+      try {
+        await projectsApi.saveData(project.id, project);
+        adopted++;
+      } catch (e) {
+        console.error(`Failed to adopt guest project ${project.id}:`, e);
+        failed.push(project);
+      }
+    }
+
+    // Gast-Speicher bereinigen (fehlgeschlagene bleiben für einen späteren Versuch erhalten)
+    localStorage.removeItem(LOCAL_PROJECT_KEY);
+    if (failed.length > 0) {
+      localStorage.setItem(LOCAL_PROJECTS_KEY, JSON.stringify(failed));
+    } else {
+      localStorage.removeItem(LOCAL_PROJECTS_KEY);
+    }
+
+    // In-Memory-Zustand auf den Benutzer-Speicher umstellen
+    currentProject.value = null;
+    projects.value = [];
+    calculationResult.value = null;
+    isSavedToCloud.value = false;
+    undoStack.value = [];
+    redoStack.value = [];
+    initFromStorage();
+
+    if (adopted > 0) {
+      await loadProjectListFromServer();
+    }
+
+    return adopted;
+  }
+
   // === Clear all project data (called on logout) ===
 
   function clearAll() {
@@ -470,6 +536,8 @@ export const useProjectStore = defineStore('project', () => {
 
     // Server sync
     syncProjectToServer,
+    hasGuestProjects,
+    adoptGuestProjects,
     loadProjectFromServer,
     loadProjectListFromServer,
     deleteProjectFromServer,

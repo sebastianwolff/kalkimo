@@ -10,40 +10,42 @@
 
     <!-- Loans Section -->
     <div class="loans-section">
-      <div class="section-header">
-        <h4 class="section-label">{{ t('financing.loans') }}</h4>
+      <div class="block-header">
+        <h4 class="section-title">{{ t('financing.loans') }}</h4>
         <button type="button" class="btn btn-outline btn-sm" @click="addLoan">
-          <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
           </svg>
           {{ t('financing.addLoan') }}
         </button>
       </div>
 
-      <div v-if="loans.length === 0" class="empty-state">
-        <p>Keine Darlehen hinzugefügt</p>
+      <div v-if="loans.length === 0" class="empty-row">
+        Keine Darlehen hinzugefügt
       </div>
 
       <div v-else class="loans-list">
         <div
-          v-for="loan in loans"
+          v-for="(loan, index) in loans"
           :key="loan.id"
-          class="loan-card"
+          class="panel item-panel"
         >
-          <div class="loan-header">
+          <div class="item-header">
+            <span class="item-index">{{ String(index + 1).padStart(2, '0') }}</span>
             <input
               v-model="loan.name"
               type="text"
-              class="loan-name-input"
+              class="item-name-input"
               placeholder="z.B. Hauptdarlehen"
             />
             <button
               type="button"
-              class="delete-btn"
+              class="icon-btn"
               @click="removeLoan(loan.id)"
               :title="t('common.delete')"
+              :aria-label="t('common.delete')"
             >
-              <svg viewBox="0 0 20 20" fill="currentColor">
+              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
               </svg>
             </button>
@@ -82,51 +84,75 @@
               :suffix="t('common.years')"
               help-key="financing.fixedInterestYears"
             />
+            <KalkPercent
+              v-model="loan.refinancingRate"
+              :label="t('financing.loan.refinancingRate')"
+              :hint="t('financing.loan.refinancingRateHint')"
+              :min="0"
+              :max="15"
+              :decimals="2"
+            />
+            <KalkPercent
+              v-model="loan.refinancingRepayment"
+              :label="t('financing.loan.refinancingRepayment')"
+              :hint="t('financing.loan.refinancingRepaymentHint')"
+              :min="0"
+              :max="20"
+              :decimals="2"
+            />
+            <KalkInput
+              v-model="loan.gracePeriodYears"
+              :label="t('financing.loan.gracePeriodYears')"
+              type="number"
+              :min="0"
+              :max="10"
+              :suffix="t('common.years')"
+            />
           </div>
         </div>
       </div>
     </div>
 
     <!-- Summary -->
-    <div class="financing-summary">
-      <div class="summary-row">
-        <span>Gesamtkapitalbedarf: <HelpIcon help-key="financing.totalCapitalNeed" /></span>
-        <strong>{{ formatCurrency(totalCapitalNeed) }}</strong>
+    <div class="summary-box statement">
+      <div class="data-row">
+        <span class="data-label strong">Gesamtkapitalbedarf <HelpIcon help-key="financing.totalCapitalNeed" /></span>
+        <span class="data-value">{{ formatCurrency(totalCapitalNeed) }}</span>
       </div>
-      <div v-if="totalCapexAmount > 0" class="summary-row sub">
-        <span>davon Kaufpreis + Nebenkosten:</span>
-        <span>{{ formatCurrency(totalInvestment) }}</span>
+      <div v-if="totalCapexAmount > 0" class="data-row sub">
+        <span class="data-label">davon Kaufpreis + Nebenkosten</span>
+        <span class="data-value">{{ formatCurrency(totalInvestment) }}</span>
       </div>
-      <div v-if="totalCapexAmount > 0" class="summary-row sub">
-        <span>davon Investitionsmaßnahmen:</span>
-        <span>{{ formatCurrency(totalCapexAmount) }}</span>
+      <div v-if="totalCapexAmount > 0" class="data-row sub">
+        <span class="data-label">davon Investitionsmaßnahmen</span>
+        <span class="data-value">{{ formatCurrency(totalCapexAmount) }}</span>
       </div>
-      <div class="summary-row">
-        <span>{{ t('financing.summary.totalLoan') }}:</span>
-        <strong>{{ formatCurrency(totalLoans) }}</strong>
+      <div class="data-row">
+        <span class="data-label">{{ t('financing.summary.totalLoan') }}</span>
+        <span class="data-value">{{ formatCurrency(totalLoans) }}</span>
       </div>
-      <div class="summary-row">
-        <span>{{ t('financing.summary.totalEquity') }}:</span>
-        <strong>{{ formatCurrency(equity || 0) }}</strong>
+      <div class="data-row">
+        <span class="data-label">{{ t('financing.summary.totalEquity') }}</span>
+        <span class="data-value">{{ formatCurrency(equity || 0) }}</span>
       </div>
-      <div class="summary-row">
-        <span>Finanzierung gesamt (EK + FK):</span>
-        <strong>{{ formatCurrency(totalFinancing) }}</strong>
+      <div class="data-row">
+        <span class="data-label strong">Finanzierung gesamt (EK + FK)</span>
+        <span class="data-value">{{ formatCurrency(totalFinancing) }}</span>
       </div>
-      <div :class="['summary-row', 'highlight', { 'highlight-error': !isFinancingCovered }]">
-        <span>{{ isFinancingCovered ? 'Finanzierung gedeckt' : 'Finanzierungslücke' }}: <HelpIcon help-key="financing.gap" /></span>
-        <strong>{{ formatCurrency(financingGap) }}</strong>
+      <div :class="['data-row', 'total', { 'is-gap': !isFinancingCovered }]">
+        <span class="data-label">{{ isFinancingCovered ? 'Finanzierung gedeckt' : 'Finanzierungslücke' }} <HelpIcon help-key="financing.gap" /></span>
+        <span class="data-value">{{ formatCurrency(financingGap) }}</span>
       </div>
     </div>
 
     <!-- Validation message -->
-    <div v-if="!isFinancingCovered" class="validation-error">
-      <svg class="error-icon" viewBox="0 0 20 20" fill="currentColor">
+    <div v-if="!isFinancingCovered" class="callout error gap-callout" role="alert">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
       </svg>
       <p>
         Die Finanzierung deckt den Gesamtkapitalbedarf nicht.
-        Es fehlen <strong>{{ formatCurrency(Math.abs(financingGap)) }}</strong>.
+        Es fehlen <strong class="num">{{ formatCurrency(Math.abs(financingGap)) }}</strong>.
         Bitte erhöhen Sie das Eigenkapital oder fügen Sie weitere Darlehen hinzu.
       </p>
     </div>
@@ -146,6 +172,9 @@ interface LoanItem {
   interestRate: number;
   initialRepayment: number;
   fixedInterestYears: number;
+  refinancingRate?: number;
+  refinancingRepayment?: number;
+  gracePeriodYears?: number;
 }
 
 const emit = defineEmits<{
@@ -223,7 +252,10 @@ onMounted(() => {
       principal: l.principal.amount,
       interestRate: l.interestRatePercent,
       initialRepayment: l.initialRepaymentPercent,
-      fixedInterestYears: l.fixedInterestYears
+      fixedInterestYears: l.fixedInterestYears,
+      refinancingRate: l.refinancingInterestRatePercent,
+      refinancingRepayment: l.refinancingRepaymentPercent,
+      gracePeriodYears: l.gracePeriodYears
     }));
   }
 });
@@ -253,7 +285,10 @@ watch(
           interestRatePercent: l.interestRate,
           initialRepaymentPercent: l.initialRepayment,
           fixedInterestYears: l.fixedInterestYears,
-          startDate: startPeriod
+          startDate: startPeriod,
+          refinancingInterestRatePercent: l.refinancingRate,
+          refinancingRepaymentPercent: l.refinancingRepayment,
+          gracePeriodYears: l.gracePeriodYears ? Number(l.gracePeriodYears) : undefined
         }))
       }
     });
@@ -264,69 +299,30 @@ watch(
 
 <style scoped>
 .loans-section {
-  margin-top: var(--kalk-space-8);
+  margin-top: var(--kalk-space-6);
+  padding-top: var(--kalk-space-5);
+  border-top: 1px solid var(--kalk-border);
 }
 
-.section-header {
+.block-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--kalk-space-4);
+  gap: var(--kalk-space-3);
+  margin-bottom: var(--kalk-space-3);
 }
 
-.section-label {
-  font-size: var(--kalk-text-base);
-  font-weight: 600;
-  color: var(--kalk-gray-900);
+.block-header .section-title {
   margin: 0;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--kalk-space-2);
-  font-family: var(--kalk-font-family);
-  font-weight: 600;
-  border-radius: var(--kalk-radius-md);
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.btn-sm {
-  height: 36px;
-  padding: 0 var(--kalk-space-4);
-  font-size: var(--kalk-text-xs);
-}
-
-.btn-outline {
-  background: #ffffff;
-  color: var(--kalk-gray-700);
-  border: 1.5px solid var(--kalk-gray-300);
-}
-
-.btn-outline:hover {
-  background: var(--kalk-gray-50);
-  border-color: var(--kalk-gray-400);
-}
-
-.btn-icon {
-  width: 16px;
-  height: 16px;
-}
-
-.empty-state {
-  text-align: center;
-  padding: var(--kalk-space-8);
-  background: var(--kalk-gray-50);
-  border-radius: var(--kalk-radius-md);
-  border: 2px dashed var(--kalk-gray-200);
-}
-
-.empty-state p {
+.empty-row {
+  padding: var(--kalk-space-3) var(--kalk-space-4);
+  font-size: var(--kalk-text-sm);
   color: var(--kalk-gray-500);
-  margin: 0;
+  background: var(--kalk-gray-50);
+  border: 1px solid var(--kalk-border);
+  border-radius: var(--kalk-radius-md);
 }
 
 .loans-list {
@@ -335,52 +331,58 @@ watch(
   gap: var(--kalk-space-3);
 }
 
-.loan-card {
-  background: #ffffff;
-  border: 1px solid var(--kalk-gray-200);
+.item-panel {
   border-radius: var(--kalk-radius-md);
-  padding: var(--kalk-space-4);
-  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.loan-card:hover {
-  border-color: var(--kalk-gray-300);
-  box-shadow: var(--kalk-shadow-sm);
-}
-
-.loan-header {
+.item-header {
   display: flex;
   align-items: center;
   gap: var(--kalk-space-3);
-  margin-bottom: var(--kalk-space-4);
-  padding-bottom: var(--kalk-space-3);
-  border-bottom: 1px solid var(--kalk-gray-100);
+  padding: var(--kalk-space-1) var(--kalk-space-2) var(--kalk-space-1) var(--kalk-space-4);
+  background: var(--kalk-gray-50);
+  border-bottom: 1px solid var(--kalk-border);
 }
 
-.loan-name-input {
+.item-index {
+  font-size: var(--kalk-text-xs);
+  font-weight: 600;
+  color: var(--kalk-gray-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.item-name-input {
   flex: 1;
-  padding: var(--kalk-space-2) var(--kalk-space-3);
+  min-width: 0;
+  height: 32px;
+  padding: 0 var(--kalk-space-2);
+  margin-left: calc(-1 * var(--kalk-space-2));
   font-family: var(--kalk-font-family);
   font-size: var(--kalk-text-sm);
   font-weight: 600;
   color: var(--kalk-gray-900);
   background: transparent;
-  border: none;
-  border-bottom: 1px solid transparent;
+  border: 1px solid transparent;
+  border-radius: var(--kalk-radius-sm);
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.12s, background-color 0.12s;
 }
 
-.loan-name-input:focus {
-  border-bottom-color: var(--kalk-accent-500);
+.item-name-input:hover {
+  border-color: var(--kalk-border);
 }
 
-.loan-name-input::placeholder {
+.item-name-input:focus {
+  background: var(--kalk-surface);
+  border-color: var(--kalk-navy-600);
+}
+
+.item-name-input::placeholder {
   color: var(--kalk-gray-400);
   font-weight: 500;
 }
 
-.delete-btn {
+.icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -388,127 +390,81 @@ watch(
   height: 32px;
   padding: 0;
   background: transparent;
-  border: none;
-  border-radius: var(--kalk-radius-sm);
+  border: 1px solid transparent;
+  border-radius: var(--kalk-radius-md);
   color: var(--kalk-gray-400);
   cursor: pointer;
-  transition: all 0.15s;
   flex-shrink: 0;
+  transition: color 0.12s, background-color 0.12s, border-color 0.12s;
 }
 
-.delete-btn:hover {
-  background: var(--kalk-error-bg);
-  color: var(--kalk-error);
+.icon-btn:hover {
+  color: var(--kalk-negative);
+  background: var(--kalk-negative-bg);
+  border-color: var(--kalk-negative-border);
 }
 
-.delete-btn svg {
-  width: 18px;
-  height: 18px;
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .loan-fields {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--kalk-space-4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--kalk-space-4);
+  padding: var(--kalk-space-4) var(--kalk-space-4) 0;
 }
 
 @media (max-width: 600px) {
   .loan-fields {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
-.financing-summary {
-  margin-top: var(--kalk-space-8);
-  padding: var(--kalk-space-6);
-  background: var(--kalk-gray-50);
-  border-radius: var(--kalk-radius-md);
+/* Finanzierungsuebersicht im Stil einer Aufstellung */
+.statement {
+  margin-top: var(--kalk-space-6);
+  background: var(--kalk-surface);
 }
 
-.summary-row {
-  display: flex;
-  justify-content: space-between;
+.statement .data-label {
+  display: inline-flex;
   align-items: center;
-  padding: var(--kalk-space-2) 0;
-  border-bottom: 1px solid var(--kalk-gray-200);
+  gap: 2px;
 }
 
-.summary-row:last-child {
-  border-bottom: none;
-}
-
-.summary-row span {
-  color: var(--kalk-gray-600);
-  font-size: var(--kalk-text-sm);
-}
-
-.summary-row strong {
+.statement .data-label.strong {
   color: var(--kalk-gray-900);
-  font-variant-numeric: tabular-nums;
+  font-weight: 600;
 }
 
-.summary-row.highlight {
-  margin-top: var(--kalk-space-2);
-  padding-top: var(--kalk-space-4);
-  border-top: 2px solid var(--kalk-accent-500);
-  border-bottom: none;
+.statement .data-row.sub {
+  padding: 6px 0 6px var(--kalk-space-4);
+}
+
+.statement .data-row.sub .data-label,
+.statement .data-row.sub .data-value {
+  font-size: var(--kalk-text-sm);
+  font-weight: 400;
+  color: var(--kalk-gray-500);
+}
+
+.statement .data-row.total .data-value {
   font-size: var(--kalk-text-lg);
 }
 
-.summary-row.highlight span {
-  color: var(--kalk-accent-600);
+.statement .data-row.total.is-gap .data-label,
+.statement .data-row.total.is-gap .data-value {
+  color: var(--kalk-negative);
 }
 
-.summary-row.highlight strong {
-  color: var(--kalk-accent-600);
-}
-
-.summary-row.highlight-error {
-  border-top-color: var(--kalk-error);
-}
-
-.summary-row.highlight-error span,
-.summary-row.highlight-error strong {
-  color: var(--kalk-error);
-}
-
-.summary-row.sub {
-  border-bottom: none;
-  padding: var(--kalk-space-1) 0 var(--kalk-space-1) var(--kalk-space-4);
-}
-
-.summary-row.sub span {
-  font-size: var(--kalk-text-xs);
-  color: var(--kalk-gray-400);
-}
-
-.validation-error {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--kalk-space-3);
+.gap-callout {
   margin-top: var(--kalk-space-4);
-  padding: var(--kalk-space-4);
-  background: rgba(220, 38, 38, 0.05);
-  border: 1px solid rgba(220, 38, 38, 0.2);
-  border-radius: var(--kalk-radius-md);
 }
 
-.error-icon {
-  width: 20px;
-  height: 20px;
-  color: var(--kalk-error);
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.validation-error p {
-  margin: 0;
-  font-size: var(--kalk-text-sm);
-  color: var(--kalk-gray-700);
-  line-height: 1.5;
-}
-
-.validation-error strong {
-  color: var(--kalk-error);
+.gap-callout strong {
+  color: var(--kalk-negative);
+  font-weight: 600;
 }
 </style>

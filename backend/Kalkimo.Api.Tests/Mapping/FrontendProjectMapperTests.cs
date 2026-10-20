@@ -16,7 +16,7 @@ public class FrontendProjectMapperTests
     /// Erzeugt einen vollständigen, gültigen AnonymousCalculationRequest
     /// der die typische Frontend-JSON-Struktur widerspiegelt.
     /// </summary>
-    private static AnonymousCalculationRequest CreateValidRequest(
+    internal static AnonymousCalculationRequest CreateValidRequest(
         decimal purchasePrice = 400_000m,
         decimal landValuePercent = 20m,
         decimal equity = 100_000m,
@@ -752,6 +752,108 @@ public class FrontendProjectMapperTests
         var project = FrontendProjectMapper.MapToProject(request);
 
         project.Purchase.AcquisitionCosts[0].Type.Should().Be(AcquisitionCostType.Other);
+    }
+
+    [Theory]
+    [InlineData("Notar Grundschuld")]
+    [InlineData("Grundbuch Grundschuldeintragung")]
+    [InlineData("Finanzierungsvermittlung")]
+    public void MapToProject_AcquisitionCost_FinancingCosts_AreNotCapitalized(string name)
+    {
+        var request = CreateValidRequest();
+        request = request with
+        {
+            Purchase = request.Purchase with
+            {
+                Costs = new[]
+                {
+                    new PurchaseCostItemDto { Id = "c1", Name = name, Amount = new MoneyInputDto { Amount = 1_500m } }
+                }
+            }
+        };
+
+        var project = FrontendProjectMapper.MapToProject(request);
+
+        project.Purchase.AcquisitionCosts[0].Type.Should().Be(AcquisitionCostType.FinancingCosts);
+        project.Purchase.AcquisitionCosts[0].IsCapitalizable.Should().BeFalse();
+        project.Purchase.ImmediatelyDeductibleAcquisitionCosts.Amount.Should().Be(1_500m);
+    }
+
+    [Fact]
+    public void MapToProject_Loan_MapsRefinancingTypeAndGracePeriod()
+    {
+        var request = CreateValidRequest();
+        var loan = request.Financing.Loans![0] with
+        {
+            Type = "KfW",
+            GracePeriodYears = 2,
+            RefinancingInterestRatePercent = 4.5m,
+            RefinancingRepaymentPercent = 3m
+        };
+        request = request with { Financing = request.Financing with { Loans = new[] { loan } } };
+
+        var project = FrontendProjectMapper.MapToProject(request);
+
+        var mapped = project.Financing.Loans[0];
+        mapped.Type.Should().Be(LoanType.KfW);
+        mapped.TilgungsfreieAnlaufjahre.Should().Be(2);
+        mapped.Refinancing.Should().NotBeNull();
+        mapped.Refinancing!.InterestRatePercent.Should().Be(4.5m);
+        mapped.Refinancing.RepaymentPercent.Should().Be(3m);
+    }
+
+    [Fact]
+    public void MapToProject_Loan_WithoutRefinancingRate_HasNoRefinancing()
+    {
+        var request = CreateValidRequest();
+
+        var project = FrontendProjectMapper.MapToProject(request);
+
+        project.Financing.Loans[0].Refinancing.Should().BeNull();
+        project.Financing.Loans[0].Type.Should().Be(LoanType.Annuity);
+    }
+
+    [Fact]
+    public void MapToProject_Valuation_MapsUserInput()
+    {
+        var request = CreateValidRequest() with
+        {
+            Valuation = new ValuationDto
+            {
+                MarketGrowthRatePercent = 2.5m,
+                PlannedSaleDate = new YearMonthDto { Year = 2032, Month = 6 },
+                SaleCostsPercent = 4m,
+                DiscountRatePercent = 6m
+            }
+        };
+
+        var project = FrontendProjectMapper.MapToProject(request);
+
+        project.Valuation.MarketGrowthRatePercent.Should().Be(2.5m);
+        project.Valuation.PlannedSaleDate.Should().Be(new YearMonth(2032, 6));
+        project.Valuation.SaleCostsPercent.Should().Be(4m);
+        project.Valuation.DiscountRatePercent.Should().Be(6m);
+    }
+
+    [Fact]
+    public void MapToProject_Valuation_Missing_UsesBaseScenarioGrowth()
+    {
+        var request = CreateValidRequest();
+
+        var project = FrontendProjectMapper.MapToProject(request);
+
+        project.Valuation.MarketGrowthRatePercent.Should().Be(FrontendProjectMapper.DefaultMarketGrowthRatePercent);
+        project.Valuation.PlannedSaleDate.Should().BeNull();
+    }
+
+    [Fact]
+    public void MapToProject_AcquisitionCost_PurchaseCosts_AreCapitalized()
+    {
+        var request = CreateValidRequest();
+
+        var project = FrontendProjectMapper.MapToProject(request);
+
+        project.Purchase.AcquisitionCosts.Should().OnlyContain(c => c.IsCapitalizable);
     }
 
     #endregion

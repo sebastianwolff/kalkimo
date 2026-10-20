@@ -280,6 +280,33 @@ public class ProjectsController : ControllerBase
         _logger.LogInformation("Calculation requested for {ProjectId}, scenario: {ScenarioId}",
             id, request?.ScenarioId ?? "base");
 
+        // Die Wizard-Eingaben liegen als Frontend-JSON vor (PUT /data); das Domain-Snapshot
+        // enthält nur die Defaults aus der Projektanlage. Daher bevorzugt die Frontend-Daten
+        // über denselben Mapper wie die anonyme Berechnung verwenden.
+        var rawData = await _store.LoadProjectDataAsync(id, ct);
+        if (rawData is { Length: > 0 })
+        {
+            try
+            {
+                var frontendData = JsonSerializer.Deserialize<AnonymousCalculationRequest>(
+                    rawData, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+                if (frontendData != null)
+                {
+                    project = FrontendProjectMapper.MapToProject(frontendData) with
+                    {
+                        Id = project.Id,
+                        Name = project.Name,
+                        Scenarios = project.Scenarios
+                    };
+                }
+            }
+            catch (Exception ex) when (ex is JsonException or ArgumentException or NullReferenceException)
+            {
+                _logger.LogWarning(ex, "Stored project data for {ProjectId} could not be mapped", id);
+                return BadRequest(new { error = "Invalid project data", message = ex.Message });
+            }
+        }
+
         try
         {
             var result = _calculator.Calculate(project, request?.ScenarioId);

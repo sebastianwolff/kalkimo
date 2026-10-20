@@ -48,6 +48,12 @@ public record CapExMeasure
     /// <summary>Wertauswirkung relativ (%)</summary>
     public decimal? ValueImpactPercent { get; init; }
 
+    /// <summary>
+    /// Anteil der Kosten (%), der sich im Immobilienwert niederschlägt (Wertprognose).
+    /// Unabhängig von der steuerlichen Klassifikation. null = Standard (70%).
+    /// </summary>
+    public decimal? ValueFactorPercent { get; init; }
+
     /// <summary>Wirtschaftliche Auswirkung (Betriebskostenersparnis, Mieterhöhung)</summary>
     public MeasureImpact? Impact { get; init; }
 

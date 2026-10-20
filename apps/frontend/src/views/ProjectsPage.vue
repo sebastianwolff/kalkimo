@@ -2,77 +2,113 @@
   <ion-page>
     <AppHeader :title="t('nav.projects')" />
 
-    <ion-content :fullscreen="true" class="ion-padding">
-      <!-- Login required message for unauthenticated users -->
-      <div v-if="!isAuthenticated" class="login-required">
-        <ion-icon :icon="lockClosedOutline" class="lock-icon" />
-        <h3>Anmeldung erforderlich</h3>
-        <p>
-          Um mehrere Projekte zu verwalten, melden Sie sich bitte an oder erstellen Sie ein Konto.
-        </p>
-        <p class="hint">
-          Als Gast können Sie ein einzelnes Projekt erstellen und berechnen.
-        </p>
-        <div class="action-buttons">
-          <ion-button @click="goToLogin">
-            <ion-icon slot="start" :icon="logInOutline" />
-            Anmelden
-          </ion-button>
-          <ion-button fill="outline" @click="goToWizard">
-            Als Gast fortfahren
-          </ion-button>
-        </div>
-      </div>
-
-      <!-- Full project list for authenticated users -->
-      <div v-else class="projects-page">
-        <div class="header-actions">
-          <ion-button @click="startNewProject">
-            <ion-icon slot="start" :icon="addOutline" />
-            {{ t('nav.newProject') }}
-          </ion-button>
+    <ion-content>
+      <div class="page-content">
+        <!-- Nicht angemeldet -->
+        <div v-if="!isAuthenticated" class="login-required panel">
+          <div class="panel-body">
+            <ion-icon :icon="lockClosedOutline" class="lock-icon" />
+            <h2 class="panel-title">{{ t('projectsPage.loginTitle') }}</h2>
+            <p class="login-text">{{ t('projectsPage.loginText') }}</p>
+            <p class="login-hint">{{ t('projectsPage.loginHint') }}</p>
+            <div class="action-buttons">
+              <button type="button" class="btn btn-primary" @click="goToLogin">
+                <ion-icon :icon="logInOutline" />
+                {{ t('auth.login') }}
+              </button>
+              <button type="button" class="btn btn-outline" @click="goToWizard">
+                {{ t('projectsPage.continueAsGuest') }}
+              </button>
+            </div>
+          </div>
         </div>
 
-        <!-- Loading state -->
-        <div v-if="loadingProjects" class="loading-state">
-          <ion-spinner name="crescent" />
-          <p>Projekte werden geladen...</p>
-        </div>
-
-        <div v-else-if="projects.length === 0" class="empty-state">
-          <ion-icon :icon="folderOpenOutline" class="empty-icon" />
-          <h3>Keine Projekte vorhanden</h3>
-          <p>Erstellen Sie Ihr erstes Investitionsprojekt</p>
-          <ion-button @click="startNewProject">
-            {{ t('nav.newProject') }}
-          </ion-button>
-        </div>
-
-        <ion-list v-else>
-          <ion-item
-            v-for="project in projects"
-            :key="project.id"
-            button
-            @click="openProject(project.id)"
-          >
-            <ion-icon slot="start" :icon="documentOutline" />
-            <ion-label>
-              <h2>{{ project.name }}</h2>
-              <p>{{ project.description || 'Keine Beschreibung' }}</p>
-              <p class="meta">
-                Aktualisiert: {{ formatDate(project.updatedAt) }}
+        <!-- Projektliste -->
+        <template v-else>
+          <header class="page-head">
+            <div>
+              <span class="eyebrow">{{ t('projectsPage.eyebrow') }}</span>
+              <h1 class="page-title">{{ t('nav.projects') }}</h1>
+              <p class="page-subtitle">
+                {{ t('projectsPage.subtitle') }}
+                <template v-if="!loadingProjects && projects.length > 0">
+                  · {{ t('projectsPage.count', { n: projects.length }, projects.length) }}
+                </template>
               </p>
-            </ion-label>
-            <ion-button
-              slot="end"
-              fill="clear"
-              color="danger"
-              @click.stop="confirmDelete(project)"
-            >
-              <ion-icon slot="icon-only" :icon="trashOutline" />
-            </ion-button>
-          </ion-item>
-        </ion-list>
+            </div>
+            <div class="page-actions">
+              <button type="button" class="btn btn-primary" @click="startNewProject">
+                <ion-icon :icon="addOutline" />
+                {{ t('nav.newProject') }}
+              </button>
+            </div>
+          </header>
+
+          <div v-if="loadingProjects" class="panel loading-state">
+            <ion-spinner name="lines-small" />
+            <span>{{ t('projectsPage.loading') }}</span>
+          </div>
+
+          <div v-else-if="projects.length === 0" class="empty-state">
+            <ion-icon :icon="folderOpenOutline" class="empty-state-icon" />
+            <p class="empty-state-title">{{ t('home.noProjects') }}</p>
+            <p class="empty-state-text">{{ t('home.noProjectsHint') }}</p>
+            <button type="button" class="btn btn-primary" @click="startNewProject">
+              <ion-icon :icon="addOutline" />
+              {{ t('nav.newProject') }}
+            </button>
+          </div>
+
+          <div v-else class="panel table-panel">
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>{{ t('home.colProject') }}</th>
+                    <th class="num hide-sm">{{ t('home.colVersion') }}</th>
+                    <th class="num hide-md">{{ t('projectsPage.colCreated') }}</th>
+                    <th class="num">{{ t('home.colUpdated') }}</th>
+                    <th class="actions-col" aria-hidden="true"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="project in projects"
+                    :key="project.id"
+                    class="clickable-row"
+                    tabindex="0"
+                    @click="openProject(project.id)"
+                    @keydown.enter="openProject(project.id)"
+                  >
+                    <td>
+                      <div class="project-cell">
+                        <span class="project-name">{{ project.name }}</span>
+                        <span v-if="project.description" class="project-desc">{{ project.description }}</span>
+                      </div>
+                    </td>
+                    <td class="num hide-sm">{{ project.version != null ? `v${project.version}` : '–' }}</td>
+                    <td class="num hide-md">{{ formatDate(project.createdAt) }}</td>
+                    <td class="num">{{ formatDate(project.updatedAt) }}</td>
+                    <td class="actions-col">
+                      <div class="row-actions">
+                      <button
+                        type="button"
+                        class="row-btn danger"
+                        :title="t('projectsPage.delete')"
+                        :aria-label="t('projectsPage.delete')"
+                        @click.stop="confirmDelete(project)"
+                      >
+                        <ion-icon :icon="trashOutline" />
+                      </button>
+                      <ion-icon :icon="chevronForwardOutline" class="row-chevron" />
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </template>
       </div>
     </ion-content>
   </ion-page>
@@ -85,21 +121,17 @@ import { useI18n } from 'vue-i18n';
 import {
   IonPage,
   IonContent,
-  IonButton,
   IonIcon,
-  IonList,
-  IonItem,
-  IonLabel,
   IonSpinner,
   alertController
 } from '@ionic/vue';
 import {
   addOutline,
   folderOpenOutline,
-  documentOutline,
   trashOutline,
   lockClosedOutline,
-  logInOutline
+  logInOutline,
+  chevronForwardOutline
 } from 'ionicons/icons';
 import { AppHeader } from '@/components';
 import { useAuthStore } from '@/stores/authStore';
@@ -110,6 +142,7 @@ interface DisplayProject {
   id: string;
   name: string;
   description?: string;
+  version?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -123,25 +156,24 @@ const uiStore = useUiStore();
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 const loadingProjects = ref(false);
 
-// Reactive project list - from server summaries when authenticated, local otherwise
 const projects = computed<DisplayProject[]>(() => {
-  if (isAuthenticated.value && projectStore.projectSummaries.length > 0) {
-    return projectStore.projectSummaries.map(s => ({
-      id: s.id,
-      name: s.name,
-      description: s.description,
-      createdAt: s.createdAt,
-      updatedAt: s.updatedAt
-    }));
-  }
-  // Fallback to local projects
-  return projectStore.projects.map(p => ({
-    id: p.id,
-    name: p.name,
-    description: p.description,
-    createdAt: p.createdAt,
-    updatedAt: p.updatedAt
-  }));
+  const list: DisplayProject[] = isAuthenticated.value && projectStore.projectSummaries.length > 0
+    ? projectStore.projectSummaries.map(s => ({
+        id: s.id,
+        name: s.name,
+        description: s.description,
+        version: s.version,
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt
+      }))
+    : projectStore.projects.map(p => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt
+      }));
+  return [...list].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 });
 
 onMounted(async () => {
@@ -153,10 +185,11 @@ onMounted(async () => {
 });
 
 function formatDate(dateStr: string): string {
+  if (!dateStr) return '–';
   return new Intl.DateTimeFormat(locale.value, {
     year: 'numeric',
-    month: 'short',
-    day: 'numeric'
+    month: '2-digit',
+    day: '2-digit'
   }).format(new Date(dateStr));
 }
 
@@ -176,23 +209,23 @@ function startNewProject() {
 
 async function openProject(id: string) {
   if (isAuthenticated.value) {
-    // Load from server for authenticated users
     const project = await projectStore.loadProjectFromServer(id);
     if (project) {
       projectStore.setProject(project, true);
       uiStore.resetWizard();
       router.push('/wizard');
-    } else {
-      uiStore.showToast('Projekt konnte nicht geladen werden', 'error');
+      return;
     }
+  }
+
+  // Fallback: lokal gespeichertes Projekt (Gast oder noch nicht synchronisiert)
+  const project = projectStore.projects.find(p => p.id === id);
+  if (project) {
+    projectStore.setProject(project);
+    uiStore.resetWizard();
+    router.push('/wizard');
   } else {
-    // Load from local storage for guests
-    const project = projectStore.projects.find(p => p.id === id);
-    if (project) {
-      projectStore.setProject(project);
-      uiStore.resetWizard();
-      router.push('/wizard');
-    }
+    uiStore.showToast('Projekt konnte nicht geladen werden', 'error');
   }
 }
 
@@ -215,17 +248,14 @@ async function confirmDelete(project: DisplayProject) {
 
 async function deleteProject(id: string) {
   if (isAuthenticated.value) {
-    // Delete from server
     const deleted = await projectStore.deleteProjectFromServer(id);
     if (deleted) {
-      // Refresh list from server
       await projectStore.loadProjectListFromServer();
       uiStore.showToast('Projekt gelöscht', 'success');
     } else {
       uiStore.showToast('Löschen fehlgeschlagen', 'error');
     }
   } else {
-    // Delete locally
     const updatedProjects = projectStore.projects.filter(p => p.id !== id);
     projectStore.setProjects(updatedProjects);
     uiStore.showToast('Projekt gelöscht', 'success');
@@ -234,119 +264,146 @@ async function deleteProject(id: string) {
 </script>
 
 <style scoped>
-.projects-page {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.header-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: var(--kalk-space-6);
-}
-
-.loading-state {
-  text-align: center;
-  padding: var(--kalk-space-12);
-}
-
-.loading-state ion-spinner {
-  margin-bottom: var(--kalk-space-4);
-}
-
-.loading-state p {
-  color: var(--kalk-gray-500);
-}
-
-.empty-state {
-  text-align: center;
-  padding: var(--kalk-space-12);
-}
-
-.empty-icon {
-  font-size: 64px;
-  color: var(--kalk-gray-400);
-  margin-bottom: var(--kalk-space-4);
-}
-
-.empty-state h3 {
-  color: var(--kalk-gray-900);
-  margin-bottom: var(--kalk-space-1);
-}
-
-.empty-state p {
-  color: var(--kalk-gray-500);
-  margin-bottom: var(--kalk-space-6);
-}
-
-/* Login required state */
 .login-required {
-  max-width: 500px;
-  margin: var(--kalk-space-12) auto;
-  text-align: center;
+  max-width: 520px;
+  margin: var(--kalk-space-8) auto 0;
+}
+
+.login-required .panel-body {
   padding: var(--kalk-space-8);
-  background: #ffffff;
-  border-radius: var(--kalk-radius-lg);
-  box-shadow: var(--kalk-shadow-md);
 }
 
 .lock-icon {
-  font-size: 64px;
-  color: var(--kalk-gray-400);
-  margin-bottom: var(--kalk-space-4);
+  font-size: 24px;
+  color: var(--kalk-navy-600);
+  margin-bottom: var(--kalk-space-3);
 }
 
-.login-required h3 {
-  color: var(--kalk-gray-900);
-  font-size: var(--kalk-text-xl);
-  margin-bottom: var(--kalk-space-2);
-}
-
-.login-required p {
-  color: var(--kalk-gray-600);
-  margin-bottom: var(--kalk-space-2);
-}
-
-.login-required .hint {
+.login-text {
+  margin-top: var(--kalk-space-2);
   font-size: var(--kalk-text-sm);
+}
+
+.login-hint {
+  margin-top: var(--kalk-space-2);
+  font-size: var(--kalk-text-xs);
   color: var(--kalk-gray-500);
-  margin-bottom: var(--kalk-space-6);
 }
 
 .action-buttons {
   display: flex;
-  flex-direction: column;
-  gap: var(--kalk-space-3);
+  flex-wrap: wrap;
+  gap: var(--kalk-space-2);
+  margin-top: var(--kalk-space-6);
 }
 
-@media (min-width: 400px) {
-  .action-buttons {
-    flex-direction: row;
-    justify-content: center;
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: var(--kalk-space-3);
+  padding: var(--kalk-space-5);
+  font-size: var(--kalk-text-sm);
+  color: var(--kalk-gray-600);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:focus-visible {
+  outline: 2px solid var(--kalk-navy-500);
+  outline-offset: -2px;
+}
+
+.project-cell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.project-name {
+  font-weight: 600;
+  color: var(--kalk-navy-900);
+}
+
+.project-desc {
+  margin-top: 2px;
+  font-size: var(--kalk-text-xs);
+  color: var(--kalk-gray-500);
+  max-width: 48ch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.actions-col {
+  width: 72px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--kalk-space-1);
+}
+
+.row-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  font-size: 15px;
+  color: var(--kalk-gray-400);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--kalk-radius-md);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.clickable-row:hover .row-btn,
+.clickable-row:focus-within .row-btn {
+  opacity: 1;
+}
+
+.row-btn.danger:hover {
+  color: var(--kalk-negative);
+  background: var(--kalk-negative-bg);
+  border-color: var(--kalk-negative-border);
+}
+
+.row-chevron {
+  font-size: 16px;
+  color: var(--kalk-gray-400);
+}
+
+.clickable-row:hover .row-chevron {
+  color: var(--kalk-navy-700);
+}
+
+@media (hover: none) {
+  .row-btn {
+    opacity: 1;
   }
 }
 
-ion-list {
-  background: transparent;
+@media (max-width: 900px) {
+  .hide-md {
+    display: none;
+  }
 }
 
-ion-item {
-  --background: #ffffff;
-  --border-radius: var(--kalk-radius-md);
-  margin-bottom: var(--kalk-space-2);
-}
-
-ion-item h2 {
-  font-weight: 600;
-  color: var(--kalk-gray-900);
-}
-
-ion-item p {
-  color: var(--kalk-gray-500);
-}
-
-ion-item .meta {
-  font-size: var(--kalk-text-xs);
-  margin-top: var(--kalk-space-1);
+@media (max-width: 640px) {
+  .hide-sm {
+    display: none;
+  }
 }
 </style>

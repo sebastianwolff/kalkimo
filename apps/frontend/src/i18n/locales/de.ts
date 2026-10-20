@@ -62,7 +62,109 @@ export default {
     settings: 'Einstellungen',
     help: 'Hilfe',
     about: 'Über',
-    admin: 'Administration'
+    admin: 'Administration',
+    workspace: 'Arbeitsbereich',
+    userAdmin: 'Benutzerverwaltung',
+    roleAdmin: 'Administrator',
+    roleUser: 'Investor',
+    securityNote: 'Daten verschlüsselt gespeichert'
+  },
+
+  home: {
+    eyebrow: 'Übersicht',
+    greeting: 'Guten Tag',
+    titleGuest: 'Immobilien-Investitionen fundiert kalkulieren',
+    subtitle: 'Bankübliche Investitionsrechnung mit vollständiger deutscher Steuerlogik, Szenarien und Liquiditätsplanung.',
+    recentProjects: 'Zuletzt bearbeitet',
+    allProjects: 'Alle Projekte anzeigen',
+    colProject: 'Projekt',
+    colVersion: 'Version',
+    colUpdated: 'Zuletzt geändert',
+    open: 'Öffnen',
+    noProjects: 'Noch keine Projekte angelegt.',
+    noProjectsHint: 'Legen Sie Ihr erstes Investitionsprojekt an, um eine vollständige Kalkulation zu erstellen.',
+    currentProject: 'Aktuelles Projekt',
+    currentProjectHint: 'Lokal in diesem Browser gespeichert',
+    continue: 'Fortsetzen',
+    replace: 'Neu beginnen',
+    guestNotice: 'Sie arbeiten im Gastmodus. Ein Projekt wird lokal gespeichert. Für mehrere Projekte und verschlüsselte Cloud-Speicherung',
+    guestNoticeLink: 'melden Sie sich an',
+    startTitle: 'In drei Schritten zur Kalkulation',
+    start1Title: 'Objekt und Kauf erfassen',
+    start1Text: 'Objektdaten, Kaufpreis, Nebenkosten und geplante Maßnahmen.',
+    start2Title: 'Finanzierung und Bewirtschaftung',
+    start2Text: 'Darlehen, Mieten, laufende Kosten und steuerliche Parameter.',
+    start3Title: 'Ergebnis prüfen',
+    start3Text: 'Rendite, Cashflow, Bankkennzahlen und Steuerwirkung über die Laufzeit.',
+    startCta: 'Kalkulation beginnen',
+    methodTitle: 'Berechnungsgrundlagen',
+    method1: 'Bankkennzahlen: DSCR, LTV, Cash-on-Cash',
+    method2: 'IRR und NPV vor und nach Steuern',
+    method3: 'AfA nach Baujahr, 15 %-Regel, §82b EStDV',
+    method4: 'Private Veräußerung nach §23 EStG',
+    securityTitle: 'Datenschutz und Sicherheit',
+    security1: 'Projektdaten verschlüsselt gespeichert',
+    security2: 'Revisionssichere Versionierung jeder Änderung',
+    security3: 'Zugriff nur für berechtigte Nutzer',
+    newProjectConfirmTitle: 'Neues Projekt erstellen?',
+    newProjectConfirmText: 'Im Gastmodus wird nur ein Projekt gespeichert. Das bestehende Projekt wird ersetzt.',
+    cancel: 'Abbrechen',
+    login: 'Anmelden'
+  },
+
+  projectsPage: {
+    eyebrow: 'Portfolio',
+    subtitle: 'Alle gespeicherten Investitionsprojekte.',
+    loading: 'Projekte werden geladen …',
+    count: '{n} Projekt | {n} Projekte',
+    colStatus: 'Status',
+    colCreated: 'Angelegt',
+    loginTitle: 'Anmeldung erforderlich',
+    loginText: 'Um mehrere Projekte zu verwalten, melden Sie sich bitte an oder erstellen Sie ein Konto.',
+    loginHint: 'Als Gast können Sie ein einzelnes Projekt erstellen und berechnen.',
+    continueAsGuest: 'Als Gast fortfahren',
+    delete: 'Löschen'
+  },
+
+  loginPage: {
+    headline: 'Investitionsentscheidungen auf solider Grundlage.',
+    intro: 'Kalkimo rechnet Immobilieninvestments so, wie Banken und Steuerberater sie prüfen.',
+    point1: 'Vollständige Steuerlogik nach deutschem Recht',
+    point2: 'Szenarien, Stresstests und Liquiditätsplanung',
+    point3: 'Verschlüsselte, versionierte Projektdaten',
+    welcome: 'Anmelden',
+    welcomeText: 'Melden Sie sich mit Ihrem Kalkimo-Konto an.',
+    registerTitle: 'Konto erstellen',
+    registerText: 'Legen Sie ein Konto an, um Projekte sicher zu speichern.',
+    guest: 'Ohne Anmeldung fortfahren',
+    legal: 'Ihre Daten werden verschlüsselt übertragen und gespeichert.',
+    noAccount: 'Noch kein Konto?',
+    haveAccount: 'Bereits registriert?',
+    pwRequirements: 'Passwort-Anforderungen',
+    or: 'oder'
+  },
+
+  settingsPage: {
+    eyebrow: 'Konto und Anwendung',
+    subtitle: 'Persönliche Einstellungen und Informationen zur Anwendung.',
+    general: 'Allgemein',
+    language: 'Sprache',
+    languageHint: 'Sprache der Oberfläche und der Berichte.',
+    account: 'Konto',
+    name: 'Name',
+    email: 'E-Mail-Adresse',
+    role: 'Rolle',
+    logoutHint: 'Beendet die Sitzung auf diesem Gerät.',
+    about: 'Über die Anwendung',
+    version: 'Version',
+    publisher: 'Herausgeber',
+    storage: 'Datenhaltung',
+    storageValue: 'Verschlüsselt, versioniert'
+  },
+
+  helpPage: {
+    eyebrow: 'Unterstützung',
+    subtitle: 'Anleitung, Fachbegriffe und Antworten auf häufige Fragen.'
   },
 
   wizard: {
@@ -94,7 +196,19 @@ export default {
     startDate: 'Startdatum',
     endDate: 'Enddatum',
     createdAt: 'Erstellt am',
-    updatedAt: 'Zuletzt geändert'
+    updatedAt: 'Zuletzt geändert',
+    valuation: {
+      title: 'Wertentwicklung & Verkauf',
+      marketGrowth: 'Wertsteigerung p.a.',
+      marketGrowthHint: 'Marktwertentwicklung für Objektwert, LTV und Verkaufserlös',
+      saleCosts: 'Verkaufskosten',
+      saleCostsHint: 'Makler, Notar etc. in % vom Verkaufspreis',
+      discountRate: 'Kalkulationszins',
+      discountRateHint: 'Diskontierungszins für den Kapitalwert',
+      plannedSale: 'Verkauf vor Ende des Analysezeitraums geplant',
+      plannedSaleDate: 'Geplanter Verkauf',
+      exitHint: 'Ohne geplanten Verkauf wird für Rendite und Kapitalwert ein fiktiver Verkauf am Ende des Analysezeitraums angenommen.'
+    }
   },
 
   property: {
@@ -212,7 +326,12 @@ export default {
       initialRepayment: 'Anfängliche Tilgung',
       fixedInterestYears: 'Zinsbindung',
       startDate: 'Startdatum',
-      specialRepayment: 'Sondertilgung p.a.'
+      specialRepayment: 'Sondertilgung p.a.',
+      refinancingRate: 'Anschlusszins',
+      refinancingRateHint: 'Nach Ende der Zinsbindung. Leer = Sollzins läuft weiter',
+      refinancingRepayment: 'Tilgung Anschluss',
+      refinancingRepaymentHint: 'Leer = anfängliche Tilgung',
+      gracePeriodYears: 'Tilgungsfreie Jahre'
     },
     summary: {
       totalLoan: 'Gesamtdarlehen',
@@ -298,12 +417,14 @@ export default {
     title: 'Investitionsmaßnahmen',
     measures: 'Geplante Maßnahmen',
     addMeasure: 'Maßnahme hinzufügen',
+    noMeasures: 'Keine Investitionsmaßnahmen geplant',
     measure: {
       name: 'Bezeichnung',
       category: 'Kategorie',
       amount: 'Betrag',
       scheduledDate: 'Geplant für',
       taxClassification: 'Steuerliche Behandlung',
+      valueFactor: 'Wertwirksamkeit',
       impact: 'Wirtschaftliche Auswirkung',
       costSavings: 'Betriebskostenersparnis/Monat',
       costSavingsHint: 'Z.B. niedrigere Heizkosten nach energetischer Sanierung',
@@ -333,6 +454,9 @@ export default {
       AcquisitionCost: 'Anschaffungskosten (AfA)',
       ImprovementCost: 'Herstellungskosten (AfA)',
       NotDeductible: 'Nicht absetzbar'
+    },
+    valueHint: {
+      noComponent: 'Diese Maßnahme ist keinem erfassten Bauteil zugeordnet. Sie erhöht den Wert nur über die Wertwirksamkeit, gleicht aber die Alterung eines Bauteils nicht aus. Wähle z.B. „Dach“ als Kategorie, wenn es um das Dach geht.'
     },
     totalCapex: 'Gesamtinvestitionen',
     suggestMeasures: 'Maßnahmen vorschlagen',
@@ -518,7 +642,7 @@ export default {
         overdueComponents: '{count} Bauteile überfällig ({names}) — durchschnittlich {avgOverdueYears} Jahre über Erneuerungszyklus. Dies drückt den Zustandsfaktor.',
         degradation: 'Zustandsfaktor sinkt von {startFactor}% auf {endFactor}% über {years} Jahre (−{totalDecline} Prozentpunkte) durch natürliche Alterung.',
         componentDeterioration: '{uncoveredCount} Bauteile werden im Haltezeitraum fällig und sind nicht durch Maßnahmen abgedeckt. Geschätzte Wertminderung: {uncoveredAmount} €.',
-        investments: '{measureCount} Maßnahmen geplant ({totalAmount} €). Wertbeitrag: {valueUplift} € (70% Übertragung). Zustandsverbesserung: +{conditionBoost} Prozentpunkte.',
+        investments: '{measureCount} Maßnahmen geplant ({totalAmount} €). Wertbeitrag: {valueUplift} € (Ø {factorPercent}% Übertragung). Zustandsverbesserung: +{conditionBoost} Prozentpunkte.',
         marketAppreciation: 'Marktentwicklung {rate}% p.a. über {years} Jahre ergibt +{appreciationPercent}% reine Preissteigerung ({appreciationAmount} €).',
         meanReversion: 'Kaufpreis {gapPercent}% {assessment} regionalem Marktwert — {direction} von {adjustmentAmount} € (Halbwertszeit 7 Jahre).',
         summary: 'Geschätzter Wert nach {years} Jahren (Basis-Szenario): {finalValue} € ({changeDirection}{changePercent}% bzw. {changeDirection}{changeAbsolute} € ggü. Kaufpreis).',
@@ -613,7 +737,7 @@ export default {
     step3: 'Sehen Sie Ihre Kennzahlen und Cashflow-Prognosen',
     step4: 'Exportieren Sie Berichte für Ihre Bank oder Steuerberater',
     contactText: 'Bei Fragen oder Problemen kontaktieren Sie uns:',
-    contactEmail: 'support@kalkimo.de',
+    contactEmail: "support{'@'}kalkimo.de",
     faqTopics: {
       afa: 'tax.depreciation',
       rule15: 'summary.tax.rule15',
@@ -633,7 +757,12 @@ export default {
     registeredAt: 'Registriert am',
     projects: 'Projekte',
     noProjects: 'Keine Projekte vorhanden',
-    backToUsers: 'Zurück zur Übersicht'
+    backToUsers: 'Zurück zur Übersicht',
+    retry: 'Erneut versuchen',
+    subtitle: 'Benutzerkonten und Projektbestand der Installation.',
+    colUser: 'Benutzer',
+    colProjects: 'Projekte',
+    adminCount: 'Administratoren'
   },
 
   errors: {

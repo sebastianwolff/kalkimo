@@ -23,9 +23,28 @@ public record AnonymousCalculationRequest
     [Required] public required CostConfigurationDto Costs { get; init; }
     [Required] public required TaxProfileDto TaxProfile { get; init; }
     public IReadOnlyList<CapExMeasureDto>? Capex { get; init; }
+    public ValuationDto? Valuation { get; init; }
 }
 
 // === Shared Value Types ===
+
+/// <summary>
+/// Wertentwicklung und Exit
+/// </summary>
+public record ValuationDto
+{
+    /// <summary>Marktwertentwicklung p.a. in % (null = Default 1,5 %, entspricht Basisszenario der Prognose)</summary>
+    public decimal? MarketGrowthRatePercent { get; init; }
+
+    /// <summary>Geplanter Verkauf (null = fiktiver Verkauf am Ende des Analysezeitraums)</summary>
+    public YearMonthDto? PlannedSaleDate { get; init; }
+
+    /// <summary>Verkaufskosten in % vom Verkaufspreis</summary>
+    public decimal? SaleCostsPercent { get; init; }
+
+    /// <summary>Diskontierungszins für den Kapitalwert in %</summary>
+    public decimal? DiscountRatePercent { get; init; }
+}
 
 public record YearMonthDto
 {
@@ -158,6 +177,18 @@ public record LoanDto
     public int FixedInterestYears { get; init; }
     public required YearMonthDto StartDate { get; init; }
     public decimal? SpecialRepaymentPercentPerYear { get; init; }
+
+    /// <summary>Darlehensart: "Annuity" (Default), "BulletLoan" (endfällig), "KfW"</summary>
+    public string? Type { get; init; }
+
+    /// <summary>Tilgungsfreie Anlaufjahre (z.B. KfW)</summary>
+    public int? GracePeriodYears { get; init; }
+
+    /// <summary>Anschlusszins p.a. nach Ende der Zinsbindung (null = Sollzins wird fortgeschrieben)</summary>
+    public decimal? RefinancingInterestRatePercent { get; init; }
+
+    /// <summary>Tilgung p.a. der Anschlussfinanzierung (null = anfängliche Tilgung)</summary>
+    public decimal? RefinancingRepaymentPercent { get; init; }
 }
 
 // === Rent ===
@@ -206,6 +237,7 @@ public record CapExMeasureDto
     public required YearMonthDto ScheduledDate { get; init; }
     public required string TaxClassification { get; init; }
     public int? DistributionYears { get; init; }
+    public decimal? ValueFactorPercent { get; init; }
     public MeasureImpactDto? Impact { get; init; }
     public bool IsRecurring { get; init; }
     public RecurringMeasureConfigDto? RecurringConfig { get; init; }

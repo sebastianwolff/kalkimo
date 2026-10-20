@@ -32,7 +32,7 @@ import '@ionic/vue/css/display.css';
 
 /* @import '@ionic/vue/css/palettes/dark.always.css'; */
 /* @import '@ionic/vue/css/palettes/dark.class.css'; */
-import '@ionic/vue/css/palettes/dark.system.css';
+/* Dark Mode bewusst deaktiviert: die App nutzt ein festes, helles Erscheinungsbild. */
 
 /* Theme variables */
 import './theme/variables.css';

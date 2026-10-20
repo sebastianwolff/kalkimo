@@ -10,11 +10,11 @@ namespace Kalkimo.Domain.Calculators;
 /// - Zustandsfaktor-Modell (bauteilbasierte Degradation)
 /// - Bauteil-Verschlechterung (kostenbasiert, exponentielle Alterung)
 /// - Mean-Reversion zum regionalen Marktwert
-/// - Improvement Value Factor (70% der CapEx-Investitionen)
+/// - Wertbeitrag der Investitionen (Faktor pro Maßnahme, Standard 70%)
 /// </summary>
 public static class PropertyValueForecastCalculator
 {
-    private const decimal ImprovementValueFactor = 0.70m;
+    internal const decimal DefaultValueFactor = 0.70m;
     private const decimal BaseAgingRate = 0.005m;
     private const decimal AgingAcceleration = 0.005m;
     private const int ReferenceLifecycle = 60;
@@ -99,9 +99,9 @@ public static class PropertyValueForecastCalculator
             .ToList();
 
         // === Index CapEx by year ===
-        var capexByYear = new Dictionary<int, (decimal Improvement, decimal Maintenance, Dictionary<CapExCategory, string> Categories)>();
-        decimal totalCapexImprovement = 0;
-        decimal totalCapexMaintenance = 0;
+        var capexByYear = new Dictionary<int, (decimal Improvement, decimal Maintenance, decimal ValueUplift, Dictionary<CapExCategory, string> Categories)>();
+        decimal totalCapexAmount = 0;
+        decimal totalValueUplift = 0;
         int capexMeasureCount = 0;
 
         foreach (var measure in capexMeasures)
@@ -112,9 +112,15 @@ public static class PropertyValueForecastCalculator
 
             if (!capexByYear.TryGetValue(y, out var entry))
             {
-                entry = (0, 0, new Dictionary<CapExCategory, string>());
+                entry = (0, 0, 0, new Dictionary<CapExCategory, string>());
                 capexByYear[y] = entry;
             }
+
+            // Wertbeitrag pro Maßnahme — unabhängig von der steuerlichen Klassifikation
+            var uplift = measure.EstimatedCost.Amount * GetValueFactor(measure);
+            entry.ValueUplift += uplift;
+            totalValueUplift += uplift;
+            totalCapexAmount += measure.EstimatedCost.Amount;
 
             var isImprovement =
                 measure.TaxClassification == TaxClassification.ManufacturingCosts ||
@@ -123,14 +129,12 @@ public static class PropertyValueForecastCalculator
             if (isImprovement)
             {
                 entry.Improvement += measure.EstimatedCost.Amount;
-                totalCapexImprovement += measure.EstimatedCost.Amount;
                 entry.Categories[measure.Category] = "improvement";
             }
             else if (measure.TaxClassification == TaxClassification.MaintenanceExpense ||
                      measure.TaxClassification == TaxClassification.MaintenanceExpenseDistributed)
             {
                 entry.Maintenance += measure.EstimatedCost.Amount;
-                totalCapexMaintenance += measure.EstimatedCost.Amount;
                 if (!entry.Categories.ContainsKey(measure.Category))
                     entry.Categories[measure.Category] = "maintenance";
             }
@@ -180,8 +184,7 @@ public static class PropertyValueForecastCalculator
                 var previousConditionFactor = conditionFactor;
 
                 // Improvement uplift
-                if (capex.Improvement > 0)
-                    cumulativeImprovement += capex.Improvement * ImprovementValueFactor;
+                cumulativeImprovement += capex.ValueUplift;
 
                 // Condition factor update
                 if (componentStates.Count > 0)
@@ -301,13 +304,16 @@ public static class PropertyValueForecastCalculator
             project, components, scenarios, componentDet,
             initialConditionFactor, baseEndConditionFactor, baseTotalConditionBoost,
             overdueComponents, capexMeasureCount,
-            totalCapexImprovement, totalCapexMaintenance,
+            totalCapexAmount, totalValueUplift,
             purchasePrice, totalYears, marketComparison, useMeanReversion);
 
         return new PropertyValueForecastResult
         {
             PurchasePrice = purchasePrice,
-            ImprovementValueFactor = ImprovementValueFactor,
+            // Effektiver (kostengewichteter) Übertragungsfaktor über alle Maßnahmen
+            ImprovementValueFactor = totalCapexAmount > 0
+                ? totalValueUplift / totalCapexAmount
+                : DefaultValueFactor,
             InitialConditionFactor = initialConditionFactor,
             MarketComparison = marketComparison,
             ComponentDeterioration = componentDet,
@@ -315,6 +321,13 @@ public static class PropertyValueForecastCalculator
             Scenarios = scenarios
         };
     }
+
+    // === Value factor per measure (0..1) ===
+
+    internal static decimal GetValueFactor(CapExMeasure measure) =>
+        measure.ValueFactorPercent.HasValue
+            ? Math.Clamp(measure.ValueFactorPercent.Value, 0m, 100m) / 100m
+            : DefaultValueFactor;
 
     // === Condition to factor mapping ===
 
@@ -589,8 +602,8 @@ public static class PropertyValueForecastCalculator
         decimal baseTotalConditionBoost,
         IEnumerable<dynamic> overdueComponents,
         int capexMeasureCount,
-        decimal totalCapexImprovement,
-        decimal totalCapexMaintenance,
+        decimal totalCapexAmount,
+        decimal totalValueUplift,
         decimal purchasePrice,
         int totalYears,
         MarketComparison? marketComparison,
@@ -665,7 +678,6 @@ public static class PropertyValueForecastCalculator
         }
 
         // 4. Investments
-        var totalCapexAmount = totalCapexImprovement + totalCapexMaintenance;
         if (capexMeasureCount > 0)
         {
             drivers.Add(new ForecastDriver
@@ -675,7 +687,10 @@ public static class PropertyValueForecastCalculator
                 {
                     ["measureCount"] = capexMeasureCount,
                     ["totalAmount"] = Math.Round(totalCapexAmount),
-                    ["valueUplift"] = Math.Round(totalCapexImprovement * ImprovementValueFactor),
+                    ["valueUplift"] = Math.Round(totalValueUplift),
+                    ["factorPercent"] = totalCapexAmount > 0
+                        ? Math.Round(totalValueUplift / totalCapexAmount * 100)
+                        : Math.Round(DefaultValueFactor * 100),
                     ["conditionBoost"] = (int)Math.Round(baseTotalConditionBoost * 100 / Math.Max(components.Count, 1))
                 }
             });

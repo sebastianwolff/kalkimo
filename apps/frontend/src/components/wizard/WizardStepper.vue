@@ -1,40 +1,45 @@
 <template>
-  <div class="wizard-stepper">
+  <nav class="wizard-stepper" :aria-label="t('wizard.progress')">
     <div class="stepper-container">
-      <!-- Progress line -->
-      <div class="progress-line">
-        <div class="progress-fill" :style="{ width: `${progressWidth}%` }" />
+      <div class="stepper-meta">
+        <span class="meta-step">
+          {{ t('wizard.step') }} {{ currentStepIndex + 1 }} {{ t('wizard.of') }} {{ steps.length }}
+        </span>
+        <span class="meta-title">{{ currentLabel }}</span>
       </div>
 
-      <!-- Steps -->
-      <div class="steps">
-        <div
+      <ol class="steps">
+        <li
           v-for="(step, index) in steps"
           :key="step.id"
           :class="[
             'step',
             {
               'is-active': step.id === currentStep,
-              'is-completed': step.isCompleted,
+              'is-completed': step.isCompleted && step.id !== currentStep,
               'is-clickable': step.isCompleted || index <= currentStepIndex + 1
             }
           ]"
-          @click="handleStepClick(step, index)"
         >
-          <!-- Step circle -->
-          <div class="step-circle">
-            <svg v-if="step.isCompleted" class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            <span v-else class="step-number">{{ index + 1 }}</span>
-          </div>
-
-          <!-- Step label -->
-          <span class="step-label">{{ t(step.labelKey) }}</span>
-        </div>
-      </div>
+          <button
+            type="button"
+            class="step-button"
+            :disabled="!(step.isCompleted || index <= currentStepIndex + 1)"
+            :aria-current="step.id === currentStep ? 'step' : undefined"
+            @click="handleStepClick(step, index)"
+          >
+            <span class="step-index">
+              <svg v-if="step.isCompleted && step.id !== currentStep" class="check-icon" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M3.5 8.5l3 3 6-7" />
+              </svg>
+              <template v-else>{{ String(index + 1).padStart(2, '0') }}</template>
+            </span>
+            <span class="step-label">{{ t(step.labelKey) }}</span>
+          </button>
+        </li>
+      </ol>
     </div>
-  </div>
+  </nav>
 </template>
 
 <script setup lang="ts">
@@ -48,12 +53,9 @@ const uiStore = useUiStore();
 const steps = computed(() => uiStore.wizardSteps);
 const currentStep = computed(() => uiStore.currentWizardStep);
 const currentStepIndex = computed(() => uiStore.currentStepIndex);
-
-// Calculate progress width based on completed steps
-const progressWidth = computed(() => {
-  const totalSteps = steps.value.length;
-  if (totalSteps <= 1) return 0;
-  return (currentStepIndex.value / (totalSteps - 1)) * 100;
+const currentLabel = computed(() => {
+  const step = steps.value[currentStepIndex.value];
+  return step ? t(step.labelKey) : '';
 });
 
 function handleStepClick(step: WizardStepInfo, index: number) {
@@ -65,144 +67,161 @@ function handleStepClick(step: WizardStepInfo, index: number) {
 
 <style scoped>
 .wizard-stepper {
-  background: #ffffff;
-  border-bottom: 1px solid var(--kalk-gray-200);
-  padding: var(--kalk-space-5) var(--kalk-space-6);
+  background: var(--kalk-surface);
+  border-bottom: 1px solid var(--kalk-border);
 }
 
 .stepper-container {
-  max-width: 900px;
+  max-width: var(--kalk-content-max);
   margin: 0 auto;
-  position: relative;
+  padding: var(--kalk-space-4) var(--kalk-space-8) 0;
 }
 
-/* Progress line behind circles */
-.progress-line {
-  position: absolute;
-  top: 16px;
-  left: 24px;
-  right: 24px;
-  height: 2px;
-  background: var(--kalk-gray-200);
-  z-index: 0;
+.stepper-meta {
+  display: none;
 }
 
-.progress-fill {
-  height: 100%;
-  background: var(--kalk-accent-500);
-  transition: width 0.3s ease;
-}
-
-/* Steps container */
 .steps {
-  display: flex;
-  justify-content: space-between;
-  position: relative;
-  z-index: 1;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-/* Individual step */
-.step {
+.step-button {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  flex: 1;
-  max-width: 100px;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 0 var(--kalk-space-2) var(--kalk-space-3) 0;
+  font-family: var(--kalk-font-family);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid var(--kalk-gray-200);
+  cursor: default;
+  transition: border-color 0.15s;
 }
 
-.step.is-clickable {
+.step.is-clickable .step-button {
   cursor: pointer;
 }
 
-/* Step circle */
-.step-circle {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #ffffff;
-  border: 2px solid var(--kalk-gray-300);
+.step-index {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-bottom: var(--kalk-space-2);
-  transition: all 0.2s;
-}
-
-.step-number {
-  font-size: var(--kalk-text-sm);
+  height: 16px;
+  font-size: var(--kalk-text-2xs);
   font-weight: 600;
+  letter-spacing: 0.04em;
   color: var(--kalk-gray-400);
-}
-
-/* Active step */
-.step.is-active .step-circle {
-  border-color: var(--kalk-accent-500);
-  background: var(--kalk-accent-500);
-  box-shadow: 0 0 0 4px var(--kalk-accent-100);
-}
-
-.step.is-active .step-number {
-  color: #ffffff;
-}
-
-.step.is-active .step-label {
-  color: var(--kalk-gray-900);
-  font-weight: 600;
-}
-
-/* Completed step */
-.step.is-completed .step-circle {
-  border-color: var(--kalk-accent-500);
-  background: var(--kalk-accent-500);
+  font-variant-numeric: tabular-nums;
 }
 
 .check-icon {
-  width: 16px;
-  height: 16px;
-  color: #ffffff;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: var(--kalk-navy-600);
+  stroke-width: 2;
+  stroke-linecap: square;
+}
+
+.step-label {
+  font-size: var(--kalk-text-xs);
+  font-weight: 500;
+  color: var(--kalk-gray-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Erledigt */
+.step.is-completed .step-button {
+  border-bottom-color: var(--kalk-navy-400);
 }
 
 .step.is-completed .step-label {
-  color: var(--kalk-gray-600);
-}
-
-/* Step label */
-.step-label {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--kalk-gray-400);
-  text-align: center;
-  white-space: nowrap;
-  transition: color 0.2s;
-}
-
-/* Hover state */
-.step.is-clickable:hover .step-label {
   color: var(--kalk-gray-700);
 }
 
-/* Mobile: Horizontal scroll */
-@media (max-width: 768px) {
-  .wizard-stepper {
-    padding: var(--kalk-space-4);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+/* Aktiv */
+.step.is-active .step-button {
+  border-bottom-color: var(--kalk-navy-900);
+  border-bottom-width: 3px;
+  padding-bottom: calc(var(--kalk-space-3) - 1px);
+}
+
+.step.is-active .step-index {
+  color: var(--kalk-brass-600);
+}
+
+.step.is-active .step-label {
+  color: var(--kalk-navy-900);
+  font-weight: 600;
+}
+
+.step.is-clickable:not(.is-active) .step-button:hover .step-label {
+  color: var(--kalk-navy-700);
+}
+
+.step.is-clickable:not(.is-active) .step-button:hover {
+  border-bottom-color: var(--kalk-navy-500);
+}
+
+.step-button:disabled .step-label {
+  color: var(--kalk-gray-400);
+}
+
+/* Mobil: kompakte Kopfzeile + schmale Segmentleiste */
+@media (max-width: 860px) {
+  .stepper-container {
+    padding: var(--kalk-space-3) var(--kalk-space-4) var(--kalk-space-3);
   }
 
-  .stepper-container {
-    min-width: 600px;
+  .stepper-meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: var(--kalk-space-2);
+  }
+
+  .meta-step {
+    font-size: var(--kalk-text-2xs);
+    font-weight: 600;
+    letter-spacing: var(--kalk-tracking-caps);
+    text-transform: uppercase;
+    color: var(--kalk-gray-500);
+  }
+
+  .meta-title {
+    font-size: var(--kalk-text-sm);
+    font-weight: 600;
+    color: var(--kalk-navy-900);
   }
 
   .steps {
-    gap: var(--kalk-space-2);
+    gap: 3px;
   }
 
-  .step {
-    min-width: 70px;
+  .step-button {
+    padding: 0;
+    height: 10px;
+    border-bottom-width: 3px;
   }
 
+  .step.is-active .step-button {
+    padding: 0;
+    border-bottom-width: 3px;
+  }
+
+  .step-index,
   .step-label {
-    font-size: 10px;
+    display: none;
   }
 }
 </style>

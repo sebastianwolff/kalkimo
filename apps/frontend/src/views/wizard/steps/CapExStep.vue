@@ -1,41 +1,38 @@
 <template>
   <KalkCard :title="t('capex.title')">
-    <!-- Initial prompt overlay when entering with no measures -->
+    <!-- Initial prompt when entering with no measures -->
     <div v-if="showInitialPrompt" class="initial-prompt">
-      <div class="initial-prompt-icon">
+      <div class="initial-prompt-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
         </svg>
       </div>
-      <h4 class="initial-prompt-title">{{ t('capex.initialPrompt.title') }}</h4>
-      <p class="initial-prompt-desc">{{ t('capex.initialPrompt.description') }}</p>
-      <div class="initial-prompt-actions">
-        <button type="button" class="btn btn-accent btn-md" @click="handleShowSuggestions">
-          <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM4 11a1 1 0 100-2H3a1 1 0 000 2h1zM10 18a1 1 0 001-1v-1a1 1 0 10-2 0v1a1 1 0 001 1z" />
-            <path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 2a6 6 0 100 12 6 6 0 000-12z" clip-rule="evenodd" />
-          </svg>
-          {{ t('capex.initialPrompt.showSuggestions') }}
-        </button>
-        <button type="button" class="btn btn-outline btn-md" @click="showInitialPrompt = false">
-          {{ t('capex.initialPrompt.manualOnly') }}
-        </button>
+      <div class="initial-prompt-body">
+        <h4 class="initial-prompt-title">{{ t('capex.initialPrompt.title') }}</h4>
+        <p class="initial-prompt-desc">{{ t('capex.initialPrompt.description') }}</p>
+        <div class="initial-prompt-actions">
+          <button type="button" class="btn btn-primary" @click="handleShowSuggestions">
+            {{ t('capex.initialPrompt.showSuggestions') }}
+          </button>
+          <button type="button" class="btn btn-outline" @click="showInitialPrompt = false">
+            {{ t('capex.initialPrompt.manualOnly') }}
+          </button>
+        </div>
       </div>
     </div>
 
     <template v-else>
-    <div class="section-header">
-      <h4 class="section-label">{{ t('capex.measures') }}</h4>
+    <div class="step-section-head">
+      <h4 class="step-section-title">{{ t('capex.measures') }}</h4>
       <div class="header-actions">
         <button type="button" class="btn btn-outline btn-sm" @click="runForecast">
-          <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM4 11a1 1 0 100-2H3a1 1 0 000 2h1zM10 18a1 1 0 001-1v-1a1 1 0 10-2 0v1a1 1 0 001 1z" />
-            <path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 2a6 6 0 100 12 6 6 0 000-12z" clip-rule="evenodd" />
+          <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
           </svg>
           {{ t('capex.suggestMeasures') }}
         </button>
-        <button type="button" class="btn btn-outline btn-sm" @click="addMeasure">
-          <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+        <button type="button" class="btn btn-primary btn-sm" @click="addMeasure">
+          <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
           </svg>
           {{ t('capex.addMeasure') }}
@@ -46,8 +43,8 @@
     <!-- Suggestions -->
     <div v-if="suggestions.length > 0" class="suggestions-section">
       <div class="suggestions-header">
-        <h5 class="suggestions-title">{{ t('capex.suggestions.title') }}</h5>
-        <button type="button" class="btn btn-accent-outline btn-xs" @click="acceptAllSuggestions">
+        <span class="eyebrow">{{ t('capex.suggestions.title') }} ({{ suggestions.length }})</span>
+        <button type="button" class="btn btn-outline btn-sm" @click="acceptAllSuggestions">
           {{ t('capex.suggestions.acceptAll') }}
         </button>
       </div>
@@ -56,26 +53,35 @@
         <div
           v-for="(suggestion, index) in suggestions"
           :key="`suggestion-${index}`"
-          class="suggestion-card"
+          class="suggestion-row"
         >
           <div class="suggestion-content">
             <div class="suggestion-top">
               <span class="suggestion-name">{{ suggestion.name }}</span>
-              <span class="priority-badge" :class="`priority-${suggestion.priority.toLowerCase()}`">
+              <span
+                class="badge"
+                :class="{
+                  'badge-error': suggestion.priority === 'Critical',
+                  'badge-warning': suggestion.priority === 'High',
+                  'badge-info': suggestion.priority === 'Medium',
+                  'badge-neutral': suggestion.priority === 'Low'
+                }"
+              >
                 {{ t(`capex.suggestions.priorities.${suggestion.priority}`) }}
               </span>
-            </div>
-            <div class="suggestion-details">
-              <span>{{ suggestion.plannedYear }} &middot; {{ formatCurrency(suggestion.estimatedCost) }}</span>
             </div>
             <div class="suggestion-reasoning">
               {{ suggestion.reasoning }}
             </div>
           </div>
+          <div class="suggestion-figures">
+            <span class="suggestion-year">{{ suggestion.plannedYear }}</span>
+            <span class="suggestion-cost">{{ formatCurrency(suggestion.estimatedCost) }}</span>
+          </div>
           <div class="suggestion-actions">
             <button
               type="button"
-              class="btn btn-accent-outline btn-xs"
+              class="btn btn-outline btn-sm"
               @click="acceptSuggestion(index)"
               :title="t('capex.suggestions.accept')"
             >
@@ -83,7 +89,7 @@
             </button>
             <button
               type="button"
-              class="btn btn-ghost btn-xs"
+              class="btn btn-ghost btn-sm"
               @click="dismissSuggestion(index)"
               :title="t('capex.suggestions.dismiss')"
             >
@@ -95,8 +101,8 @@
     </div>
 
     <!-- Existing / accepted measures -->
-    <div v-if="measures.length === 0 && suggestions.length === 0" class="empty-state">
-      <p>Keine Investitionsmaßnahmen geplant</p>
+    <div v-if="measures.length === 0 && suggestions.length === 0" class="empty-state capex-empty">
+      <p class="empty-state-text">{{ t('capex.noMeasures') }}</p>
     </div>
 
     <div v-if="measures.length > 0" class="measures-list">
@@ -118,158 +124,184 @@
             @click="removeMeasure(measure.id)"
             :title="t('common.delete')"
           >
-            <svg viewBox="0 0 20 20" fill="currentColor">
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
           </button>
         </div>
 
-        <div class="measure-fields">
-          <KalkSelect
-            v-model="measure.category"
-            :label="t('capex.measure.category')"
-            :options="categoryOptions"
-            help-key="capex.category"
-          />
-        </div>
-
-        <!-- One-time investment toggle -->
-        <div class="recurring-section">
-          <label class="recurring-toggle-label">
-            <input
-              type="checkbox"
-              v-model="measure.isOneTime"
-              class="recurring-checkbox"
-            />
-            <span class="recurring-checkbox-visual"></span>
-            <span class="recurring-toggle-text">{{ t('capex.oneTime.toggle') }}</span>
-          </label>
-
-          <div v-if="measure.isOneTime" class="onetime-fields">
-            <KalkCurrency
-              v-model="measure.amount"
-              :label="t('capex.measure.amount')"
-              :currency="currency"
-              help-key="capex.amount"
-            />
-            <KalkDatePicker
-              v-model="measure.scheduledDate"
-              :label="t('capex.measure.scheduledDate')"
-              :min-year="startYear"
-              :max-year="endYear"
-              help-key="capex.scheduledDate"
-              @update:modelValue="applyTaxSuggestion(measure)"
-            />
+        <div class="measure-body">
+          <div class="measure-fields">
             <KalkSelect
-              v-model="measure.taxClassification"
-              :label="t('capex.measure.taxClassification')"
-              :options="taxClassificationOptions"
-              help-key="capex.taxClassification"
+              v-model="measure.category"
+              :label="t('capex.measure.category')"
+              :options="categoryOptions"
+              help-key="capex.category"
             />
           </div>
-        </div>
 
-        <div v-if="measure.isOneTime && measure.scheduledDate" class="tax-hint" :class="{ 'tax-hint--warning': getTaxSuggestion(measure).isWarning }">
-          {{ getTaxSuggestion(measure).reason }}
-        </div>
+          <!-- One-time investment toggle -->
+          <div class="measure-subsection">
+            <label class="check-label">
+              <input
+                type="checkbox"
+                v-model="measure.isOneTime"
+                class="check-input"
+              />
+              <span class="check-box"></span>
+              <span class="check-text">{{ t('capex.oneTime.toggle') }}</span>
+            </label>
 
-        <!-- Recurring measure toggle -->
-        <div class="recurring-section">
-          <label class="recurring-toggle-label">
-            <input
-              type="checkbox"
-              v-model="measure.isRecurring"
-              class="recurring-checkbox"
-            />
-            <span class="recurring-checkbox-visual"></span>
-            <span class="recurring-toggle-text">{{ t('capex.recurring.toggle') }}</span>
-          </label>
+            <div v-if="measure.isOneTime" class="sub-fields onetime-fields">
+              <KalkCurrency
+                v-model="measure.amount"
+                :label="t('capex.measure.amount')"
+                :currency="currency"
+                help-key="capex.amount"
+              />
+              <KalkDatePicker
+                v-model="measure.scheduledDate"
+                :label="t('capex.measure.scheduledDate')"
+                :min-year="startYear"
+                :max-year="endYear"
+                help-key="capex.scheduledDate"
+                @update:modelValue="applyTaxSuggestion(measure)"
+              />
+              <KalkSelect
+                v-model="measure.taxClassification"
+                :label="t('capex.measure.taxClassification')"
+                :options="taxClassificationOptions"
+                help-key="capex.taxClassification"
+              />
+              <KalkPercent
+                v-model="measure.valueFactorPercent"
+                :label="t('capex.measure.valueFactor')"
+                help-key="capex.valueFactor"
+              />
+            </div>
 
-          <div v-if="measure.isRecurring" class="recurring-fields">
-            <KalkPercent
-              v-model="measure.recurringIntervalPercent"
-              :label="t('capex.recurring.intervalPercent')"
-              help-key="capex.recurringInterval"
-            />
-            <KalkPercent
-              v-model="measure.recurringCostPercent"
-              :label="t('capex.recurring.costPercent')"
-              help-key="capex.recurringCost"
-            />
-            <KalkPercent
-              v-model="measure.recurringCycleExtensionPercent"
-              :label="t('capex.recurring.cycleExtension')"
-              help-key="capex.cycleExtension"
-            />
-            <div class="recurring-hints">
-              <span class="recurring-hint">{{ t('capex.recurring.calculatedInterval', { years: getRecurringIntervalYears(measure) }) }}</span>
-              <span class="recurring-hint">{{ t('capex.recurring.calculatedCost', { cost: formatCurrency(getRecurringCostPerEvent(measure)) }) }}</span>
-              <span v-if="getRecurringOccurrenceYears(measure).length > 0" class="recurring-hint">
-                {{ t('capex.recurring.occurrences', { count: getRecurringOccurrenceYears(measure).length, years: getRecurringOccurrenceYears(measure).join(', ') }) }}
-              </span>
-              <span v-else class="recurring-hint recurring-hint--warn">
-                {{ t('capex.recurring.noOccurrences') }}
-              </span>
+            <div
+              v-if="measure.isOneTime && measure.amount > 0 && !isComponentCategory(measure)"
+              class="callout info tax-hint"
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              </svg>
+              <span>{{ t('capex.valueHint.noComponent') }}</span>
+            </div>
+
+            <div
+              v-if="measure.isOneTime && measure.scheduledDate"
+              class="callout tax-hint"
+              :class="getTaxSuggestion(measure).isWarning ? 'warning' : 'info'"
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              </svg>
+              <span>{{ getTaxSuggestion(measure).reason }}</span>
             </div>
           </div>
-        </div>
 
-        <!-- Impact / Wirtschaftliche Auswirkung -->
-        <div class="impact-section">
-          <button
-            type="button"
-            class="impact-toggle"
-            @click="measure.impactExpanded = !measure.impactExpanded"
-          >
-            <svg
-              class="impact-chevron"
-              :class="{ 'is-expanded': measure.impactExpanded }"
-              viewBox="0 0 20 20"
-              fill="currentColor"
+          <!-- Recurring measure toggle -->
+          <div class="measure-subsection">
+            <label class="check-label">
+              <input
+                type="checkbox"
+                v-model="measure.isRecurring"
+                class="check-input"
+              />
+              <span class="check-box"></span>
+              <span class="check-text">{{ t('capex.recurring.toggle') }}</span>
+            </label>
+
+            <div v-if="measure.isRecurring" class="sub-fields recurring-fields">
+              <KalkPercent
+                v-model="measure.recurringIntervalPercent"
+                :label="t('capex.recurring.intervalPercent')"
+                help-key="capex.recurringInterval"
+              />
+              <KalkPercent
+                v-model="measure.recurringCostPercent"
+                :label="t('capex.recurring.costPercent')"
+                help-key="capex.recurringCost"
+              />
+              <KalkPercent
+                v-model="measure.recurringCycleExtensionPercent"
+                :label="t('capex.recurring.cycleExtension')"
+                help-key="capex.cycleExtension"
+              />
+              <ul class="recurring-hints">
+                <li class="recurring-hint">{{ t('capex.recurring.calculatedInterval', { years: getRecurringIntervalYears(measure) }) }}</li>
+                <li class="recurring-hint">{{ t('capex.recurring.calculatedCost', { cost: formatCurrency(getRecurringCostPerEvent(measure)) }) }}</li>
+                <li v-if="getRecurringOccurrenceYears(measure).length > 0" class="recurring-hint">
+                  {{ t('capex.recurring.occurrences', { count: getRecurringOccurrenceYears(measure).length, years: getRecurringOccurrenceYears(measure).join(', ') }) }}
+                </li>
+                <li v-else class="recurring-hint recurring-hint--warn">
+                  {{ t('capex.recurring.noOccurrences') }}
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Impact / Wirtschaftliche Auswirkung -->
+          <div class="measure-subsection impact-section">
+            <button
+              type="button"
+              class="impact-toggle"
+              :aria-expanded="measure.impactExpanded"
+              @click="measure.impactExpanded = !measure.impactExpanded"
             >
-              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-            {{ t('capex.measure.impact') }}
-            <span v-if="hasImpactData(measure)" class="impact-indicator"></span>
-          </button>
+              <svg
+                class="impact-chevron"
+                :class="{ 'is-expanded': measure.impactExpanded }"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              </svg>
+              {{ t('capex.measure.impact') }}
+              <span v-if="hasImpactData(measure)" class="impact-indicator" aria-hidden="true"></span>
+            </button>
 
-          <div v-if="measure.impactExpanded" class="impact-fields">
-            <KalkCurrency
-              v-model="measure.impact.costSavingsMonthly"
-              :label="t('capex.measure.costSavings')"
-              :currency="currency"
-              :placeholder="t('capex.measure.costSavingsHint')"
-              help-key="capex.costSavings"
-            />
-            <KalkCurrency
-              v-model="measure.impact.rentIncreaseMonthly"
-              :label="t('capex.measure.rentIncrease')"
-              :currency="currency"
-              :placeholder="t('capex.measure.rentIncreaseHint')"
-              help-key="capex.rentIncrease"
-            />
-            <KalkPercent
-              v-model="measure.impact.rentIncreasePercent"
-              :label="t('capex.measure.rentIncreasePercent')"
-              help-key="capex.rentIncreasePercent"
-            />
-            <KalkInput
-              v-model="measure.impact.delayMonths"
-              type="number"
-              :label="t('capex.measure.delayMonths')"
-              :min="0"
-              :max="36"
-              :placeholder="t('capex.measure.delayMonthsHint')"
-              help-key="capex.delayMonths"
-            />
+            <div v-if="measure.impactExpanded" class="sub-fields impact-fields">
+              <KalkCurrency
+                v-model="measure.impact.costSavingsMonthly"
+                :label="t('capex.measure.costSavings')"
+                :currency="currency"
+                :placeholder="t('capex.measure.costSavingsHint')"
+                help-key="capex.costSavings"
+              />
+              <KalkCurrency
+                v-model="measure.impact.rentIncreaseMonthly"
+                :label="t('capex.measure.rentIncrease')"
+                :currency="currency"
+                :placeholder="t('capex.measure.rentIncreaseHint')"
+                help-key="capex.rentIncrease"
+              />
+              <KalkPercent
+                v-model="measure.impact.rentIncreasePercent"
+                :label="t('capex.measure.rentIncreasePercent')"
+                help-key="capex.rentIncreasePercent"
+              />
+              <KalkInput
+                v-model="measure.impact.delayMonths"
+                type="number"
+                :label="t('capex.measure.delayMonths')"
+                :min="0"
+                :max="36"
+                :placeholder="t('capex.measure.delayMonthsHint')"
+                help-key="capex.delayMonths"
+              />
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <div v-if="measures.length > 0" class="capex-summary">
-      <span>{{ t('capex.totalCapex') }}:</span>
-      <strong>{{ formatCurrency(totalCapex) }}</strong>
+      <span class="capex-summary-label">{{ t('capex.totalCapex') }}</span>
+      <strong class="capex-summary-value">{{ formatCurrency(totalCapex) }}</strong>
     </div>
     </template>
   </KalkCard>
@@ -297,6 +329,7 @@ interface MeasureItem {
   amount: number;
   scheduledDate?: YearMonth;
   taxClassification: TaxClassification;
+  valueFactorPercent: number;
   impactExpanded: boolean;
   impact: MeasureImpactLocal;
   isOneTime: boolean;
@@ -306,6 +339,9 @@ interface MeasureItem {
   recurringCycleExtensionPercent: number;
   unitId?: string;
 }
+
+/** Anteil der Investitionskosten, der standardmäßig in den Immobilienwert eingeht */
+const DEFAULT_VALUE_FACTOR_PERCENT = 70;
 
 const emit = defineEmits<{
   'validation-change': [valid: boolean];
@@ -367,6 +403,16 @@ function emptyImpact(): MeasureImpactLocal {
 function hasImpactData(measure: MeasureItem): boolean {
   const i = measure.impact;
   return (i.costSavingsMonthly > 0 || i.rentIncreaseMonthly > 0 || i.rentIncreasePercent > 0);
+}
+
+/** Gibt es ein erfasstes Bauteil, dessen Alterung diese Maßnahme ausgleicht? (Abgleich wie im Backend: Kategorie + Einheit) */
+function isComponentCategory(measure: MeasureItem): boolean {
+  const property = projectStore.currentProject?.property;
+  if (!property) return false;
+  const components = measure.unitId
+    ? property.units.find(u => u.id === measure.unitId)?.components ?? []
+    : property.components;
+  return components.some(c => c.category === measure.category);
 }
 
 function getComponentCycle(category: CapExCategory): number {
@@ -508,6 +554,7 @@ function addMeasure() {
     category: 'Other',
     amount: 0,
     taxClassification: 'MaintenanceExpense',
+    valueFactorPercent: DEFAULT_VALUE_FACTOR_PERCENT,
     impactExpanded: false,
     impact: emptyImpact(),
     isOneTime: true,
@@ -567,6 +614,7 @@ function acceptSuggestion(index: number) {
     amount: suggestion.estimatedCost,
     scheduledDate: { year: suggestion.plannedYear, month: suggestion.plannedMonth },
     taxClassification: 'MaintenanceExpense',
+    valueFactorPercent: DEFAULT_VALUE_FACTOR_PERCENT,
     impactExpanded: false,
     impact: suggestionToImpact(suggestion),
     isOneTime: true,
@@ -595,6 +643,7 @@ function acceptAllSuggestions() {
       amount: suggestion.estimatedCost,
       scheduledDate: { year: suggestion.plannedYear, month: suggestion.plannedMonth },
       taxClassification: 'MaintenanceExpense',
+      valueFactorPercent: DEFAULT_VALUE_FACTOR_PERCENT,
       impactExpanded: false,
       impact: suggestionToImpact(suggestion),
       isOneTime: true,
@@ -620,6 +669,7 @@ onMounted(() => {
       amount: m.amount.amount,
       scheduledDate: m.scheduledDate,
       taxClassification: m.taxClassification,
+      valueFactorPercent: m.valueFactorPercent ?? DEFAULT_VALUE_FACTOR_PERCENT,
       impactExpanded: false,
       impact: {
         costSavingsMonthly: m.impact?.costSavingsMonthly?.amount ?? 0,
@@ -664,6 +714,7 @@ watch(
           amount: { amount: m.isOneTime ? m.amount : 0, currency: currency.value },
           scheduledDate: (m.isOneTime && m.scheduledDate) ? m.scheduledDate : projectStore.currentProject!.startPeriod,
           taxClassification: m.taxClassification,
+          valueFactorPercent: m.valueFactorPercent,
           impact: hasImpact ? {
             costSavingsMonthly: m.impact.costSavingsMonthly > 0
               ? { amount: m.impact.costSavingsMonthly, currency: currency.value } : undefined,
@@ -688,15 +739,20 @@ watch(
 );
 </script>
 
+
 <style scoped>
-.section-header {
+/* ------------------------------------------------------------
+ * Section head
+ * ------------------------------------------------------------ */
+.step-section-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--kalk-space-4);
   margin-bottom: var(--kalk-space-4);
 }
 
-.section-label {
+.step-section-title {
   font-size: var(--kalk-text-base);
   font-weight: 600;
   color: var(--kalk-gray-900);
@@ -705,106 +761,34 @@ watch(
 
 .header-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--kalk-space-2);
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--kalk-space-2);
-  font-family: var(--kalk-font-family);
-  font-weight: 600;
-  border-radius: var(--kalk-radius-md);
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.btn-md {
-  height: 44px;
-  padding: 0 var(--kalk-space-6);
-  font-size: var(--kalk-text-sm);
-}
-
-.btn-sm {
-  height: 36px;
-  padding: 0 var(--kalk-space-4);
-  font-size: var(--kalk-text-xs);
-}
-
-.btn-xs {
-  height: 28px;
-  padding: 0 var(--kalk-space-3);
-  font-size: var(--kalk-text-xs);
-}
-
-.btn-outline {
-  background: #ffffff;
-  color: var(--kalk-gray-700);
-  border: 1.5px solid var(--kalk-gray-300);
-}
-
-.btn-outline:hover {
-  background: var(--kalk-gray-50);
-  border-color: var(--kalk-gray-400);
-}
-
-.btn-accent {
-  background: var(--kalk-accent-500, #3b82f6);
-  color: #ffffff;
-  border: 1.5px solid var(--kalk-accent-500, #3b82f6);
-}
-
-.btn-accent:hover {
-  background: var(--kalk-accent-600, #2563eb);
-  border-color: var(--kalk-accent-600, #2563eb);
-}
-
-.btn-accent-outline {
-  background: #ffffff;
-  color: var(--kalk-accent-600, #2563eb);
-  border: 1.5px solid var(--kalk-accent-400, #60a5fa);
-}
-
-.btn-accent-outline:hover {
-  background: var(--kalk-accent-50, #eff6ff);
-  border-color: var(--kalk-accent-500, #3b82f6);
-}
-
-.btn-ghost {
-  background: transparent;
-  color: var(--kalk-gray-500);
-  border: 1.5px solid transparent;
-}
-
-.btn-ghost:hover {
-  background: var(--kalk-gray-100);
-  color: var(--kalk-gray-700);
 }
 
 .btn-icon {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
-/* Initial prompt */
+/* ------------------------------------------------------------
+ * Initial prompt
+ * ------------------------------------------------------------ */
 .initial-prompt {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: var(--kalk-space-10) var(--kalk-space-6);
-  background: linear-gradient(135deg, var(--kalk-accent-50, #eff6ff) 0%, #f0f9ff 100%);
-  border: 2px solid var(--kalk-accent-200, #bfdbfe);
-  border-radius: var(--kalk-radius-lg, 12px);
+  gap: var(--kalk-space-4);
+  align-items: flex-start;
+  padding: var(--kalk-space-6);
+  background: var(--kalk-gray-50);
+  border: 1px solid var(--kalk-border);
+  border-left: 3px solid var(--kalk-navy-700);
+  border-radius: var(--kalk-radius-md);
 }
 
 .initial-prompt-icon {
-  width: 48px;
-  height: 48px;
-  color: var(--kalk-accent-500, #3b82f6);
-  margin-bottom: var(--kalk-space-4);
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  color: var(--kalk-navy-600);
 }
 
 .initial-prompt-icon svg {
@@ -812,38 +796,34 @@ watch(
   height: 100%;
 }
 
+.initial-prompt-body {
+  flex: 1;
+  min-width: 0;
+}
+
 .initial-prompt-title {
-  font-size: var(--kalk-text-lg);
-  font-weight: 700;
+  font-size: var(--kalk-text-base);
+  font-weight: 600;
   color: var(--kalk-gray-900);
-  margin: 0 0 var(--kalk-space-2) 0;
+  margin: 0 0 var(--kalk-space-1) 0;
 }
 
 .initial-prompt-desc {
   font-size: var(--kalk-text-sm);
   color: var(--kalk-gray-600);
-  max-width: 480px;
-  line-height: 1.5;
-  margin: 0 0 var(--kalk-space-6) 0;
+  max-width: 60ch;
+  margin: 0 0 var(--kalk-space-5) 0;
 }
 
 .initial-prompt-actions {
   display: flex;
-  gap: var(--kalk-space-3);
+  flex-wrap: wrap;
+  gap: var(--kalk-space-2);
 }
 
-@media (max-width: 768px) {
-  .initial-prompt-actions {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .initial-prompt-actions .btn {
-    width: 100%;
-  }
-}
-
-/* Suggestions */
+/* ------------------------------------------------------------
+ * Suggestions
+ * ------------------------------------------------------------ */
 .suggestions-section {
   margin-bottom: var(--kalk-space-6);
 }
@@ -852,43 +832,44 @@ watch(
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--kalk-space-3);
-}
-
-.suggestions-title {
-  font-size: var(--kalk-text-sm);
-  font-weight: 600;
-  color: var(--kalk-accent-700, #1d4ed8);
-  margin: 0;
+  gap: var(--kalk-space-3);
+  margin-bottom: var(--kalk-space-2);
 }
 
 .suggestions-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--kalk-space-2);
+  border: 1px solid var(--kalk-border);
+  border-radius: var(--kalk-radius-lg);
+  background: var(--kalk-surface);
+  overflow: hidden;
 }
 
-.suggestion-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--kalk-space-4);
+.suggestion-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--kalk-space-5);
   padding: var(--kalk-space-3) var(--kalk-space-4);
-  background: var(--kalk-accent-50, #eff6ff);
-  border: 1px solid var(--kalk-accent-200, #bfdbfe);
-  border-radius: var(--kalk-radius-md);
+  border-bottom: 1px solid var(--kalk-gray-100);
+}
+
+.suggestion-row:last-child {
+  border-bottom: none;
+}
+
+.suggestion-row:hover {
+  background: var(--kalk-gray-50);
 }
 
 .suggestion-content {
-  flex: 1;
   min-width: 0;
 }
 
 .suggestion-top {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--kalk-space-2);
-  margin-bottom: var(--kalk-space-1);
+  margin-bottom: 2px;
 }
 
 .suggestion-name {
@@ -897,47 +878,28 @@ watch(
   color: var(--kalk-gray-900);
 }
 
-.priority-badge {
-  display: inline-block;
-  padding: 1px var(--kalk-space-2);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-radius: 9999px;
-}
-
-.priority-critical {
-  background: #fef2f2;
-  color: #991b1b;
-}
-
-.priority-high {
-  background: #fff7ed;
-  color: #9a3412;
-}
-
-.priority-medium {
-  background: #fefce8;
-  color: #854d0e;
-}
-
-.priority-low {
-  background: #f0fdf4;
-  color: #166534;
-}
-
-.suggestion-details {
-  font-size: var(--kalk-text-xs);
-  color: var(--kalk-gray-600);
-  font-variant-numeric: tabular-nums;
-  margin-bottom: var(--kalk-space-1);
-}
-
 .suggestion-reasoning {
   font-size: var(--kalk-text-xs);
   color: var(--kalk-gray-500);
-  font-style: italic;
+}
+
+.suggestion-figures {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.suggestion-year {
+  font-size: var(--kalk-text-xs);
+  color: var(--kalk-gray-500);
+}
+
+.suggestion-cost {
+  font-size: var(--kalk-text-sm);
+  font-weight: 600;
+  color: var(--kalk-gray-900);
 }
 
 .suggestion-actions {
@@ -946,17 +908,14 @@ watch(
   flex-shrink: 0;
 }
 
-/* Measures */
-.empty-state {
-  text-align: center;
-  padding: var(--kalk-space-8);
-  background: var(--kalk-gray-50);
-  border-radius: var(--kalk-radius-md);
-  border: 2px dashed var(--kalk-gray-200);
+/* ------------------------------------------------------------
+ * Measures
+ * ------------------------------------------------------------ */
+.capex-empty {
+  padding: var(--kalk-space-8) var(--kalk-space-6);
 }
 
-.empty-state p {
-  color: var(--kalk-gray-500);
+.capex-empty .empty-state-text {
   margin: 0;
 }
 
@@ -967,48 +926,57 @@ watch(
 }
 
 .measure-card {
-  background: #ffffff;
-  border: 1px solid var(--kalk-gray-200);
-  border-radius: var(--kalk-radius-md);
-  padding: var(--kalk-space-4);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  background: var(--kalk-surface);
+  border: 1px solid var(--kalk-border);
+  border-radius: var(--kalk-radius-lg);
+  transition: border-color 0.12s;
 }
 
-.measure-card:hover {
-  border-color: var(--kalk-gray-300);
-  box-shadow: var(--kalk-shadow-sm);
+.measure-card:hover,
+.measure-card:focus-within {
+  border-color: var(--kalk-border-strong);
 }
 
 .measure-header {
   display: flex;
   align-items: center;
-  gap: var(--kalk-space-3);
-  margin-bottom: var(--kalk-space-4);
-  padding-bottom: var(--kalk-space-3);
-  border-bottom: 1px solid var(--kalk-gray-100);
+  gap: var(--kalk-space-2);
+  padding: var(--kalk-space-2) var(--kalk-space-3) var(--kalk-space-2) var(--kalk-space-2);
+  background: var(--kalk-gray-50);
+  border-bottom: 1px solid var(--kalk-border);
+  border-radius: var(--kalk-radius-lg) var(--kalk-radius-lg) 0 0;
 }
 
 .measure-name-input {
   flex: 1;
-  padding: var(--kalk-space-2) var(--kalk-space-3);
-  font-family: var(--kalk-font-family);
-  font-size: var(--kalk-text-sm);
+  min-width: 0;
+  height: 32px;
+  padding: 0 var(--kalk-space-2);
+  font-family: inherit;
+  font-size: var(--kalk-text-base);
   font-weight: 600;
   color: var(--kalk-gray-900);
   background: transparent;
-  border: none;
-  border-bottom: 1px solid transparent;
+  border: 1px solid transparent;
+  border-radius: var(--kalk-radius-md);
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.12s, box-shadow 0.12s, background-color 0.12s;
+}
+
+.measure-name-input:hover {
+  border-color: var(--kalk-border-strong);
+  background: var(--kalk-surface);
 }
 
 .measure-name-input:focus {
-  border-bottom-color: var(--kalk-accent-500);
+  background: var(--kalk-surface);
+  border-color: var(--kalk-navy-600);
+  box-shadow: 0 0 0 3px var(--kalk-ring-color);
 }
 
 .measure-name-input::placeholder {
   color: var(--kalk-gray-400);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .delete-btn {
@@ -1019,274 +987,270 @@ watch(
   height: 32px;
   padding: 0;
   background: transparent;
-  border: none;
-  border-radius: var(--kalk-radius-sm);
-  color: var(--kalk-gray-400);
+  border: 1px solid transparent;
+  border-radius: var(--kalk-radius-md);
+  color: var(--kalk-gray-500);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background-color 0.12s, color 0.12s, border-color 0.12s;
   flex-shrink: 0;
 }
 
 .delete-btn:hover {
-  background: var(--kalk-error-bg);
-  color: var(--kalk-error);
+  background: var(--kalk-negative-bg);
+  border-color: var(--kalk-negative-border);
+  color: var(--kalk-negative);
 }
 
 .delete-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
+}
+
+.measure-body {
+  padding: var(--kalk-space-4) var(--kalk-space-5) var(--kalk-space-2);
 }
 
 .measure-fields {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--kalk-space-4);
 }
 
-/* Impact section */
-.impact-section {
-  margin-top: var(--kalk-space-3);
+.measure-subsection {
   border-top: 1px solid var(--kalk-gray-100);
-  padding-top: var(--kalk-space-2);
+  padding: var(--kalk-space-3) 0;
 }
 
-.impact-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--kalk-space-2);
-  background: transparent;
-  border: none;
-  padding: var(--kalk-space-1) var(--kalk-space-2);
-  font-family: var(--kalk-font-family);
-  font-size: var(--kalk-text-xs);
-  font-weight: 600;
-  color: var(--kalk-gray-500);
-  cursor: pointer;
-  border-radius: var(--kalk-radius-sm);
-  transition: all 0.15s;
-}
-
-.impact-toggle:hover {
-  background: var(--kalk-gray-50);
-  color: var(--kalk-gray-700);
-}
-
-.impact-chevron {
-  width: 14px;
-  height: 14px;
-  transition: transform 0.2s;
-}
-
-.impact-chevron.is-expanded {
-  transform: rotate(180deg);
-}
-
-.impact-indicator {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--kalk-accent-500, #3b82f6);
-}
-
-.impact-fields {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--kalk-space-4);
-  margin-top: var(--kalk-space-3);
-  padding: var(--kalk-space-3);
-  background: var(--kalk-gray-50);
-  border-radius: var(--kalk-radius-md);
-}
-
-@media (max-width: 768px) {
-  .impact-fields {
-    grid-template-columns: 1fr;
-  }
-
-  .measure-fields {
-    grid-template-columns: 1fr;
-  }
-
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--kalk-space-2);
-  }
-
-  .header-actions {
-    width: 100%;
-  }
-
-  .header-actions .btn {
-    flex: 1;
-  }
-
-  .suggestion-card {
-    flex-direction: column;
-  }
-
-  .suggestion-actions {
-    width: 100%;
-  }
-
-  .suggestion-actions .btn {
-    flex: 1;
-  }
-}
-
-.capex-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--kalk-space-6);
-  background: var(--kalk-primary-900);
-  color: #ffffff;
-  border-radius: var(--kalk-radius-md);
-  margin-top: var(--kalk-space-8);
-  font-size: var(--kalk-text-lg);
-}
-
-.capex-summary span {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.capex-summary strong {
-  color: #ffffff;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Recurring measure section */
-.recurring-section {
-  margin-top: var(--kalk-space-3);
-  border-top: 1px solid var(--kalk-gray-100);
-  padding-top: var(--kalk-space-3);
-}
-
-.recurring-toggle-label {
+/* Checkbox */
+.check-label {
   display: inline-flex;
   align-items: center;
   gap: var(--kalk-space-2);
   cursor: pointer;
   user-select: none;
   padding: var(--kalk-space-1) 0;
+  position: relative;
 }
 
-.recurring-checkbox {
+.check-input {
   position: absolute;
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-.recurring-checkbox-visual {
+.check-box {
   display: inline-block;
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--kalk-gray-300);
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--kalk-gray-400);
   border-radius: var(--kalk-radius-sm);
-  background: #fff;
-  transition: all 0.15s;
+  background: var(--kalk-surface);
+  transition: background-color 0.12s, border-color 0.12s;
   flex-shrink: 0;
   position: relative;
 }
 
-.recurring-checkbox:checked + .recurring-checkbox-visual {
-  background: var(--kalk-accent-500);
-  border-color: var(--kalk-accent-500);
+.check-label:hover .check-box {
+  border-color: var(--kalk-gray-500);
 }
 
-.recurring-checkbox:checked + .recurring-checkbox-visual::after {
+.check-input:checked + .check-box {
+  background: var(--kalk-navy-700);
+  border-color: var(--kalk-navy-700);
+}
+
+.check-input:checked + .check-box::after {
   content: '';
   position: absolute;
-  left: 4px;
-  top: 1px;
-  width: 6px;
-  height: 10px;
-  border: solid #fff;
+  left: 4.5px;
+  top: 1.5px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--kalk-surface);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
 
-.recurring-toggle-text {
+.check-input:focus-visible + .check-box {
+  box-shadow: 0 0 0 3px var(--kalk-ring-color);
+  border-color: var(--kalk-navy-600);
+}
+
+.check-text {
   font-size: var(--kalk-text-sm);
-  font-weight: 600;
-  color: var(--kalk-gray-700);
+  font-weight: 500;
+  color: var(--kalk-gray-800);
+}
+
+/* Sub-field grids: indented under their toggle, no colored boxes */
+.sub-fields {
+  display: grid;
+  gap: 0 var(--kalk-space-4);
+  margin-top: var(--kalk-space-3);
+  padding-left: var(--kalk-space-6);
 }
 
 .onetime-fields {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--kalk-space-4);
-  margin-top: var(--kalk-space-3);
-  padding: var(--kalk-space-4);
-  background: var(--kalk-gray-50);
-  border: 1px solid var(--kalk-gray-200);
-  border-radius: var(--kalk-radius-md);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .recurring-fields {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--kalk-space-4);
-  margin-top: var(--kalk-space-3);
-  padding: var(--kalk-space-4);
-  background: var(--kalk-accent-50, #f0fdf4);
-  border: 1px solid var(--kalk-accent-200, #bbf7d0);
-  border-radius: var(--kalk-radius-md);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.impact-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .recurring-hints {
   grid-column: 1 / -1;
+  list-style: none;
+  margin: 0;
+  padding: var(--kalk-space-2) 0 0;
+  border-top: 1px dashed var(--kalk-border);
   display: flex;
-  gap: var(--kalk-space-4);
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .recurring-hint {
   font-size: var(--kalk-text-xs);
-  color: var(--kalk-gray-500);
-  font-style: italic;
+  color: var(--kalk-gray-600);
   font-variant-numeric: tabular-nums;
 }
 
 .recurring-hint--warn {
-  color: var(--kalk-warning, #b45309);
+  color: var(--kalk-caution);
 }
 
 /* Tax classification hint */
 .tax-hint {
-  grid-column: 1 / -1;
-  font-size: var(--kalk-text-xs);
-  color: var(--kalk-gray-500);
-  font-style: italic;
+  margin: var(--kalk-space-1) 0 var(--kalk-space-2) var(--kalk-space-6);
   padding: var(--kalk-space-2) var(--kalk-space-3);
-  background: var(--kalk-gray-50);
-  border-radius: var(--kalk-radius-sm);
-  border-left: 2px solid var(--kalk-gray-300);
-  line-height: 1.4;
+  font-size: var(--kalk-text-xs);
 }
 
-.tax-hint--warning {
-  border-left-color: var(--kalk-warning, #b45309);
-  background: #fffbeb;
-  color: #92400e;
+.tax-hint svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Impact section */
+.impact-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kalk-space-2);
+  background: transparent;
+  border: none;
+  padding: var(--kalk-space-1) 0;
+  font-family: inherit;
+  font-size: var(--kalk-text-sm);
   font-weight: 500;
+  color: var(--kalk-gray-800);
+  cursor: pointer;
 }
 
-.tax-hint {
-    font-size: smaller;
-    font-style: italic;
-    color: gray;
+.impact-toggle:hover {
+  color: var(--kalk-navy-700);
 }
 
+.impact-chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--kalk-gray-500);
+  transition: transform 0.15s ease;
+}
+
+.impact-chevron.is-expanded {
+  transform: rotate(90deg);
+}
+
+.impact-indicator {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--kalk-navy-600);
+}
+
+/* ------------------------------------------------------------
+ * Total
+ * ------------------------------------------------------------ */
+.capex-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--kalk-space-4);
+  margin-top: var(--kalk-space-6);
+  padding: var(--kalk-space-3) var(--kalk-space-1) 0;
+  border-top: 2px solid var(--kalk-navy-900);
+}
+
+.capex-summary-label {
+  font-size: var(--kalk-text-sm);
+  font-weight: 600;
+  color: var(--kalk-gray-800);
+}
+
+.capex-summary-value {
+  font-size: var(--kalk-text-xl);
+  font-weight: 600;
+  color: var(--kalk-navy-900);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------
+ * Responsive
+ * ------------------------------------------------------------ */
 @media (max-width: 768px) {
-  .onetime-fields {
-    grid-template-columns: 1fr;
+  .step-section-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--kalk-space-2);
   }
 
-  .recurring-fields {
-    grid-template-columns: 1fr;
+  .header-actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .initial-prompt {
+    flex-direction: column;
+    padding: var(--kalk-space-5) var(--kalk-space-4);
+  }
+
+  .initial-prompt-actions .btn {
+    flex: 1 1 100%;
+  }
+
+  .suggestion-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--kalk-space-2) var(--kalk-space-3);
+  }
+
+  .suggestion-actions {
+    grid-column: 1 / -1;
+  }
+
+  .suggestion-actions .btn {
+    flex: 1;
+  }
+
+  .measure-body {
+    padding: var(--kalk-space-3) var(--kalk-space-4) var(--kalk-space-1);
+  }
+
+  .measure-fields,
+  .onetime-fields,
+  .recurring-fields,
+  .impact-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sub-fields,
+  .tax-hint {
+    padding-left: 0;
+    margin-left: 0;
   }
 }
 </style>

@@ -26,7 +26,7 @@
     />
 
     <div class="period-section">
-      <h4 class="section-label">{{ t('project.period') }}</h4>
+      <h4 class="section-title period-title">{{ t('project.period') }}</h4>
 
       <!-- Start Date -->
       <div class="start-date-row">
@@ -42,10 +42,11 @@
 
       <!-- End Date Mode Toggle -->
       <div class="end-date-section">
-        <div class="mode-toggle">
+        <div class="mode-toggle" role="group">
           <button
             type="button"
             :class="['toggle-btn', { active: endDateMode === 'duration' }]"
+            :aria-pressed="endDateMode === 'duration'"
             @click="endDateMode = 'duration'"
           >
             Laufzeit in Jahren
@@ -53,6 +54,7 @@
           <button
             type="button"
             :class="['toggle-btn', { active: endDateMode === 'date' }]"
+            :aria-pressed="endDateMode === 'date'"
             @click="endDateMode = 'date'"
           >
             Enddatum
@@ -89,13 +91,58 @@
         </div>
       </div>
     </div>
+
+    <div class="period-section">
+      <h4 class="section-title period-title">{{ t('project.valuation.title') }}</h4>
+
+      <div class="valuation-grid">
+        <KalkPercent
+          v-model="marketGrowthRate"
+          :label="t('project.valuation.marketGrowth')"
+          :hint="t('project.valuation.marketGrowthHint')"
+          :min="-10"
+          :max="15"
+          :decimals="1"
+        />
+        <KalkPercent
+          v-model="saleCostsPercent"
+          :label="t('project.valuation.saleCosts')"
+          :hint="t('project.valuation.saleCostsHint')"
+          :min="0"
+          :max="15"
+          :decimals="1"
+        />
+        <KalkPercent
+          v-model="discountRate"
+          :label="t('project.valuation.discountRate')"
+          :hint="t('project.valuation.discountRateHint')"
+          :min="0"
+          :max="20"
+          :decimals="1"
+        />
+      </div>
+
+      <label class="checkbox-row">
+        <input v-model="hasPlannedSale" type="checkbox" />
+        <span>{{ t('project.valuation.plannedSale') }}</span>
+      </label>
+
+      <KalkDatePicker
+        v-if="hasPlannedSale"
+        v-model="plannedSaleDate"
+        :label="t('project.valuation.plannedSaleDate')"
+        :min-year="startPeriod.year"
+        :max-year="actualEndPeriod.year"
+      />
+      <p v-else class="calculated-end">{{ t('project.valuation.exitHint') }}</p>
+    </div>
   </KalkCard>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { KalkCard, KalkInput, KalkSelect, KalkDatePicker } from '@/components';
+import { KalkCard, KalkInput, KalkSelect, KalkDatePicker, KalkPercent } from '@/components';
 import { useProjectStore } from '@/stores/projectStore';
 import type { YearMonth } from '@/stores/types';
 
@@ -127,6 +174,13 @@ const startPeriod = ref<YearMonth>(getNextMonth());
 const endPeriod = ref<YearMonth | undefined>();
 const endDateMode = ref<'duration' | 'date'>('duration');
 const durationYears = ref(10);
+
+// Wertentwicklung & Verkauf (Defaults entsprechen den Backend-Defaults)
+const marketGrowthRate = ref<number | undefined>(1.5);
+const saleCostsPercent = ref<number | undefined>(3);
+const discountRate = ref<number | undefined>(5);
+const hasPlannedSale = ref(false);
+const plannedSaleDate = ref<YearMonth | undefined>();
 
 // Validation errors
 const errors = ref<{ name?: string }>({});
@@ -197,6 +251,15 @@ onMounted(() => {
       endDateMode.value = 'date';
       endPeriod.value = existingEnd;
     }
+
+    const valuation = projectStore.currentProject.valuation;
+    if (valuation) {
+      marketGrowthRate.value = valuation.marketGrowthRatePercent ?? 1.5;
+      saleCostsPercent.value = valuation.saleCostsPercent ?? 3;
+      discountRate.value = valuation.discountRatePercent ?? 5;
+      hasPlannedSale.value = !!valuation.plannedSaleDate;
+      plannedSaleDate.value = valuation.plannedSaleDate;
+    }
   }
 });
 
@@ -228,72 +291,133 @@ watch([projectName, projectDescription, currency, startPeriod, actualEndPeriod],
     });
   }
 }, { deep: true });
+
+// Vorbelegung des Verkaufsdatums beim Aktivieren: Ende des Analysezeitraums
+watch(hasPlannedSale, (planned) => {
+  if (planned && !plannedSaleDate.value) {
+    plannedSaleDate.value = { ...actualEndPeriod.value };
+  }
+});
+
+watch([marketGrowthRate, saleCostsPercent, discountRate, hasPlannedSale, plannedSaleDate], () => {
+  if (projectStore.currentProject) {
+    projectStore.updateProject({
+      valuation: {
+        marketGrowthRatePercent: marketGrowthRate.value,
+        saleCostsPercent: saleCostsPercent.value,
+        discountRatePercent: discountRate.value,
+        plannedSaleDate: hasPlannedSale.value ? plannedSaleDate.value : undefined
+      }
+    });
+  }
+}, { deep: true });
 </script>
 
 <style scoped>
 .period-section {
   margin-top: var(--kalk-space-6);
+  padding-top: var(--kalk-space-5);
+  border-top: 1px solid var(--kalk-border);
 }
 
-.section-label {
-  font-size: var(--kalk-text-sm);
-  font-weight: 600;
-  color: var(--kalk-gray-900);
-  margin-bottom: var(--kalk-space-4);
+.period-title {
+  margin: 0 0 var(--kalk-space-4);
 }
 
 .start-date-row {
-  margin-bottom: var(--kalk-space-6);
+  margin-bottom: var(--kalk-space-2);
 }
 
 .end-date-section {
-  margin-top: var(--kalk-space-4);
+  margin-top: 0;
 }
 
 .mode-toggle {
-  display: flex;
-  gap: 0;
+  display: inline-flex;
+  width: 100%;
+  max-width: 360px;
   margin-bottom: var(--kalk-space-4);
-  border: 1px solid var(--kalk-gray-300);
+  border: 1px solid var(--kalk-border-strong);
   border-radius: var(--kalk-radius-md);
   overflow: hidden;
+  background: var(--kalk-surface);
 }
 
 .toggle-btn {
   flex: 1;
-  padding: var(--kalk-space-3) var(--kalk-space-4);
+  height: 34px;
+  padding: 0 var(--kalk-space-3);
   border: none;
-  background: #ffffff;
+  background: var(--kalk-surface);
   color: var(--kalk-gray-600);
+  font-family: var(--kalk-font-family);
   font-size: var(--kalk-text-sm);
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  white-space: nowrap;
+  transition: background-color 0.12s, color 0.12s;
 }
 
-.toggle-btn:first-child {
-  border-right: 1px solid var(--kalk-gray-300);
+.toggle-btn + .toggle-btn {
+  border-left: 1px solid var(--kalk-border-strong);
 }
 
 .toggle-btn:hover:not(.active) {
   background: var(--kalk-gray-50);
+  color: var(--kalk-gray-900);
 }
 
 .toggle-btn.active {
-  background: var(--kalk-accent-500);
-  color: #ffffff;
+  background: var(--kalk-navy-800);
+  color: var(--kalk-surface);
+}
+
+.toggle-btn:focus-visible {
+  outline: 2px solid var(--kalk-navy-500);
+  outline-offset: -2px;
 }
 
 .duration-input {
   display: flex;
   flex-direction: column;
-  gap: var(--kalk-space-2);
+}
+
+.duration-input :deep(.form-group) {
+  margin-bottom: var(--kalk-space-2);
 }
 
 .calculated-end {
   font-size: var(--kalk-text-sm);
-  color: var(--kalk-gray-500);
+  color: var(--kalk-gray-600);
+  font-variant-numeric: tabular-nums;
   margin: 0;
-  padding-left: var(--kalk-space-1);
+}
+
+.valuation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: var(--kalk-space-4);
+}
+
+@media (max-width: 600px) {
+  .valuation-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--kalk-space-2);
+  margin-bottom: var(--kalk-space-3);
+  font-size: var(--kalk-text-sm);
+  color: var(--kalk-gray-700);
+  cursor: pointer;
+}
+
+.checkbox-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--kalk-navy-800);
 }
 </style>

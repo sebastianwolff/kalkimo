@@ -23,7 +23,8 @@ export const calculationApi = {
         rent: project.rent,
         costs: project.costs,
         taxProfile: project.taxProfile,
-        capex: project.capex
+        capex: project.capex,
+        valuation: project.valuation
       });
       return response.data;
     } catch (error) {

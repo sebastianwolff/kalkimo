@@ -10,10 +10,8 @@
         class="help-btn"
         @click.stop="showHelp"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
         </svg>
       </button>
     </label>
@@ -131,13 +129,12 @@ function showHelp() {
   border: none;
   color: var(--kalk-gray-400);
   cursor: pointer;
-  border-radius: 50%;
+  border-radius: var(--kalk-radius-sm);
   transition: color 0.15s, background-color 0.15s;
 }
 
 .help-btn:hover {
-  color: var(--kalk-accent-600);
-  background: var(--kalk-accent-50);
+  color: var(--kalk-navy-600);
 }
 
 .input-wrapper {
@@ -150,20 +147,20 @@ function showHelp() {
 
 .form-input {
   width: 100%;
-  height: 48px;
-  padding: 0 var(--kalk-space-4);
+  height: 42px;
+  padding: 0 var(--kalk-space-3);
   font-family: var(--kalk-font-family);
   font-size: var(--kalk-text-base);
   color: var(--kalk-gray-900);
-  background: #ffffff;
-  border: 1.5px solid var(--kalk-gray-200);
+  background: var(--kalk-surface);
+  border: 1px solid var(--kalk-border-strong);
   border-radius: var(--kalk-radius-md);
   transition: border-color 0.15s, box-shadow 0.15s;
   outline: none;
 }
 
 .form-input:hover:not(:disabled) {
-  border-color: var(--kalk-gray-300);
+  border-color: var(--kalk-gray-400);
 }
 
 .form-input:focus {
@@ -186,7 +183,7 @@ function showHelp() {
 }
 
 .form-input.has-error:focus {
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+  box-shadow: 0 0 0 3px rgba(161, 44, 44, 0.18);
 }
 
 .input-suffix {
@@ -194,7 +191,7 @@ function showHelp() {
   right: var(--kalk-space-4);
   top: 50%;
   transform: translateY(-50%);
-  color: var(--kalk-gray-400);
+  color: var(--kalk-gray-500);
   font-size: var(--kalk-text-sm);
   pointer-events: none;
 }

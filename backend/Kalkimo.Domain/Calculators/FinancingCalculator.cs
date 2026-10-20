@@ -54,8 +54,13 @@ public static class FinancingCalculator
         var monthlyRate = loan.InterestRatePercent / 100 / 12;
         var monthlyPayment = CalculateMonthlyPayment(loan);
 
-        // Dictionary für Sondertilgungen
-        var specialRepayments = loan.SpecialRepayments.ToDictionary(sr => sr.Period, sr => sr.Amount);
+        // Sondertilgungen (mehrere im selben Monat werden addiert)
+        var specialRepayments = loan.SpecialRepayments
+            .GroupBy(sr => sr.Period)
+            .ToDictionary(g => g.Key, g => g.Aggregate(Money.Zero(currency), (sum, sr) => sum + sr.Amount));
+
+        // Rate der Anschlussfinanzierung: einmalig bei Ende der Zinsbindung festgelegt
+        Money? refinancingPayment = null;
 
         foreach (var period in schedule.InterestPayments.Periods)
         {
@@ -89,9 +94,15 @@ public static class FinancingCalculator
 
             if (period > fixedInterestEndPeriod && loan.Refinancing != null)
             {
-                currentRate = loan.Refinancing.InterestRatePercent / 100 / 12;
-                currentPayment = loan.Refinancing.FixedMonthlyPayment
-                    ?? CalculateAnnuityPayment(outstandingBalance, currentRate * 12, loan.Refinancing.RepaymentPercent);
+                var refinancing = loan.Refinancing;
+                currentRate = refinancing.InterestRatePercent / 100 / 12;
+
+                // Annuität auf die Restschuld bei Ende der Zinsbindung – danach konstant
+                refinancingPayment ??= refinancing.FixedMonthlyPayment
+                    ?? (refinancing.TermMonths is > 0
+                        ? CalculateAnnuityForFullRepayment(outstandingBalance, refinancing.InterestRatePercent, refinancing.TermMonths.Value)
+                        : CalculateAnnuityPayment(outstandingBalance, refinancing.InterestRatePercent, refinancing.RepaymentPercent));
+                currentPayment = refinancingPayment.Value;
             }
 
             // Zinsanteil
@@ -103,9 +114,9 @@ public static class FinancingCalculator
                 schedule.DisagioAmortization[period] = disagioPerMonth.Round();
             }
 
-            // Tilgungsanteil - bei KfW in tilgungsfreier Zeit: keine Tilgung
+            // Tilgungsanteil - in tilgungsfreien Anlaufjahren (typisch KfW): keine Tilgung
             Money principalPayment;
-            if (loan.Type == LoanType.KfW && period <= tilgungsfreieEnde)
+            if (loan.TilgungsfreieAnlaufjahre > 0 && period <= tilgungsfreieEnde)
             {
                 // Tilgungsfreie Anlaufjahre: nur Zinsen, keine Tilgung
                 principalPayment = Money.Zero(currency);

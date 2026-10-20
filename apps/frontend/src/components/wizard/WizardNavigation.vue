@@ -88,9 +88,11 @@ function handleCalculate() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--kalk-space-4) var(--kalk-space-6);
-  background: #ffffff;
-  border-top: 1px solid var(--kalk-gray-200);
+  gap: var(--kalk-space-3);
+  padding: var(--kalk-space-3) max(var(--kalk-space-8), calc((100% - var(--kalk-content-max)) / 2 + var(--kalk-space-8)));
+  padding-bottom: calc(var(--kalk-space-3) + env(safe-area-inset-bottom));
+  background: var(--kalk-surface);
+  border-top: 1px solid var(--kalk-border);
   position: sticky;
   bottom: 0;
 }
@@ -104,26 +106,26 @@ function handleCalculate() {
   align-items: center;
   justify-content: center;
   gap: var(--kalk-space-2);
-  padding: var(--kalk-space-3) var(--kalk-space-5);
+  padding: 0 var(--kalk-space-5);
   font-family: var(--kalk-font-family);
   font-size: var(--kalk-text-sm);
-  font-weight: 600;
+  font-weight: 500;
   border-radius: var(--kalk-radius-md);
   cursor: pointer;
-  transition: all 0.15s;
-  min-width: 120px;
-  height: 44px;
+  transition: background-color 0.12s, border-color 0.12s;
+  min-width: 128px;
+  height: 40px;
 }
 
 .nav-button:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .nav-button-outline {
-  background: transparent;
-  border: 1.5px solid var(--kalk-gray-300);
-  color: var(--kalk-gray-700);
+  background: var(--kalk-surface);
+  border: 1px solid var(--kalk-border-strong);
+  color: var(--kalk-gray-800);
 }
 
 .nav-button-outline:hover:not(:disabled) {
@@ -132,29 +134,41 @@ function handleCalculate() {
 }
 
 .nav-button-primary {
-  background: var(--kalk-primary-900);
-  border: none;
+  background: var(--kalk-navy-800);
+  border: 1px solid var(--kalk-navy-800);
   color: #ffffff;
-  box-shadow: var(--kalk-shadow-sm);
 }
 
 .nav-button-primary:hover:not(:disabled) {
-  background: var(--kalk-primary-800);
+  background: var(--kalk-navy-900);
 }
 
 .nav-button-accent {
-  background: var(--kalk-accent-600);
-  border: none;
+  background: var(--kalk-navy-900);
+  border: 1px solid var(--kalk-navy-900);
   color: #ffffff;
-  box-shadow: var(--kalk-shadow-sm);
 }
 
 .nav-button-accent:hover:not(:disabled) {
-  background: var(--kalk-accent-700);
+  background: var(--kalk-navy-950);
 }
 
 .button-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 768px) {
+  .wizard-navigation {
+    padding-left: var(--kalk-space-4);
+    padding-right: var(--kalk-space-4);
+  }
+  .nav-button {
+    min-width: 0;
+    flex: 1;
+  }
+  .spacer {
+    display: none;
+  }
 }
 </style>

@@ -4,13 +4,9 @@
     <div v-if="!result" class="empty-result-state">
       <div class="empty-result-icon">
         <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="8" y="4" width="32" height="40" rx="4" stroke="currentColor" stroke-width="2.5"/>
-          <path d="M16 12h16M16 12h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-          <rect x="14" y="20" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
-          <rect x="14" y="30" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
-          <rect x="24" y="20" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
-          <rect x="24" y="30" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
-          <rect x="34" y="20" width="0" height="16" rx="0" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="10" y="6" width="28" height="36" rx="2" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M16 14h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M16 22h6M26 22h6M16 28h6M26 28h6M16 34h6M26 34h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
       </div>
       <h3 class="empty-result-title">Ergebnis berechnen</h3>
@@ -29,12 +25,15 @@
     <template v-if="result">
 
     <!-- Tab Bar -->
-    <nav class="tab-bar">
+    <nav class="tab-bar" role="tablist">
       <button
         v-for="tab in tabs"
         :key="tab.id"
+        type="button"
+        role="tab"
         class="tab-btn"
         :class="{ active: activeTab === tab.id }"
+        :aria-selected="activeTab === tab.id"
         @click="activeTab = tab.id"
       >
         {{ t(tab.label) }}
@@ -44,150 +43,169 @@
     <!-- ===== TAB: OVERVIEW ===== -->
     <div v-show="activeTab === 'overview'" class="tab-content">
 
-      <!-- Project Overview -->
-      <KalkCard :title="t('summary.projectOverview')">
-        <div class="overview-grid">
-          <div class="overview-item">
-            <span class="label">{{ t('project.name') }}</span>
-            <span class="value">{{ project?.name }}</span>
-          </div>
-          <div class="overview-item">
-            <span class="label">{{ t('property.type') }}</span>
-            <span class="value">{{ t(`property.types.${project?.property?.type || 'SingleFamily'}`) }}</span>
-          </div>
-          <div class="overview-item">
-            <span class="label">{{ t('purchase.price') }}</span>
-            <span class="value">{{ fmtCur(project?.purchase.purchasePrice.amount || 0) }}</span>
-          </div>
-          <div class="overview-item">
-            <span class="label">{{ t('purchase.totalInvestment') }}</span>
-            <span class="value highlight">{{ fmtCur(totalInvestment) }}</span>
-          </div>
-          <div class="overview-item">
-            <span class="label">{{ t('financing.equity') }}</span>
-            <span class="value">{{ fmtCur(project?.financing.equity.amount || 0) }}</span>
-          </div>
-          <div class="overview-item">
-            <span class="label">{{ t('summary.metrics.ltvInitial') }}</span>
-            <span class="value">{{ fmtPct(ltv) }}</span>
-          </div>
-        </div>
-      </KalkCard>
-
       <!-- Return Metrics -->
-      <KalkCard :title="t('summary.returnMetrics')">
-        <div class="metrics-grid">
-          <div class="metric-item accent">
-            <span class="metric-label">{{ t('summary.metrics.irrAfterTax') }} <HelpIcon help-key="summary.irrAfterTax" /></span>
-            <span class="metric-value">{{ fmtPct(result.metrics.irrAfterTaxPercent) }}</span>
+      <section>
+        <h2 class="section-title block-title">{{ t('summary.returnMetrics') }}</h2>
+        <div class="kpi-grid kpi-grid-3">
+          <div class="kpi kpi-hero">
+            <span class="kpi-label">{{ t('summary.metrics.irrAfterTax') }} <HelpIcon help-key="summary.irrAfterTax" /></span>
+            <span class="kpi-value" :class="signClass(result.metrics.irrAfterTaxPercent)">{{ fmtPct(result.metrics.irrAfterTaxPercent) }}</span>
           </div>
-          <div class="metric-item">
-            <span class="metric-label">{{ t('summary.metrics.irrBeforeTax') }} <HelpIcon help-key="summary.irrBeforeTax" /></span>
-            <span class="metric-value">{{ fmtPct(result.metrics.irrBeforeTaxPercent) }}</span>
+          <div class="kpi">
+            <span class="kpi-label">{{ t('summary.metrics.irrBeforeTax') }} <HelpIcon help-key="summary.irrBeforeTax" /></span>
+            <span class="kpi-value" :class="signClass(result.metrics.irrBeforeTaxPercent)">{{ fmtPct(result.metrics.irrBeforeTaxPercent) }}</span>
           </div>
-          <div class="metric-item">
-            <span class="metric-label">{{ t('summary.metrics.npvAfterTax') }} <HelpIcon help-key="summary.npvAfterTax" /></span>
-            <span class="metric-value" :class="npvClass(result.metrics.npvAfterTax.amount)">
+          <div class="kpi">
+            <span class="kpi-label">{{ t('summary.metrics.npvAfterTax') }} <HelpIcon help-key="summary.npvAfterTax" /></span>
+            <span class="kpi-value" :class="signClass(result.metrics.npvAfterTax.amount)">
               {{ fmtCur(result.metrics.npvAfterTax.amount) }}
             </span>
           </div>
-          <div class="metric-item">
-            <span class="metric-label">{{ t('summary.metrics.cashOnCash') }} <HelpIcon help-key="summary.cashOnCash" /></span>
-            <span class="metric-value">{{ fmtPct(result.metrics.cashOnCashPercent) }}</span>
+          <div class="kpi">
+            <span class="kpi-label">{{ t('summary.metrics.cashOnCash') }} <HelpIcon help-key="summary.cashOnCash" /></span>
+            <span class="kpi-value" :class="signClass(result.metrics.cashOnCashPercent)">{{ fmtPct(result.metrics.cashOnCashPercent) }}</span>
           </div>
-          <div class="metric-item">
-            <span class="metric-label">{{ t('summary.metrics.equityMultiple') }} <HelpIcon help-key="summary.equityMultiple" /></span>
-            <span class="metric-value">{{ result.metrics.equityMultiple.toFixed(2) }}x</span>
+          <div class="kpi">
+            <span class="kpi-label">{{ t('summary.metrics.equityMultiple') }} <HelpIcon help-key="summary.equityMultiple" /></span>
+            <span class="kpi-value" :class="signClass(result.metrics.equityMultiple)">{{ result.metrics.equityMultiple.toFixed(2) }}x</span>
           </div>
-          <div class="metric-item">
-            <span class="metric-label">{{ t('summary.metrics.roi') }} <HelpIcon help-key="summary.roi" /></span>
-            <span class="metric-value">{{ fmtPct(result.metrics.roiPercent) }}</span>
+          <div class="kpi">
+            <span class="kpi-label">{{ t('summary.metrics.roi') }} <HelpIcon help-key="summary.roi" /></span>
+            <span class="kpi-value" :class="signClass(result.metrics.roiPercent)">{{ fmtPct(result.metrics.roiPercent) }}</span>
           </div>
         </div>
-      </KalkCard>
+      </section>
 
       <!-- Bank Metrics -->
-      <KalkCard :title="t('summary.bankMetrics')">
-        <div class="metrics-grid compact">
-          <div class="metric-item" :class="{ warn: result.metrics.dscrMin < 1.2 }">
-            <span class="metric-label">{{ t('summary.metrics.dscrMin') }} <HelpIcon help-key="summary.dscrMin" /></span>
-            <span class="metric-value">{{ result.metrics.dscrMin.toFixed(2) }}</span>
+      <section>
+        <h2 class="section-title block-title">{{ t('summary.bankMetrics') }}</h2>
+        <div class="kpi-grid kpi-grid-3">
+          <div class="kpi" :class="{ 'kpi-warn': result.metrics.dscrMin != null && result.metrics.dscrMin < 1.2 }">
+            <span class="kpi-label">{{ t('summary.metrics.dscrMin') }} <HelpIcon help-key="summary.dscrMin" /></span>
+            <span class="kpi-value">{{ result.metrics.dscrMin?.toFixed(2) ?? '–' }}</span>
           </div>
-          <div class="metric-item">
-            <span class="metric-label">{{ t('summary.metrics.dscrAvg') }} <HelpIcon help-key="summary.dscrAvg" /></span>
-            <span class="metric-value">{{ result.metrics.dscrAvg.toFixed(2) }}</span>
+          <div class="kpi">
+            <span class="kpi-label">{{ t('summary.metrics.dscrAvg') }} <HelpIcon help-key="summary.dscrAvg" /></span>
+            <span class="kpi-value">{{ result.metrics.dscrAvg?.toFixed(2) ?? '–' }}</span>
           </div>
-          <div class="metric-item" :class="{ warn: result.metrics.icrMin < 1.5 }">
-            <span class="metric-label">{{ t('summary.metrics.icrMin') }} <HelpIcon help-key="summary.icrMin" /></span>
-            <span class="metric-value">{{ result.metrics.icrMin.toFixed(2) }}</span>
+          <div class="kpi" :class="{ 'kpi-warn': result.metrics.icrMin != null && result.metrics.icrMin < 1.5 }">
+            <span class="kpi-label">{{ t('summary.metrics.icrMin') }} <HelpIcon help-key="summary.icrMin" /></span>
+            <span class="kpi-value">{{ result.metrics.icrMin?.toFixed(2) ?? '–' }}</span>
           </div>
-          <div class="metric-item">
-            <span class="metric-label">{{ t('summary.metrics.ltvInitial') }} <HelpIcon help-key="summary.ltvInitial" /></span>
-            <span class="metric-value">{{ fmtPct(result.metrics.ltvInitialPercent) }}</span>
+          <div class="kpi">
+            <span class="kpi-label">{{ t('summary.metrics.ltvInitial') }} <HelpIcon help-key="summary.ltvInitial" /></span>
+            <span class="kpi-value">{{ fmtPct(result.metrics.ltvInitialPercent) }}</span>
           </div>
-          <div class="metric-item">
-            <span class="metric-label">{{ t('summary.metrics.ltvFinal') }} <HelpIcon help-key="summary.ltvFinal" /></span>
-            <span class="metric-value">{{ fmtPct(result.metrics.ltvFinalPercent) }}</span>
+          <div class="kpi">
+            <span class="kpi-label">{{ t('summary.metrics.ltvFinal') }} <HelpIcon help-key="summary.ltvFinal" /></span>
+            <span class="kpi-value">{{ fmtPct(result.metrics.ltvFinalPercent) }}</span>
           </div>
-          <div class="metric-item">
-            <span class="metric-label">{{ t('summary.metrics.breakEvenRent') }} <HelpIcon help-key="summary.breakEvenRent" /></span>
-            <span class="metric-value">{{ fmtCur(result.metrics.breakEvenRent.amount) }}/M</span>
+          <div class="kpi">
+            <span class="kpi-label">{{ t('summary.metrics.breakEvenRent') }} <HelpIcon help-key="summary.breakEvenRent" /></span>
+            <span class="kpi-value">{{ fmtCur(result.metrics.breakEvenRent.amount) }}<span class="kpi-unit">/M</span></span>
           </div>
         </div>
-      </KalkCard>
+      </section>
+
+      <div class="two-col">
+        <!-- Project Overview -->
+        <section class="panel">
+          <header class="panel-header">
+            <h3 class="panel-title">{{ t('summary.projectOverview') }}</h3>
+          </header>
+          <div class="panel-body panel-body-rows">
+            <div class="data-row">
+              <span class="data-label">{{ t('project.name') }}</span>
+              <span class="data-value">{{ project?.name }}</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">{{ t('property.type') }}</span>
+              <span class="data-value">{{ t(`property.types.${project?.property?.type || 'SingleFamily'}`) }}</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">{{ t('purchase.price') }}</span>
+              <span class="data-value">{{ fmtCur(project?.purchase.purchasePrice.amount || 0) }}</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">{{ t('financing.equity') }}</span>
+              <span class="data-value">{{ fmtCur(project?.financing.equity.amount || 0) }}</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">{{ t('summary.metrics.ltvInitial') }}</span>
+              <span class="data-value">{{ fmtPct(ltv) }}</span>
+            </div>
+            <div class="data-row total">
+              <span class="data-label">{{ t('purchase.totalInvestment') }}</span>
+              <span class="data-value">{{ fmtCur(totalInvestment) }}</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Cashflow totals -->
+        <section class="panel">
+          <header class="panel-header">
+            <h3 class="panel-title">{{ t('summary.cashflowTable') }}</h3>
+          </header>
+          <div class="panel-body panel-body-rows">
+            <div class="data-row">
+              <span class="data-label">{{ t('summary.totals.totalEquity') }}</span>
+              <span class="data-value">{{ fmtCur(result.totalEquityInvested) }}</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">{{ t('summary.totals.totalCashflowBefore') }}</span>
+              <span class="data-value" :class="valClass(result.totalCashflowBeforeTax)">{{ fmtCur(result.totalCashflowBeforeTax) }}</span>
+            </div>
+            <div class="data-row total">
+              <span class="data-label">{{ t('summary.totals.totalCashflowAfter') }}</span>
+              <span class="data-value" :class="valClass(result.totalCashflowAfterTax)">{{ fmtCur(result.totalCashflowAfterTax) }}</span>
+            </div>
+          </div>
+        </section>
+      </div>
 
       <!-- Risk Indicators -->
-      <KalkCard :title="t('summary.riskIndicators')">
-        <div class="risk-grid">
+      <section class="panel">
+        <header class="panel-header">
+          <h3 class="panel-title">{{ t('summary.riskIndicators') }}</h3>
+        </header>
+        <div class="panel-body risk-grid">
           <div class="risk-item">
-            <span class="risk-label">{{ t('summary.risk.maintenance') }} <HelpIcon help-key="summary.riskMaintenance" /></span>
+            <div class="risk-head">
+              <span class="risk-label">{{ t('summary.risk.maintenance') }} <HelpIcon help-key="summary.riskMaintenance" /></span>
+              <span class="risk-score" :class="riskClass(result.metrics.maintenanceRiskScore)">
+                {{ result.metrics.maintenanceRiskScore }}<span class="risk-max">/100</span>
+                <span class="risk-level">{{ riskLabel(result.metrics.maintenanceRiskScore) }}</span>
+              </span>
+            </div>
             <div class="risk-gauge">
               <div class="risk-fill" :class="riskClass(result.metrics.maintenanceRiskScore)" :style="{ width: result.metrics.maintenanceRiskScore + '%' }"></div>
             </div>
-            <span class="risk-score" :class="riskClass(result.metrics.maintenanceRiskScore)">
-              {{ result.metrics.maintenanceRiskScore }}/100
-              <span class="risk-level">{{ riskLabel(result.metrics.maintenanceRiskScore) }}</span>
-            </span>
           </div>
           <div class="risk-item">
-            <span class="risk-label">{{ t('summary.risk.liquidity') }} <HelpIcon help-key="summary.riskLiquidity" /></span>
+            <div class="risk-head">
+              <span class="risk-label">{{ t('summary.risk.liquidity') }} <HelpIcon help-key="summary.riskLiquidity" /></span>
+              <span class="risk-score" :class="riskClass(result.metrics.liquidityRiskScore)">
+                {{ result.metrics.liquidityRiskScore }}<span class="risk-max">/100</span>
+                <span class="risk-level">{{ riskLabel(result.metrics.liquidityRiskScore) }}</span>
+              </span>
+            </div>
             <div class="risk-gauge">
               <div class="risk-fill" :class="riskClass(result.metrics.liquidityRiskScore)" :style="{ width: result.metrics.liquidityRiskScore + '%' }"></div>
             </div>
-            <span class="risk-score" :class="riskClass(result.metrics.liquidityRiskScore)">
-              {{ result.metrics.liquidityRiskScore }}/100
-              <span class="risk-level">{{ riskLabel(result.metrics.liquidityRiskScore) }}</span>
-            </span>
           </div>
         </div>
-      </KalkCard>
-
-      <!-- Totals -->
-      <div class="totals-section">
-        <div class="total-item">
-          <span>{{ t('summary.totals.totalEquity') }}</span>
-          <strong>{{ fmtCur(result.totalEquityInvested) }}</strong>
-        </div>
-        <div class="total-item">
-          <span>{{ t('summary.totals.totalCashflowBefore') }}</span>
-          <strong :class="valClass(result.totalCashflowBeforeTax)">{{ fmtCur(result.totalCashflowBeforeTax) }}</strong>
-        </div>
-        <div class="total-item accent">
-          <span>{{ t('summary.totals.totalCashflowAfter') }}</span>
-          <strong :class="valClass(result.totalCashflowAfterTax)">{{ fmtCur(result.totalCashflowAfterTax) }}</strong>
-        </div>
-      </div>
+      </section>
 
       <!-- Collapsible Warnings -->
-      <div v-if="warningCount > 0" class="warnings-card">
-        <button class="warnings-card-header" :class="{ open: warningsOpen, 'has-critical': hasCriticalWarning }" @click="warningsOpen = !warningsOpen">
+      <section v-if="warningCount > 0" class="panel warnings-card">
+        <button type="button" class="warnings-card-header" :class="{ open: warningsOpen, 'has-critical': hasCriticalWarning }" :aria-expanded="warningsOpen" @click="warningsOpen = !warningsOpen">
           <span class="warnings-card-title">
             <svg class="warning-icon" viewBox="0 0 20 20" fill="currentColor">
               <path v-if="hasCriticalWarning" fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
               <path v-else fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
             </svg>
             {{ t('summary.warnings') }}
-            <span class="warnings-badge" :class="{ critical: hasCriticalWarning }">{{ warningCount }}</span>
+            <span class="badge" :class="hasCriticalWarning ? 'badge-error' : 'badge-neutral'">{{ warningCount }}</span>
           </span>
           <svg class="chevron-icon" :class="{ open: warningsOpen }" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
@@ -197,8 +215,8 @@
           <div
             v-for="(w, i) in result.warnings"
             :key="i"
-            class="warning-item"
-            :class="w.severity"
+            class="callout warning-item"
+            :class="w.severity === 'critical' ? 'error' : w.severity === 'warning' ? 'warning' : 'info'"
           >
             <svg class="warning-icon" viewBox="0 0 20 20" fill="currentColor">
               <path v-if="w.severity === 'critical'" fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -207,15 +225,18 @@
             <span>{{ w.message }}</span>
           </div>
         </div>
-      </div>
+      </section>
 
     </div><!-- /overview -->
 
     <!-- ===== TAB: CASHFLOW ===== -->
     <div v-show="activeTab === 'cashflow'" class="tab-content">
 
-      <KalkCard :title="t('summary.cashflowChart')">
-        <div class="chart-container">
+      <section class="panel">
+        <header class="panel-header">
+          <h3 class="panel-title">{{ t('summary.cashflowChart') }}</h3>
+        </header>
+        <div class="panel-body chart-container">
           <div class="bar-chart">
             <div v-for="row in result.yearlyCashflows" :key="row.year" class="bar-group">
               <div class="bar-stack">
@@ -234,11 +255,14 @@
             <span class="legend-item"><span class="swatch swatch-cf"></span> CF n. St.</span>
           </div>
         </div>
-      </KalkCard>
+      </section>
 
       <!-- Financing Chart -->
-      <KalkCard :title="t('summary.financingChart')">
-        <div class="chart-container">
+      <section class="panel">
+        <header class="panel-header">
+          <h3 class="panel-title">{{ t('summary.financingChart') }}</h3>
+        </header>
+        <div class="panel-body chart-container">
           <div class="financing-chart">
             <div v-for="row in result.yearlyCashflows" :key="row.year" class="fin-bar-group">
               <div class="fin-bar" :style="{ height: debtBarHeight(row.outstandingDebt) }" :title="`Restschuld: ${fmtCur(row.outstandingDebt)} | LTV: ${fmtPct(row.ltvPercent)}`">
@@ -252,77 +276,80 @@
             <span class="legend-item">% = LTV</span>
           </div>
         </div>
-      </KalkCard>
+      </section>
 
       <!-- Cashflow Table -->
-      <KalkCard :title="t('summary.cashflowTable')">
+      <section class="panel">
+        <header class="panel-header">
+          <h3 class="panel-title">{{ t('summary.cashflowTable') }}</h3>
+        </header>
         <div class="table-scroll">
-          <table class="cashflow-table">
+          <table class="data-table cashflow-table">
             <thead>
               <tr>
                 <th class="sticky-col">{{ t('summary.cashflow.year') }}</th>
-                <th>{{ t('summary.cashflow.effectiveRent') }} <HelpIcon help-key="summary.cf.effectiveRent" /></th>
-                <th>{{ t('summary.cashflow.operatingCosts') }}</th>
-                <th v-if="hasMaintenanceReserve">{{ t('summary.cashflow.maintenanceReserve') }}</th>
-                <th>{{ t('summary.cashflow.noi') }} <HelpIcon help-key="summary.cf.noi" /></th>
-                <th>{{ t('summary.cashflow.interest') }}</th>
-                <th>{{ t('summary.cashflow.principal') }}</th>
-                <th>{{ t('summary.cashflow.capex') }}</th>
-                <th v-if="hasMaintenanceReserve">{{ t('summary.cashflow.capexNet') }}</th>
-                <th v-if="hasMaintenanceReserve">{{ t('summary.cashflow.reserveBalance') }}</th>
-                <th>{{ t('summary.cashflow.beforeTax') }} <HelpIcon help-key="summary.cf.beforeTax" /></th>
-                <th>{{ t('summary.cashflow.tax') }}</th>
-                <th class="highlight-col">{{ t('summary.cashflow.afterTax') }} <HelpIcon help-key="summary.cf.afterTax" /></th>
-                <th>{{ t('summary.cashflow.cumulative') }} <HelpIcon help-key="summary.cf.cumulative" /></th>
-                <th>{{ t('summary.cashflow.debt') }}</th>
-                <th>{{ t('summary.cashflow.ltv') }}</th>
-                <th>{{ t('summary.cashflow.dscr') }}</th>
+                <th class="num">{{ t('summary.cashflow.effectiveRent') }} <HelpIcon help-key="summary.cf.effectiveRent" /></th>
+                <th class="num">{{ t('summary.cashflow.operatingCosts') }}</th>
+                <th v-if="hasMaintenanceReserve" class="num">{{ t('summary.cashflow.maintenanceReserve') }}</th>
+                <th class="num">{{ t('summary.cashflow.noi') }} <HelpIcon help-key="summary.cf.noi" /></th>
+                <th class="num">{{ t('summary.cashflow.interest') }}</th>
+                <th class="num">{{ t('summary.cashflow.principal') }}</th>
+                <th class="num">{{ t('summary.cashflow.capex') }}</th>
+                <th v-if="hasMaintenanceReserve" class="num">{{ t('summary.cashflow.capexNet') }}</th>
+                <th v-if="hasMaintenanceReserve" class="num">{{ t('summary.cashflow.reserveBalance') }}</th>
+                <th class="num">{{ t('summary.cashflow.beforeTax') }} <HelpIcon help-key="summary.cf.beforeTax" /></th>
+                <th class="num">{{ t('summary.cashflow.tax') }}</th>
+                <th class="num highlight-col">{{ t('summary.cashflow.afterTax') }} <HelpIcon help-key="summary.cf.afterTax" /></th>
+                <th class="num">{{ t('summary.cashflow.cumulative') }} <HelpIcon help-key="summary.cf.cumulative" /></th>
+                <th class="num">{{ t('summary.cashflow.debt') }}</th>
+                <th class="num">{{ t('summary.cashflow.ltv') }}</th>
+                <th class="num">{{ t('summary.cashflow.dscr') }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="row in result.yearlyCashflows" :key="row.year">
                 <td class="sticky-col year-col">{{ row.year }}</td>
-                <td>{{ fmtCompact(row.effectiveRent) }}</td>
-                <td class="neg">{{ fmtCompact(-row.operatingCosts) }}</td>
-                <td v-if="hasMaintenanceReserve" class="neg">{{ fmtCompact(-row.maintenanceReserve) }}</td>
-                <td :class="valClass(row.netOperatingIncome)">{{ fmtCompact(row.netOperatingIncome) }}</td>
-                <td class="neg">{{ fmtCompact(-row.interestPortion) }}</td>
-                <td class="neg">{{ fmtCompact(-row.principalPortion) }}</td>
-                <td class="neg">{{ row.capexPayments > 0 ? fmtCompact(-row.capexPayments) : '–' }}</td>
-                <td v-if="hasMaintenanceReserve" class="neg">{{ row.capexFromCashflow > 0 ? fmtCompact(-row.capexFromCashflow) : '–' }}</td>
-                <td v-if="hasMaintenanceReserve">{{ fmtCompact(row.reserveBalanceEnd) }}</td>
-                <td :class="valClass(row.cashflowBeforeTax)">{{ fmtCompact(row.cashflowBeforeTax) }}</td>
-                <td class="neg">{{ fmtCompact(-row.taxPayment) }}</td>
-                <td class="highlight-col" :class="valClass(row.cashflowAfterTax)">
+                <td class="num">{{ fmtCompact(row.effectiveRent) }}</td>
+                <td class="num" :class="valClass(-row.operatingCosts)">{{ fmtCompact(-row.operatingCosts) }}</td>
+                <td v-if="hasMaintenanceReserve" class="num" :class="valClass(-row.maintenanceReserve)">{{ fmtCompact(-row.maintenanceReserve) }}</td>
+                <td class="num" :class="valClass(row.netOperatingIncome)">{{ fmtCompact(row.netOperatingIncome) }}</td>
+                <td class="num" :class="valClass(-row.interestPortion)">{{ fmtCompact(-row.interestPortion) }}</td>
+                <td class="num" :class="valClass(-row.principalPortion)">{{ fmtCompact(-row.principalPortion) }}</td>
+                <td class="num" :class="{ neg: row.capexPayments > 0 }">{{ row.capexPayments > 0 ? fmtCompact(-row.capexPayments) : '–' }}</td>
+                <td v-if="hasMaintenanceReserve" class="num" :class="{ neg: row.capexFromCashflow > 0 }">{{ row.capexFromCashflow > 0 ? fmtCompact(-row.capexFromCashflow) : '–' }}</td>
+                <td v-if="hasMaintenanceReserve" class="num">{{ fmtCompact(row.reserveBalanceEnd) }}</td>
+                <td class="num" :class="valClass(row.cashflowBeforeTax)">{{ fmtCompact(row.cashflowBeforeTax) }}</td>
+                <td class="num" :class="valClass(-row.taxPayment)">{{ fmtCompact(-row.taxPayment) }}</td>
+                <td class="num highlight-col" :class="valClass(row.cashflowAfterTax)">
                   <strong>{{ fmtCompact(row.cashflowAfterTax) }}</strong>
                 </td>
-                <td :class="valClass(row.cumulativeCashflow)">{{ fmtCompact(row.cumulativeCashflow) }}</td>
-                <td>{{ fmtCompact(row.outstandingDebt) }}</td>
-                <td>{{ fmtPct(row.ltvPercent) }}</td>
-                <td :class="{ warn: row.dscrYear < 1.2 && row.dscrYear > 0 }">{{ row.dscrYear > 0 ? row.dscrYear.toFixed(2) : '–' }}</td>
+                <td class="num" :class="valClass(row.cumulativeCashflow)">{{ fmtCompact(row.cumulativeCashflow) }}</td>
+                <td class="num">{{ fmtCompact(row.outstandingDebt) }}</td>
+                <td class="num">{{ fmtPct(row.ltvPercent) }}</td>
+                <td class="num" :class="{ warn: row.dscrYear < 1.2 && row.dscrYear > 0 }">{{ row.dscrYear > 0 ? row.dscrYear.toFixed(2) : '–' }}</td>
               </tr>
             </tbody>
             <tfoot>
               <tr>
-                <td class="sticky-col"><strong>{{ t('common.total') }}</strong></td>
-                <td>{{ fmtCompact(sumCol('effectiveRent')) }}</td>
-                <td class="neg">{{ fmtCompact(-sumCol('operatingCosts')) }}</td>
-                <td v-if="hasMaintenanceReserve" class="neg">{{ fmtCompact(-sumCol('maintenanceReserve')) }}</td>
-                <td>{{ fmtCompact(sumCol('netOperatingIncome')) }}</td>
-                <td class="neg">{{ fmtCompact(-sumCol('interestPortion')) }}</td>
-                <td class="neg">{{ fmtCompact(-sumCol('principalPortion')) }}</td>
-                <td class="neg">{{ fmtCompact(-sumCol('capexPayments')) }}</td>
-                <td v-if="hasMaintenanceReserve" class="neg">{{ fmtCompact(-sumCol('capexFromCashflow')) }}</td>
+                <td class="sticky-col">{{ t('common.total') }}</td>
+                <td class="num">{{ fmtCompact(sumCol('effectiveRent')) }}</td>
+                <td class="num" :class="valClass(-sumCol('operatingCosts'))">{{ fmtCompact(-sumCol('operatingCosts')) }}</td>
+                <td v-if="hasMaintenanceReserve" class="num" :class="valClass(-sumCol('maintenanceReserve'))">{{ fmtCompact(-sumCol('maintenanceReserve')) }}</td>
+                <td class="num" :class="valClass(sumCol('netOperatingIncome'))">{{ fmtCompact(sumCol('netOperatingIncome')) }}</td>
+                <td class="num" :class="valClass(-sumCol('interestPortion'))">{{ fmtCompact(-sumCol('interestPortion')) }}</td>
+                <td class="num" :class="valClass(-sumCol('principalPortion'))">{{ fmtCompact(-sumCol('principalPortion')) }}</td>
+                <td class="num" :class="valClass(-sumCol('capexPayments'))">{{ fmtCompact(-sumCol('capexPayments')) }}</td>
+                <td v-if="hasMaintenanceReserve" class="num" :class="valClass(-sumCol('capexFromCashflow'))">{{ fmtCompact(-sumCol('capexFromCashflow')) }}</td>
                 <td v-if="hasMaintenanceReserve"></td>
-                <td>{{ fmtCompact(result.totalCashflowBeforeTax) }}</td>
-                <td class="neg">{{ fmtCompact(-sumCol('taxPayment')) }}</td>
-                <td class="highlight-col"><strong>{{ fmtCompact(result.totalCashflowAfterTax) }}</strong></td>
+                <td class="num" :class="valClass(result.totalCashflowBeforeTax)">{{ fmtCompact(result.totalCashflowBeforeTax) }}</td>
+                <td class="num" :class="valClass(-sumCol('taxPayment'))">{{ fmtCompact(-sumCol('taxPayment')) }}</td>
+                <td class="num highlight-col" :class="valClass(result.totalCashflowAfterTax)">{{ fmtCompact(result.totalCashflowAfterTax) }}</td>
                 <td></td><td></td><td></td><td></td>
               </tr>
             </tfoot>
           </table>
         </div>
-      </KalkCard>
+      </section>
 
     </div><!-- /cashflow -->
 
@@ -330,89 +357,99 @@
     <div v-show="activeTab === 'tax'" class="tab-content">
 
       <!-- Tax Bridge -->
-      <KalkCard :title="t('summary.taxBridge')">
-        <div class="tax-bridge">
-          <div v-for="row in result.taxBridge" :key="row.year" class="bridge-year">
-            <div class="bridge-year-label">{{ row.year }}</div>
-            <div class="bridge-bars">
-              <div class="bridge-bar income" :style="{ width: bridgeWidth(row.grossIncome) }" :title="fmtCur(row.grossIncome)"></div>
-              <div class="bridge-bar afa" :style="{ width: bridgeWidth(row.depreciation) }" :title="`AfA: -${fmtCur(row.depreciation)}`"></div>
-              <div class="bridge-bar interest" :style="{ width: bridgeWidth(row.interestExpense) }" :title="`Zinsen: -${fmtCur(row.interestExpense)}`"></div>
-              <div class="bridge-bar operating" :style="{ width: bridgeWidth(row.operatingExpenses) }" :title="`BK: -${fmtCur(row.operatingExpenses)}`"></div>
-              <div v-if="row.maintenanceExpense > 0" class="bridge-bar maintenance" :style="{ width: bridgeWidth(row.maintenanceExpense) }" :title="`Erhalt: -${fmtCur(row.maintenanceExpense)}`"></div>
-            </div>
-            <div class="bridge-result" :class="{ negative: row.taxableIncome < 0 }">
-              {{ fmtCompact(row.taxableIncome) }} &rarr; {{ fmtCompact(row.taxPayment) }}
+      <section class="panel">
+        <header class="panel-header">
+          <h3 class="panel-title">{{ t('summary.taxBridge') }}</h3>
+        </header>
+        <div class="panel-body">
+          <div class="tax-bridge">
+            <div v-for="row in result.taxBridge" :key="row.year" class="bridge-year">
+              <div class="bridge-year-label">{{ row.year }}</div>
+              <div class="bridge-bars">
+                <div class="bridge-bar income" :style="{ width: bridgeWidth(row.grossIncome) }" :title="fmtCur(row.grossIncome)"></div>
+                <div class="bridge-bar afa" :style="{ width: bridgeWidth(row.depreciation) }" :title="`AfA: -${fmtCur(row.depreciation)}`"></div>
+                <div class="bridge-bar interest" :style="{ width: bridgeWidth(row.interestExpense) }" :title="`Zinsen: -${fmtCur(row.interestExpense)}`"></div>
+                <div class="bridge-bar operating" :style="{ width: bridgeWidth(row.operatingExpenses) }" :title="`BK: -${fmtCur(row.operatingExpenses)}`"></div>
+                <div v-if="row.maintenanceExpense > 0" class="bridge-bar maintenance" :style="{ width: bridgeWidth(row.maintenanceExpense) }" :title="`Erhalt: -${fmtCur(row.maintenanceExpense)}`"></div>
+              </div>
+              <div class="bridge-result" :class="{ negative: row.taxableIncome < 0 }">
+                {{ fmtCompact(row.taxableIncome) }} &rarr; {{ fmtCompact(row.taxPayment) }}
+              </div>
             </div>
           </div>
+          <div class="chart-legend bridge-legend">
+            <span class="legend-item"><span class="swatch swatch-income"></span> {{ t('summary.tax.bridge.income') }}</span>
+            <span class="legend-item"><span class="swatch swatch-afa"></span> {{ t('summary.tax.bridge.depreciation') }}</span>
+            <span class="legend-item"><span class="swatch swatch-interest-b"></span> {{ t('summary.tax.bridge.interest') }}</span>
+            <span class="legend-item"><span class="swatch swatch-operating"></span> {{ t('summary.tax.bridge.operating') }}</span>
+            <span class="legend-item"><span class="swatch swatch-maintenance"></span> {{ t('summary.tax.bridge.maintenance') }}</span>
+          </div>
         </div>
-        <div class="chart-legend bridge-legend">
-          <span class="legend-item"><span class="swatch swatch-income"></span> {{ t('summary.tax.bridge.income') }}</span>
-          <span class="legend-item"><span class="swatch swatch-afa"></span> {{ t('summary.tax.bridge.depreciation') }}</span>
-          <span class="legend-item"><span class="swatch swatch-interest-b"></span> {{ t('summary.tax.bridge.interest') }}</span>
-          <span class="legend-item"><span class="swatch swatch-operating"></span> {{ t('summary.tax.bridge.operating') }}</span>
-          <span class="legend-item"><span class="swatch swatch-maintenance"></span> {{ t('summary.tax.bridge.maintenance') }}</span>
-        </div>
-      </KalkCard>
+      </section>
 
       <!-- Tax Summary -->
-      <KalkCard :title="t('summary.taxSummary')">
-        <div class="tax-grid">
-          <div class="tax-row">
-            <span>{{ t('summary.tax.depreciationRate') }}</span>
-            <strong>{{ fmtPct(result.taxSummary.depreciationRatePercent) }}</strong>
+      <section class="panel">
+        <header class="panel-header">
+          <h3 class="panel-title">{{ t('summary.taxSummary') }}</h3>
+        </header>
+        <div class="panel-body panel-body-rows">
+          <div class="data-row">
+            <span class="data-label">{{ t('summary.tax.depreciationRate') }}</span>
+            <span class="data-value">{{ fmtPct(result.taxSummary.depreciationRatePercent) }}</span>
           </div>
-          <div class="tax-row">
-            <span>{{ t('summary.tax.depreciationBasis') }}</span>
-            <strong>{{ fmtCur(result.taxSummary.depreciationBasis.amount) }}</strong>
+          <div class="data-row">
+            <span class="data-label">{{ t('summary.tax.depreciationBasis') }}</span>
+            <span class="data-value">{{ fmtCur(result.taxSummary.depreciationBasis.amount) }}</span>
           </div>
-          <div class="tax-row">
-            <span>{{ t('summary.tax.annualDepreciation') }}</span>
-            <strong>{{ fmtCur(result.taxSummary.annualDepreciation.amount) }}</strong>
+          <div class="data-row">
+            <span class="data-label">{{ t('summary.tax.annualDepreciation') }}</span>
+            <span class="data-value">{{ fmtCur(result.taxSummary.annualDepreciation.amount) }}</span>
           </div>
-          <div class="tax-row separator">
-            <span>{{ t('summary.tax.totalDepreciation') }}</span>
-            <strong>{{ fmtCur(result.taxSummary.totalDepreciation.amount) }}</strong>
+          <div class="data-row subtotal">
+            <span class="data-label">{{ t('summary.tax.totalDepreciation') }}</span>
+            <span class="data-value">{{ fmtCur(result.taxSummary.totalDepreciation.amount) }}</span>
           </div>
-          <div class="tax-row">
-            <span>{{ t('summary.tax.totalInterest') }}</span>
-            <strong>{{ fmtCur(result.taxSummary.totalInterestDeduction.amount) }}</strong>
+          <div class="data-row">
+            <span class="data-label">{{ t('summary.tax.totalInterest') }}</span>
+            <span class="data-value">{{ fmtCur(result.taxSummary.totalInterestDeduction.amount) }}</span>
           </div>
-          <div class="tax-row">
-            <span>{{ t('summary.tax.totalMaintenance') }}</span>
-            <strong>{{ fmtCur(result.taxSummary.totalMaintenanceDeduction.amount) }}</strong>
+          <div class="data-row">
+            <span class="data-label">{{ t('summary.tax.totalMaintenance') }}</span>
+            <span class="data-value">{{ fmtCur(result.taxSummary.totalMaintenanceDeduction.amount) }}</span>
           </div>
-          <div class="tax-row">
-            <span>{{ t('summary.tax.totalOperating') }}</span>
-            <strong>{{ fmtCur(result.taxSummary.totalOperatingDeduction.amount) }}</strong>
+          <div class="data-row">
+            <span class="data-label">{{ t('summary.tax.totalOperating') }}</span>
+            <span class="data-value">{{ fmtCur(result.taxSummary.totalOperatingDeduction.amount) }}</span>
           </div>
-          <div v-if="hasMaintenanceReserve" class="tax-row tax-row-info">
-            <span>{{ t('summary.tax.totalMaintenanceReserve') }}</span>
-            <strong class="hint-text">{{ fmtCur(result.taxSummary.totalMaintenanceReserve.amount) }}</strong>
+          <div v-if="hasMaintenanceReserve" class="data-row muted-row">
+            <span class="data-label">{{ t('summary.tax.totalMaintenanceReserve') }}</span>
+            <span class="data-value value-muted">{{ fmtCur(result.taxSummary.totalMaintenanceReserve.amount) }}</span>
           </div>
-          <div class="tax-row highlight">
-            <span>{{ t('summary.tax.totalSavings') }} <HelpIcon help-key="summary.tax.totalSavings" /></span>
-            <strong class="pos">{{ fmtCur(result.taxSummary.totalTaxSavings.amount) }}</strong>
+          <div class="data-row subtotal">
+            <span class="data-label">{{ t('summary.tax.totalSavings') }} <HelpIcon help-key="summary.tax.totalSavings" /></span>
+            <span class="data-value pos">{{ fmtCur(result.taxSummary.totalTaxSavings.amount) }}</span>
           </div>
-          <div class="tax-row highlight">
-            <span>{{ t('summary.tax.totalTax') }}</span>
-            <strong>{{ fmtCur(result.taxSummary.totalTaxPayment.amount) }}</strong>
+          <div class="data-row strong-row">
+            <span class="data-label">{{ t('summary.tax.totalTax') }}</span>
+            <span class="data-value">{{ fmtCur(result.taxSummary.totalTaxPayment.amount) }}</span>
           </div>
-          <div class="tax-row">
-            <span>{{ t('summary.tax.effectiveRate') }} <HelpIcon help-key="summary.tax.effectiveRate" /></span>
-            <strong>{{ fmtPct(result.taxSummary.effectiveTaxRatePercent) }}</strong>
+          <div class="data-row">
+            <span class="data-label">{{ t('summary.tax.effectiveRate') }} <HelpIcon help-key="summary.tax.effectiveRate" /></span>
+            <span class="data-value">{{ fmtPct(result.taxSummary.effectiveTaxRatePercent) }}</span>
           </div>
-          <div class="tax-row" :class="{ 'rule-triggered': result.taxSummary.acquisitionRelatedCostsTriggered }">
-            <span>{{ t('summary.tax.rule15') }} <HelpIcon help-key="summary.tax.rule15" /></span>
-            <strong>
-              {{ result.taxSummary.acquisitionRelatedCostsTriggered
-                ? t('summary.tax.rule15Triggered')
-                : t('summary.tax.rule15NotTriggered')
-              }}
-            </strong>
+          <div class="data-row">
+            <span class="data-label">{{ t('summary.tax.rule15') }} <HelpIcon help-key="summary.tax.rule15" /></span>
+            <span class="data-value">
+              <span class="badge" :class="result.taxSummary.acquisitionRelatedCostsTriggered ? 'badge-warning' : 'badge-neutral'">
+                {{ result.taxSummary.acquisitionRelatedCostsTriggered
+                  ? t('summary.tax.rule15Triggered')
+                  : t('summary.tax.rule15NotTriggered')
+                }}
+              </span>
+            </span>
           </div>
         </div>
-      </KalkCard>
+      </section>
 
     </div><!-- /tax -->
 
@@ -420,66 +457,71 @@
     <div v-show="activeTab === 'property'" class="tab-content">
 
       <!-- Property Value Forecast -->
-      <KalkCard :title="t('summary.propertyValue.title')">
-        <p class="exit-subtitle">{{ t('summary.propertyValue.subtitle') }}</p>
+      <section class="panel">
+        <header class="panel-header">
+          <div>
+            <h3 class="panel-title">{{ t('summary.propertyValue.title') }}</h3>
+            <p class="panel-subtitle">{{ t('summary.propertyValue.subtitle') }}</p>
+          </div>
+        </header>
+        <div class="panel-body">
 
-        <!-- Market Comparison Banner -->
-        <div v-if="result.propertyValueForecast.marketComparison" class="market-comparison">
-          <div class="mc-item">
-            <span>{{ t('summary.propertyValue.regionalPrice') }}</span>
-            <strong>{{ fmtCur(result.propertyValueForecast.marketComparison.regionalPricePerSqm) }}/m²</strong>
-          </div>
-          <div class="mc-item">
-            <span>{{ t('summary.propertyValue.fairMarketValue') }}</span>
-            <strong>{{ fmtCur(result.propertyValueForecast.marketComparison.fairMarketValue) }}</strong>
-          </div>
-          <div class="mc-item" :class="marketAssessmentClass">
-            <span>{{ t('summary.propertyValue.purchaseVsMarket') }}</span>
-            <strong>
-              {{ fmtPct((result.propertyValueForecast.marketComparison.purchasePriceToMarketRatio - 1) * 100) }}
-              ({{ t(`summary.propertyValue.assessment.${result.propertyValueForecast.marketComparison.assessment}`) }})
-            </strong>
-          </div>
-        </div>
-
-        <div class="exit-meta" style="margin-bottom: var(--kalk-space-4);">
-          <div class="exit-meta-item">
-            <span>{{ t('summary.propertyValue.initialCondition') }} <HelpIcon help-key="summary.property.conditionFactor" /></span>
-            <strong>{{ (result.propertyValueForecast.initialConditionFactor * 100).toFixed(0) }}%</strong>
-          </div>
-          <div class="exit-meta-item">
-            <span>{{ t('summary.propertyValue.improvementFactor') }} <HelpIcon help-key="summary.property.forecast" /></span>
-            <strong>{{ (result.propertyValueForecast.improvementValueFactor * 100).toFixed(0) }}%</strong>
-          </div>
-        </div>
-
-        <!-- Value chart: bars per year for base scenario -->
-        <div class="chart-container">
-          <div class="pv-chart">
-            <div class="pv-baseline" :style="{ bottom: pvBarPct(result.propertyValueForecast.purchasePrice) }">
-              <span class="pv-baseline-label">{{ fmtCompact(result.propertyValueForecast.purchasePrice) }}</span>
+          <!-- Market Comparison -->
+          <div v-if="result.propertyValueForecast.marketComparison" class="kpi-grid kpi-grid-3 kpi-compact block-gap">
+            <div class="kpi">
+              <span class="kpi-label">{{ t('summary.propertyValue.regionalPrice') }}</span>
+              <span class="kpi-value">{{ fmtCur(result.propertyValueForecast.marketComparison.regionalPricePerSqm) }}<span class="kpi-unit">/m²</span></span>
             </div>
-            <div v-for="row in baseScenarioValues" :key="row.year" class="pv-bar-group">
-              <div class="pv-bar" :style="{ height: pvBarPct(row.estimatedValue) }"
-                :title="`${row.year}: ${fmtCur(row.estimatedValue)} (Zustand: ${(row.conditionFactor * 100).toFixed(0)}%)`">
-                <span v-if="row.conditionFactor < 0.80" class="pv-condition-warn">!</span>
+            <div class="kpi">
+              <span class="kpi-label">{{ t('summary.propertyValue.fairMarketValue') }}</span>
+              <span class="kpi-value">{{ fmtCur(result.propertyValueForecast.marketComparison.fairMarketValue) }}</span>
+            </div>
+            <div class="kpi" :class="marketAssessmentClass">
+              <span class="kpi-label">{{ t('summary.propertyValue.purchaseVsMarket') }}</span>
+              <span class="kpi-value">{{ fmtPct((result.propertyValueForecast.marketComparison.purchasePriceToMarketRatio - 1) * 100) }}</span>
+              <span class="kpi-sub">{{ t(`summary.propertyValue.assessment.${result.propertyValueForecast.marketComparison.assessment}`) }}</span>
+            </div>
+          </div>
+
+          <div class="kpi-grid kpi-grid-2 kpi-compact block-gap">
+            <div class="kpi">
+              <span class="kpi-label">{{ t('summary.propertyValue.initialCondition') }} <HelpIcon help-key="summary.property.conditionFactor" /></span>
+              <span class="kpi-value">{{ (result.propertyValueForecast.initialConditionFactor * 100).toFixed(0) }}%</span>
+            </div>
+            <div class="kpi">
+              <span class="kpi-label">{{ t('summary.propertyValue.improvementFactor') }} <HelpIcon help-key="summary.property.forecast" /></span>
+              <span class="kpi-value">{{ (result.propertyValueForecast.improvementValueFactor * 100).toFixed(0) }}%</span>
+            </div>
+          </div>
+
+          <!-- Value chart: bars per year for base scenario -->
+          <div class="chart-container">
+            <div class="pv-chart">
+              <div class="pv-baseline" :style="{ bottom: pvBarPct(result.propertyValueForecast.purchasePrice) }">
+                <span class="pv-baseline-label">{{ fmtCompact(result.propertyValueForecast.purchasePrice) }}</span>
               </div>
-              <span class="bar-label">{{ row.year.toString().slice(-2) }}</span>
+              <div v-for="row in baseScenarioValues" :key="row.year" class="pv-bar-group">
+                <div class="pv-bar" :style="{ height: pvBarPct(row.estimatedValue) }"
+                  :title="`${row.year}: ${fmtCur(row.estimatedValue)} (Zustand: ${(row.conditionFactor * 100).toFixed(0)}%)`">
+                  <span v-if="row.conditionFactor < 0.80" class="pv-condition-warn">!</span>
+                </div>
+                <span class="bar-label">{{ row.year.toString().slice(-2) }}</span>
+              </div>
             </div>
-          </div>
-          <div class="chart-legend">
-            <span class="legend-item"><span class="swatch swatch-pv"></span> {{ t('summary.propertyValue.scenario.base') }} (1,5% p.a.)</span>
-            <span class="legend-item pv-baseline-legend">{{ t('summary.propertyValue.purchasePrice') }}</span>
+            <div class="chart-legend">
+              <span class="legend-item"><span class="swatch swatch-pv"></span> {{ t('summary.propertyValue.scenario.base') }} (1,5% p.a.)</span>
+              <span class="legend-item pv-baseline-legend">{{ t('summary.propertyValue.purchasePrice') }}</span>
+            </div>
           </div>
         </div>
 
         <!-- Scenario breakdown table -->
-        <div class="scenario-table-scroll" style="margin-top: var(--kalk-space-4);">
-          <table class="scenario-table">
+        <div class="table-scroll table-bordered-top">
+          <table class="data-table scenario-table">
             <thead>
               <tr>
                 <th class="scenario-label-col"></th>
-                <th v-for="s in result.propertyValueForecast.scenarios" :key="s.label" class="scenario-col" :class="{ 'scenario-base': s.label === 'base' }">
+                <th v-for="s in result.propertyValueForecast.scenarios" :key="s.label" class="num scenario-col" :class="{ 'scenario-base': s.label === 'base' }">
                   {{ t(`summary.propertyValue.scenario.${s.label}`) }}
                   <span class="scenario-rate">{{ fmtPct(s.annualAppreciationPercent) }} p.a.</span>
                 </th>
@@ -488,18 +530,18 @@
             <tbody>
               <tr>
                 <td>{{ t('summary.propertyValue.purchasePrice') }}</td>
-                <td v-for="s in result.propertyValueForecast.scenarios" :key="s.label" :class="{ 'scenario-base': s.label === 'base' }">{{ fmtCur(result.propertyValueForecast.purchasePrice) }}</td>
+                <td v-for="s in result.propertyValueForecast.scenarios" :key="s.label" class="num" :class="{ 'scenario-base': s.label === 'base' }">{{ fmtCur(result.propertyValueForecast.purchasePrice) }}</td>
               </tr>
               <tr>
                 <td>{{ t('summary.propertyValue.marketAppreciationRow') }}</td>
-                <td v-for="(s, idx) in result.propertyValueForecast.scenarios" :key="s.label"
+                <td v-for="(s, idx) in result.propertyValueForecast.scenarios" :key="s.label" class="num"
                   :class="[valClass(scenarioBreakdowns[idx].marketAppreciation), { 'scenario-base': s.label === 'base' }]">
                   {{ scenarioBreakdowns[idx].marketAppreciation >= 0 ? '+' : '' }}{{ fmtCur(scenarioBreakdowns[idx].marketAppreciation) }}
                 </td>
               </tr>
               <tr>
                 <td>{{ t('summary.propertyValue.conditionAdjustment') }}</td>
-                <td v-for="(s, idx) in result.propertyValueForecast.scenarios" :key="s.label"
+                <td v-for="(s, idx) in result.propertyValueForecast.scenarios" :key="s.label" class="num"
                   :class="[valClass(scenarioBreakdowns[idx].conditionAdjustment), { 'scenario-base': s.label === 'base' }]">
                   {{ fmtCur(scenarioBreakdowns[idx].conditionAdjustment) }}
                   <span v-if="!hasComponentDeterioration" class="scenario-rate">({{ (scenarioBreakdowns[idx].conditionFactor * 100).toFixed(0) }}%)</span>
@@ -507,29 +549,29 @@
               </tr>
               <tr v-if="hasInvestments">
                 <td>{{ t('summary.propertyValue.investmentRow') }}</td>
-                <td v-for="(s, idx) in result.propertyValueForecast.scenarios" :key="s.label"
+                <td v-for="(s, idx) in result.propertyValueForecast.scenarios" :key="s.label" class="num"
                   :class="[valClass(scenarioBreakdowns[idx].investments), { 'scenario-base': s.label === 'base' }]">
                   +{{ fmtCur(scenarioBreakdowns[idx].investments) }}
                 </td>
               </tr>
               <tr v-if="hasMeanReversion">
                 <td>{{ t('summary.propertyValue.meanReversionRow') }}</td>
-                <td v-for="(s, idx) in result.propertyValueForecast.scenarios" :key="s.label"
+                <td v-for="(s, idx) in result.propertyValueForecast.scenarios" :key="s.label" class="num"
                   :class="[valClass(scenarioBreakdowns[idx].meanReversion), { 'scenario-base': s.label === 'base' }]">
                   {{ scenarioBreakdowns[idx].meanReversion >= 0 ? '+' : '' }}{{ fmtCur(scenarioBreakdowns[idx].meanReversion) }}
                 </td>
               </tr>
-              <tr class="scenario-highlight">
+              <tr class="scenario-total">
                 <td>{{ t('summary.propertyValue.finalValue') }}</td>
-                <td v-for="s in result.propertyValueForecast.scenarios" :key="s.label" :class="{ 'scenario-base': s.label === 'base' }">
-                  <strong>{{ fmtCur(s.finalValue) }}</strong>
+                <td v-for="s in result.propertyValueForecast.scenarios" :key="s.label" class="num" :class="{ 'scenario-base': s.label === 'base' }">
+                  {{ fmtCur(s.finalValue) }}
                 </td>
               </tr>
               <tr class="scenario-highlight">
                 <td>{{ t('summary.propertyValue.vs') }}</td>
-                <td v-for="s in result.propertyValueForecast.scenarios" :key="s.label"
+                <td v-for="s in result.propertyValueForecast.scenarios" :key="s.label" class="num"
                   :class="[valClass(s.finalValue - result.propertyValueForecast.purchasePrice), { 'scenario-base': s.label === 'base' }]">
-                  <strong>{{ s.finalValue >= result.propertyValueForecast.purchasePrice ? '+' : '' }}{{ fmtCur(s.finalValue - result.propertyValueForecast.purchasePrice) }}</strong>
+                  {{ s.finalValue >= result.propertyValueForecast.purchasePrice ? '+' : '' }}{{ fmtCur(s.finalValue - result.propertyValueForecast.purchasePrice) }}
                   <span class="scenario-rate">{{ s.finalValue >= result.propertyValueForecast.purchasePrice ? '+' : '' }}{{ fmtPct(((s.finalValue / result.propertyValueForecast.purchasePrice) - 1) * 100) }}</span>
                 </td>
               </tr>
@@ -538,301 +580,308 @@
         </div>
 
         <!-- Forecast Explanation -->
-        <div v-if="forecastDriverTexts.length > 0" class="forecast-explanation">
-          <h4 class="exit-section-title">{{ t('summary.propertyValue.explanationTitle') }}</h4>
+        <div v-if="forecastDriverTexts.length > 0" class="panel-body forecast-explanation">
+          <h4 class="section-title block-title">{{ t('summary.propertyValue.explanationTitle') }}</h4>
           <ul class="explanation-list">
             <li v-for="(driver, i) in forecastDriverTexts" :key="i" :class="driver.type">
               {{ driver.text }}
             </li>
           </ul>
         </div>
-      </KalkCard>
+      </section>
 
-      <!-- Component Deterioration (Card Layout) -->
-      <KalkCard v-if="hasComponentDeterioration" :title="t('summary.propertyValue.componentDeterioration.title')">
-        <p class="exit-subtitle">{{ t('summary.propertyValue.componentDeterioration.subtitle') }} <HelpIcon help-key="summary.property.componentDeterioration" /></p>
+      <!-- Component Deterioration -->
+      <section v-if="hasComponentDeterioration" class="panel">
+        <header class="panel-header">
+          <div>
+            <h3 class="panel-title">{{ t('summary.propertyValue.componentDeterioration.title') }}</h3>
+            <p class="panel-subtitle">{{ t('summary.propertyValue.componentDeterioration.subtitle') }} <HelpIcon help-key="summary.property.componentDeterioration" /></p>
+          </div>
+        </header>
+        <div class="panel-body">
 
-        <!-- Status Summary Strip -->
-        <div class="cdet-summary-strip">
-          <div v-if="detStatusCounts.ok > 0" class="cdet-counter status-OK">
-            <span class="cdet-counter-num">{{ detStatusCounts.ok }}</span>
-            <span class="cdet-counter-label">{{ t('summary.propertyValue.componentDeterioration.statusLabels.OK') }}</span>
-          </div>
-          <div v-if="detStatusCounts.renewed > 0" class="cdet-counter status-Renewed">
-            <span class="cdet-counter-num">{{ detStatusCounts.renewed }}</span>
-            <span class="cdet-counter-label">{{ t('summary.propertyValue.componentDeterioration.statusLabels.Renewed') }}</span>
-          </div>
-          <div v-if="detStatusCounts.overdue > 0" class="cdet-counter status-Overdue">
-            <span class="cdet-counter-num">{{ detStatusCounts.overdue }}</span>
-            <span class="cdet-counter-label">{{ t('summary.propertyValue.componentDeterioration.statusLabels.Overdue') }}</span>
-          </div>
-          <div v-if="detStatusCounts.overdueAtPurchase > 0" class="cdet-counter status-OverdueAtPurchase">
-            <span class="cdet-counter-num">{{ detStatusCounts.overdueAtPurchase }}</span>
-            <span class="cdet-counter-label">{{ t('summary.propertyValue.componentDeterioration.statusLabels.OverdueAtPurchase') }}</span>
-          </div>
-          <div class="cdet-impact-total" :class="valClass(componentDeteriorationSummary?.totalValueImpact ?? 0)">
-            <span class="cdet-impact-label">{{ t('summary.propertyValue.componentDeterioration.valueImpact') }}</span>
-            <strong>{{ fmtCur(componentDeteriorationSummary?.totalValueImpact ?? 0) }}</strong>
-          </div>
-        </div>
-
-        <!-- Component Cards Grid -->
-        <div class="cdet-grid">
-          <div v-for="row in componentDeteriorationRows" :key="row.category"
-               class="cdet-card" :class="['cdet-' + row.statusAtEnd, { expanded: expandedDetRows.has(row.category) }]"
-               role="button" tabindex="0"
-               @click="toggleDetRow(row.category)"
-               @keydown.enter="toggleDetRow(row.category)">
-            <!-- Header: Name + Status Badge -->
-            <div class="cdet-card-header">
-              <span class="cdet-card-name">{{ t(`property.components.categories.${row.category}`) }}</span>
-              <span class="comp-det-status" :class="'status-' + row.statusAtEnd">
-                {{ t(`summary.propertyValue.componentDeterioration.statusLabels.${row.statusAtEnd}`) }}
+          <!-- Status Summary Strip -->
+          <div class="cdet-summary-strip">
+            <div class="cdet-counters">
+              <span v-if="detStatusCounts.ok > 0" class="badge badge-success">
+                <span class="cdet-counter-num">{{ detStatusCounts.ok }}</span>
+                {{ t('summary.propertyValue.componentDeterioration.statusLabels.OK') }}
+              </span>
+              <span v-if="detStatusCounts.renewed > 0" class="badge badge-info">
+                <span class="cdet-counter-num">{{ detStatusCounts.renewed }}</span>
+                {{ t('summary.propertyValue.componentDeterioration.statusLabels.Renewed') }}
+              </span>
+              <span v-if="detStatusCounts.overdue > 0" class="badge badge-error">
+                <span class="cdet-counter-num">{{ detStatusCounts.overdue }}</span>
+                {{ t('summary.propertyValue.componentDeterioration.statusLabels.Overdue') }}
+              </span>
+              <span v-if="detStatusCounts.overdueAtPurchase > 0" class="badge badge-neutral">
+                <span class="cdet-counter-num">{{ detStatusCounts.overdueAtPurchase }}</span>
+                {{ t('summary.propertyValue.componentDeterioration.statusLabels.OverdueAtPurchase') }}
               </span>
             </div>
-            <!-- Key Metrics -->
-            <div class="cdet-card-metrics">
-              <div class="cdet-metric">
-                <span class="cdet-metric-label">{{ t('summary.propertyValue.componentDeterioration.age') }} / {{ t('summary.propertyValue.componentDeterioration.cycleYears') }}</span>
-                <span class="cdet-metric-value">{{ row.ageAtEnd }} / {{ row.cycleYears }} {{ t('summary.propertyValue.componentDeterioration.yearsShort') }}</span>
-              </div>
-              <div class="cdet-metric">
-                <span class="cdet-metric-label">{{ t('summary.propertyValue.componentDeterioration.dueYear') }}</span>
-                <span class="cdet-metric-value">{{ row.dueYear }}</span>
-              </div>
-              <div class="cdet-metric">
-                <span class="cdet-metric-label">{{ t('summary.propertyValue.componentDeterioration.valueImpact') }}</span>
-                <span class="cdet-metric-value" :class="valClass(row.valueImpact)">
-                  <template v-if="row.statusAtEnd === 'OverdueAtPurchase'">0 € ({{ t('summary.propertyValue.componentDeterioration.pricedIn') }})</template>
-                  <template v-else>{{ fmtCur(row.valueImpact) }}</template>
+            <div class="cdet-impact-total">
+              <span class="kpi-label">{{ t('summary.propertyValue.componentDeterioration.valueImpact') }}</span>
+              <strong :class="valClass(componentDeteriorationSummary?.totalValueImpact ?? 0)">{{ fmtCur(componentDeteriorationSummary?.totalValueImpact ?? 0) }}</strong>
+            </div>
+          </div>
+
+          <!-- Component Cards Grid -->
+          <div class="cdet-grid">
+            <div v-for="row in componentDeteriorationRows" :key="row.category"
+                 class="cdet-card" :class="['cdet-' + row.statusAtEnd, { expanded: expandedDetRows.has(row.category) }]"
+                 role="button" tabindex="0"
+                 :aria-expanded="expandedDetRows.has(row.category)"
+                 @click="toggleDetRow(row.category)"
+                 @keydown.enter="toggleDetRow(row.category)">
+              <div class="cdet-card-header">
+                <span class="cdet-card-name">{{ t(`property.components.categories.${row.category}`) }}</span>
+                <span class="badge" :class="statusBadgeClass(row.statusAtEnd)">
+                  {{ t(`summary.propertyValue.componentDeterioration.statusLabels.${row.statusAtEnd}`) }}
                 </span>
               </div>
-            </div>
-            <!-- Lifecycle Progress Bar -->
-            <div class="cdet-lifecycle-bar">
-              <div class="cdet-lifecycle-fill" :class="'cdet-fill-' + row.statusAtEnd"
-                   :style="{ width: Math.min((row.ageAtEnd / row.cycleYears) * 100, 100) + '%' }"></div>
-            </div>
-            <!-- Detail (always visible on desktop, toggle on mobile) -->
-            <div class="cdet-detail">
-              <div v-if="row.statusAtEnd === 'OverdueAtPurchase'" class="cdet-priced-in-hint">
-                {{ t('summary.propertyValue.componentDeterioration.pricedInHint') }}
+              <div class="cdet-card-metrics">
+                <div class="cdet-metric">
+                  <span class="cdet-metric-label">{{ t('summary.propertyValue.componentDeterioration.age') }} / {{ t('summary.propertyValue.componentDeterioration.cycleYears') }}</span>
+                  <span class="cdet-metric-value">{{ row.ageAtEnd }} / {{ row.cycleYears }} {{ t('summary.propertyValue.componentDeterioration.yearsShort') }}</span>
+                </div>
+                <div class="cdet-metric">
+                  <span class="cdet-metric-label">{{ t('summary.propertyValue.componentDeterioration.dueYear') }}</span>
+                  <span class="cdet-metric-value">{{ row.dueYear }}</span>
+                </div>
+                <div class="cdet-metric">
+                  <span class="cdet-metric-label">{{ t('summary.propertyValue.componentDeterioration.valueImpact') }}</span>
+                  <span class="cdet-metric-value" :class="row.statusAtEnd === 'OverdueAtPurchase' ? 'value-muted' : valClass(row.valueImpact)">
+                    <template v-if="row.statusAtEnd === 'OverdueAtPurchase'">0 € ({{ t('summary.propertyValue.componentDeterioration.pricedIn') }})</template>
+                    <template v-else>{{ fmtCur(row.valueImpact) }}</template>
+                  </span>
+                </div>
               </div>
-              <div class="cdet-detail-row">
-                <span>{{ t('summary.propertyValue.componentDeterioration.renewalCost') }}</span>
-                <strong>{{ fmtCur(row.renewalCostEstimate) }}</strong>
+              <div class="cdet-lifecycle-bar">
+                <div class="cdet-lifecycle-fill" :class="'cdet-fill-' + row.statusAtEnd"
+                     :style="{ width: Math.min((row.ageAtEnd / row.cycleYears) * 100, 100) + '%' }"></div>
               </div>
-              <div v-if="row.recurringMaintenance" class="cdet-recurring">
-                <span class="cdet-recurring-badge">{{ t('summary.propertyValue.componentDeterioration.recurringLabel') }}</span>
-                <div class="cdet-recurring-details">
-                  <div class="cdet-detail-row">
-                    <span>{{ row.recurringMaintenance.name }} ({{ row.recurringMaintenance.intervalYears }} {{ t('summary.propertyValue.componentDeterioration.yearsShort') }})</span>
-                    <span>{{ row.recurringMaintenance.occurrencesInPeriod }}&times; {{ fmtCur(row.recurringMaintenance.costPerOccurrence) }}</span>
-                  </div>
-                  <div class="cdet-detail-row">
-                    <span>{{ t('summary.propertyValue.componentDeterioration.cycleYears') }} (eff.)</span>
-                    <strong>{{ row.recurringMaintenance.effectiveCycleYears }} {{ t('summary.propertyValue.componentDeterioration.yearsShort') }} (+{{ getRecurringExtensionPercent(row) }}%)</strong>
-                  </div>
-                  <div class="cdet-detail-row">
-                    <span>{{ t('summary.propertyValue.componentDeterioration.valueImpact') }}</span>
-                    <strong class="positive">+{{ fmtCur(row.recurringMaintenance.valueImprovement) }}</strong>
+              <div class="cdet-detail">
+                <div v-if="row.statusAtEnd === 'OverdueAtPurchase'" class="cdet-priced-in-hint">
+                  {{ t('summary.propertyValue.componentDeterioration.pricedInHint') }}
+                </div>
+                <div class="cdet-detail-row">
+                  <span>{{ t('summary.propertyValue.componentDeterioration.renewalCost') }}</span>
+                  <strong>{{ fmtCur(row.renewalCostEstimate) }}</strong>
+                </div>
+                <div v-if="row.recurringMaintenance" class="cdet-recurring">
+                  <span class="eyebrow cdet-recurring-badge">{{ t('summary.propertyValue.componentDeterioration.recurringLabel') }}</span>
+                  <div class="cdet-recurring-details">
+                    <div class="cdet-detail-row">
+                      <span>{{ row.recurringMaintenance.name }} ({{ row.recurringMaintenance.intervalYears }} {{ t('summary.propertyValue.componentDeterioration.yearsShort') }})</span>
+                      <span class="num">{{ row.recurringMaintenance.occurrencesInPeriod }}&times; {{ fmtCur(row.recurringMaintenance.costPerOccurrence) }}</span>
+                    </div>
+                    <div class="cdet-detail-row">
+                      <span>{{ t('summary.propertyValue.componentDeterioration.cycleYears') }} (eff.)</span>
+                      <strong>{{ row.recurringMaintenance.effectiveCycleYears }} {{ t('summary.propertyValue.componentDeterioration.yearsShort') }} (+{{ getRecurringExtensionPercent(row) }}%)</strong>
+                    </div>
+                    <div class="cdet-detail-row">
+                      <span>{{ t('summary.propertyValue.componentDeterioration.valueImpact') }}</span>
+                      <strong class="pos">+{{ fmtCur(row.recurringMaintenance.valueImprovement) }}</strong>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <!-- Expand chevron -->
-            <div class="cdet-expand-hint">
-              <svg :class="{ rotated: expandedDetRows.has(row.category) }" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bottom Totals -->
-        <div v-if="componentDeteriorationSummary" class="cdet-totals">
-          <div class="cdet-total-row">
-            <span>{{ t('summary.propertyValue.componentDeterioration.renewalCost') }}</span>
-            <strong>{{ fmtCur(componentDeteriorationSummary.totalRenewalCostIfAllDone) }}</strong>
-          </div>
-          <div v-if="componentDeteriorationSummary.uncoveredDeterioration > 0" class="cdet-total-row negative">
-            <span>{{ t('summary.propertyValue.componentDeterioration.totalUncovered') }}</span>
-            <strong>{{ fmtCur(-componentDeteriorationSummary.uncoveredDeterioration) }}</strong>
-          </div>
-          <div v-if="componentDeteriorationSummary.coveredByCapex > 0" class="cdet-total-row positive">
-            <span>{{ t('summary.propertyValue.componentDeterioration.totalCovered') }}</span>
-            <strong>{{ fmtCur(componentDeteriorationSummary.coveredByCapex) }}</strong>
-          </div>
-        </div>
-      </KalkCard>
-
-      <!-- CapEx Timeline (Horizontal) -->
-      <KalkCard v-if="result.capexTimeline.length > 0" :title="t('summary.capexTimeline')">
-        <!-- Horizontal axis -->
-        <div class="captl-axis">
-          <div class="captl-track">
-            <!-- Year ticks -->
-            <template v-for="(year, i) in timelineYears" :key="'y' + year">
-              <div class="captl-year-tick" :style="{ left: yearPosition(year) }">
-                <span v-if="i % timelineYearStep === 0 || i === timelineYears.length - 1" class="captl-year-label">{{ year }}</span>
-              </div>
-            </template>
-            <!-- Measure dots -->
-            <div v-for="item in result.capexTimeline" :key="item.id"
-                 class="captl-dot" :class="item.taxClassification"
-                 :style="{ left: yearPosition(item.year), width: dotSize(item.amount), height: dotSize(item.amount) }">
-            </div>
-          </div>
-        </div>
-
-        <!-- Grouped list by year -->
-        <div class="captl-groups">
-          <div v-for="group in capexByYear" :key="group.year" class="captl-group">
-            <div class="captl-group-year">{{ group.year }}</div>
-            <div class="captl-group-items">
-              <div v-for="item in group.items" :key="item.id" class="captl-group-item">
-                <span class="captl-dot-inline" :class="item.taxClassification"></span>
-                <span class="captl-item-name">{{ item.name }}</span>
-                <span class="captl-item-amount">{{ fmtCur(item.amount) }}</span>
-                <span class="captl-item-tax">{{ t(`capex.taxClassifications.${item.taxClassification}`) }}</span>
+              <div class="cdet-expand-hint">
+                <svg :class="{ rotated: expandedDetRows.has(row.category) }" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
               </div>
             </div>
-            <div v-if="group.items.length > 1" class="captl-group-total">{{ fmtCur(group.total) }}</div>
+          </div>
+
+          <!-- Bottom Totals -->
+          <div v-if="componentDeteriorationSummary" class="cdet-totals">
+            <div class="data-row">
+              <span class="data-label">{{ t('summary.propertyValue.componentDeterioration.renewalCost') }}</span>
+              <span class="data-value">{{ fmtCur(componentDeteriorationSummary.totalRenewalCostIfAllDone) }}</span>
+            </div>
+            <div v-if="componentDeteriorationSummary.uncoveredDeterioration > 0" class="data-row">
+              <span class="data-label">{{ t('summary.propertyValue.componentDeterioration.totalUncovered') }}</span>
+              <span class="data-value neg">{{ fmtCur(-componentDeteriorationSummary.uncoveredDeterioration) }}</span>
+            </div>
+            <div v-if="componentDeteriorationSummary.coveredByCapex > 0" class="data-row">
+              <span class="data-label">{{ t('summary.propertyValue.componentDeterioration.totalCovered') }}</span>
+              <span class="data-value pos">{{ fmtCur(componentDeteriorationSummary.coveredByCapex) }}</span>
+            </div>
           </div>
         </div>
+      </section>
 
-        <!-- Total -->
-        <div class="captl-total">
-          <span>{{ t('common.total') }}</span>
-          <strong>{{ fmtCur(capexTotal) }}</strong>
+      <!-- CapEx Timeline -->
+      <section v-if="result.capexTimeline.length > 0" class="panel">
+        <header class="panel-header">
+          <h3 class="panel-title">{{ t('summary.capexTimeline') }}</h3>
+        </header>
+        <div class="panel-body">
+          <div class="captl-axis">
+            <div class="captl-track">
+              <template v-for="(year, i) in timelineYears" :key="'y' + year">
+                <div class="captl-year-tick" :style="{ left: yearPosition(year) }">
+                  <span v-if="i % timelineYearStep === 0 || i === timelineYears.length - 1" class="captl-year-label">{{ year }}</span>
+                </div>
+              </template>
+              <div v-for="item in result.capexTimeline" :key="item.id"
+                   class="captl-dot" :class="item.taxClassification"
+                   :style="{ left: yearPosition(item.year), width: dotSize(item.amount), height: dotSize(item.amount) }">
+              </div>
+            </div>
+          </div>
+
+          <div class="captl-groups">
+            <div v-for="group in capexByYear" :key="group.year" class="captl-group">
+              <div class="captl-group-year">{{ group.year }}</div>
+              <div class="captl-group-items">
+                <div v-for="item in group.items" :key="item.id" class="captl-group-item">
+                  <span class="captl-dot-inline" :class="item.taxClassification"></span>
+                  <span class="captl-item-name">{{ item.name }}</span>
+                  <span class="captl-item-tax">{{ t(`capex.taxClassifications.${item.taxClassification}`) }}</span>
+                  <span class="captl-item-amount">{{ fmtCur(item.amount) }}</span>
+                </div>
+              </div>
+              <div v-if="group.items.length > 1" class="captl-group-total">{{ fmtCur(group.total) }}</div>
+            </div>
+          </div>
+
+          <div class="data-row total">
+            <span class="data-label">{{ t('common.total') }}</span>
+            <span class="data-value">{{ fmtCur(capexTotal) }}</span>
+          </div>
         </div>
-      </KalkCard>
+      </section>
 
       <!-- Exit Analysis -->
-      <KalkCard :title="t('summary.exit.title')">
-        <p class="exit-subtitle">{{ t('summary.exit.subtitle') }}</p>
+      <section class="panel">
+        <header class="panel-header">
+          <div>
+            <h3 class="panel-title">{{ t('summary.exit.title') }}</h3>
+            <p class="panel-subtitle">{{ t('summary.exit.subtitle') }}</p>
+          </div>
+        </header>
+        <div class="panel-body">
+          <div class="kpi-grid kpi-grid-2 kpi-compact block-gap">
+            <div class="kpi">
+              <span class="kpi-label">{{ t('summary.exit.holdingPeriod') }}</span>
+              <span class="kpi-value">{{ result.exitAnalysis.holdingPeriodYears }} {{ t('summary.exit.years') }}</span>
+            </div>
+            <div class="kpi" :class="{ 'kpi-warn': result.exitAnalysis.isWithinSpeculationPeriod }">
+              <span class="kpi-label">{{ t('summary.exit.speculationPeriod') }}</span>
+              <span class="kpi-value kpi-value-text">{{ result.exitAnalysis.isWithinSpeculationPeriod ? t('summary.exit.withinPeriod') : t('summary.exit.outsidePeriod') }}</span>
+            </div>
+          </div>
 
-        <!-- Holding period & speculation status -->
-        <div class="exit-meta">
-          <div class="exit-meta-item">
-            <span>{{ t('summary.exit.holdingPeriod') }}</span>
-            <strong>{{ result.exitAnalysis.holdingPeriodYears }} {{ t('summary.exit.years') }}</strong>
+          <h4 class="section-title block-title">{{ t('summary.exit.pnlTitle') }}</h4>
+          <div class="exit-pnl">
+            <div class="data-row">
+              <span class="data-label">{{ t('summary.exit.totalGrossIncome') }}</span>
+              <span class="data-value pos">+{{ fmtCur(result.exitAnalysis.totalGrossIncome) }}</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">{{ t('summary.exit.totalOperatingCosts') }}</span>
+              <span class="data-value neg">-{{ fmtCur(result.exitAnalysis.totalOperatingCosts) }}</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">{{ t('summary.exit.totalDebtService') }}</span>
+              <span class="data-value neg">-{{ fmtCur(result.exitAnalysis.totalDebtService) }}</span>
+            </div>
+            <div class="data-row" v-if="result.exitAnalysis.totalCapex > 0">
+              <span class="data-label">{{ t('summary.exit.totalCapex') }}</span>
+              <span class="data-value neg">-{{ fmtCur(result.exitAnalysis.totalCapex) }}</span>
+            </div>
+            <div v-if="hasMaintenanceReserve" class="data-row">
+              <span class="data-label">{{ t('summary.exit.totalMaintenanceReserve') }}</span>
+              <span class="data-value neg">-{{ fmtCur(result.exitAnalysis.totalMaintenanceReserve) }}</span>
+            </div>
+            <div v-if="hasMaintenanceReserve && result.exitAnalysis.finalReserveBalance > 0" class="data-row">
+              <span class="data-label">{{ t('summary.exit.finalReserveBalance') }}</span>
+              <span class="data-value pos">+{{ fmtCur(result.exitAnalysis.finalReserveBalance) }}</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">{{ t('summary.exit.totalTaxPaid') }}</span>
+              <span class="data-value neg">-{{ fmtCur(result.exitAnalysis.totalTaxPaid) }}</span>
+            </div>
+            <div class="data-row total">
+              <span class="data-label">{{ t('summary.exit.netCashflow') }}</span>
+              <span class="data-value" :class="valClass(result.exitAnalysis.totalCashflowAfterTax)">{{ fmtCur(result.exitAnalysis.totalCashflowAfterTax) }}</span>
+            </div>
           </div>
-          <div class="exit-meta-item" :class="{ 'speculation-active': result.exitAnalysis.isWithinSpeculationPeriod }">
-            <span>{{ t('summary.exit.speculationPeriod') }}</span>
-            <strong>{{ result.exitAnalysis.isWithinSpeculationPeriod ? t('summary.exit.withinPeriod') : t('summary.exit.outsidePeriod') }}</strong>
-          </div>
+
+          <h4 class="section-title block-title">{{ t('summary.exit.scenarioTitle') }}</h4>
         </div>
 
-        <!-- P&L over holding period -->
-        <div class="exit-pnl">
-          <h4 class="exit-section-title">{{ t('summary.exit.pnlTitle') }}</h4>
-          <div class="exit-pnl-row">
-            <span>{{ t('summary.exit.totalGrossIncome') }}</span>
-            <strong class="pos">+{{ fmtCur(result.exitAnalysis.totalGrossIncome) }}</strong>
-          </div>
-          <div class="exit-pnl-row">
-            <span>{{ t('summary.exit.totalOperatingCosts') }}</span>
-            <strong class="neg">-{{ fmtCur(result.exitAnalysis.totalOperatingCosts) }}</strong>
-          </div>
-          <div class="exit-pnl-row">
-            <span>{{ t('summary.exit.totalDebtService') }}</span>
-            <strong class="neg">-{{ fmtCur(result.exitAnalysis.totalDebtService) }}</strong>
-          </div>
-          <div class="exit-pnl-row" v-if="result.exitAnalysis.totalCapex > 0">
-            <span>{{ t('summary.exit.totalCapex') }}</span>
-            <strong class="neg">-{{ fmtCur(result.exitAnalysis.totalCapex) }}</strong>
-          </div>
-          <div v-if="hasMaintenanceReserve" class="exit-pnl-row">
-            <span>{{ t('summary.exit.totalMaintenanceReserve') }}</span>
-            <strong class="neg">-{{ fmtCur(result.exitAnalysis.totalMaintenanceReserve) }}</strong>
-          </div>
-          <div v-if="hasMaintenanceReserve && result.exitAnalysis.finalReserveBalance > 0" class="exit-pnl-row">
-            <span>{{ t('summary.exit.finalReserveBalance') }}</span>
-            <strong class="pos">+{{ fmtCur(result.exitAnalysis.finalReserveBalance) }}</strong>
-          </div>
-          <div class="exit-pnl-row">
-            <span>{{ t('summary.exit.totalTaxPaid') }}</span>
-            <strong class="neg">-{{ fmtCur(result.exitAnalysis.totalTaxPaid) }}</strong>
-          </div>
-          <div class="exit-pnl-row exit-pnl-total">
-            <span>{{ t('summary.exit.netCashflow') }}</span>
-            <strong :class="valClass(result.exitAnalysis.totalCashflowAfterTax)">{{ fmtCur(result.exitAnalysis.totalCashflowAfterTax) }}</strong>
-          </div>
+        <div class="table-scroll table-bordered-top">
+          <table class="data-table scenario-table">
+            <thead>
+              <tr>
+                <th class="scenario-label-col"></th>
+                <th v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="num scenario-col" :class="{ 'scenario-base': s.label === 'base' }">
+                  {{ t(`summary.exit.scenario.${s.label}`) }}
+                  <span class="scenario-rate">{{ fmtPct(s.annualAppreciationPercent) }} p.a.</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{ t('summary.exit.propertyValue') }}</td>
+                <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="num" :class="{ 'scenario-base': s.label === 'base' }">{{ fmtCur(s.propertyValueAtExit) }}</td>
+              </tr>
+              <tr>
+                <td>{{ t('summary.exit.saleCosts') }}</td>
+                <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="num neg" :class="{ 'scenario-base': s.label === 'base' }">-{{ fmtCur(s.saleCosts) }}</td>
+              </tr>
+              <tr v-if="result.exitAnalysis.isWithinSpeculationPeriod">
+                <td>{{ t('summary.exit.capitalGainsTax') }}</td>
+                <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="num" :class="{ neg: s.capitalGainsTax > 0, 'scenario-base': s.label === 'base' }">
+                  {{ s.capitalGainsTax > 0 ? `-${fmtCur(s.capitalGainsTax)}` : t('summary.exit.noTax') }}
+                </td>
+              </tr>
+              <tr v-else>
+                <td>{{ t('summary.exit.capitalGainsTax') }}</td>
+                <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="num value-muted" :class="{ 'scenario-base': s.label === 'base' }">{{ t('summary.exit.noTax') }}</td>
+              </tr>
+              <tr>
+                <td>{{ t('summary.exit.outstandingDebt') }}</td>
+                <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="num neg" :class="{ 'scenario-base': s.label === 'base' }">-{{ fmtCur(result.exitAnalysis.outstandingDebtAtExit) }}</td>
+              </tr>
+              <tr class="scenario-subtotal">
+                <td>{{ t('summary.exit.netSaleProceeds') }}</td>
+                <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="num" :class="[valClass(s.netSaleProceeds), { 'scenario-base': s.label === 'base' }]">{{ fmtCur(s.netSaleProceeds) }}</td>
+              </tr>
+              <tr>
+                <td>{{ t('summary.exit.plusCashflow') }}</td>
+                <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="num" :class="[valClass(result.exitAnalysis.totalCashflowAfterTax), { 'scenario-base': s.label === 'base' }]">{{ result.exitAnalysis.totalCashflowAfterTax >= 0 ? '+' : '' }}{{ fmtCur(result.exitAnalysis.totalCashflowAfterTax) }}</td>
+              </tr>
+              <tr>
+                <td>{{ t('summary.exit.minusEquity') }}</td>
+                <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="num neg" :class="{ 'scenario-base': s.label === 'base' }">-{{ fmtCur(result.exitAnalysis.equityInvested) }}</td>
+              </tr>
+              <tr class="scenario-total">
+                <td>{{ t('summary.exit.totalReturn') }} <HelpIcon help-key="summary.exit.totalReturn" /></td>
+                <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="num" :class="[valClass(s.totalReturn), { 'scenario-base': s.label === 'base' }]">
+                  {{ fmtCur(s.totalReturn) }}
+                </td>
+              </tr>
+              <tr class="scenario-highlight">
+                <td>{{ t('summary.exit.totalReturnPercent') }}</td>
+                <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="num" :class="[valClass(s.totalReturnPercent), { 'scenario-base': s.label === 'base' }]">
+                  {{ fmtPct(s.totalReturnPercent) }}
+                </td>
+              </tr>
+              <tr class="scenario-highlight">
+                <td>{{ t('summary.exit.annualizedReturn') }} <HelpIcon help-key="summary.exit.annualizedReturn" /></td>
+                <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="num" :class="[valClass(s.annualizedReturnPercent), { 'scenario-base': s.label === 'base' }]">
+                  {{ fmtPct(s.annualizedReturnPercent) }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-
-        <!-- Scenario comparison -->
-        <div class="exit-scenarios">
-          <h4 class="exit-section-title">{{ t('summary.exit.scenarioTitle') }}</h4>
-          <div class="scenario-table-scroll">
-            <table class="scenario-table">
-              <thead>
-                <tr>
-                  <th class="scenario-label-col"></th>
-                  <th v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="scenario-col" :class="{ 'scenario-base': s.label === 'base' }">
-                    {{ t(`summary.exit.scenario.${s.label}`) }}
-                    <span class="scenario-rate">{{ fmtPct(s.annualAppreciationPercent) }} p.a.</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{{ t('summary.exit.propertyValue') }}</td>
-                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" :class="{ 'scenario-base': s.label === 'base' }">{{ fmtCur(s.propertyValueAtExit) }}</td>
-                </tr>
-                <tr>
-                  <td>{{ t('summary.exit.saleCosts') }}</td>
-                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="neg" :class="{ 'scenario-base': s.label === 'base' }">-{{ fmtCur(s.saleCosts) }}</td>
-                </tr>
-                <tr v-if="result.exitAnalysis.isWithinSpeculationPeriod">
-                  <td>{{ t('summary.exit.capitalGainsTax') }}</td>
-                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="neg" :class="{ 'scenario-base': s.label === 'base' }">
-                    {{ s.capitalGainsTax > 0 ? `-${fmtCur(s.capitalGainsTax)}` : t('summary.exit.noTax') }}
-                  </td>
-                </tr>
-                <tr v-else>
-                  <td>{{ t('summary.exit.capitalGainsTax') }}</td>
-                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" :class="{ 'scenario-base': s.label === 'base' }">{{ t('summary.exit.noTax') }}</td>
-                </tr>
-                <tr>
-                  <td>{{ t('summary.exit.outstandingDebt') }}</td>
-                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="neg" :class="{ 'scenario-base': s.label === 'base' }">-{{ fmtCur(result.exitAnalysis.outstandingDebtAtExit) }}</td>
-                </tr>
-                <tr class="scenario-subtotal">
-                  <td>{{ t('summary.exit.netSaleProceeds') }}</td>
-                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" :class="[valClass(s.netSaleProceeds), { 'scenario-base': s.label === 'base' }]">{{ fmtCur(s.netSaleProceeds) }}</td>
-                </tr>
-                <tr>
-                  <td>{{ t('summary.exit.plusCashflow') }}</td>
-                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" :class="[valClass(result.exitAnalysis.totalCashflowAfterTax), { 'scenario-base': s.label === 'base' }]">+{{ fmtCur(result.exitAnalysis.totalCashflowAfterTax) }}</td>
-                </tr>
-                <tr>
-                  <td>{{ t('summary.exit.minusEquity') }}</td>
-                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" class="neg" :class="{ 'scenario-base': s.label === 'base' }">-{{ fmtCur(result.exitAnalysis.equityInvested) }}</td>
-                </tr>
-                <tr class="scenario-total">
-                  <td>{{ t('summary.exit.totalReturn') }} <HelpIcon help-key="summary.exit.totalReturn" /></td>
-                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" :class="[valClass(s.totalReturn), { 'scenario-base': s.label === 'base' }]">
-                    <strong>{{ fmtCur(s.totalReturn) }}</strong>
-                  </td>
-                </tr>
-                <tr class="scenario-highlight">
-                  <td>{{ t('summary.exit.totalReturnPercent') }}</td>
-                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" :class="[valClass(s.totalReturnPercent), { 'scenario-base': s.label === 'base' }]">
-                    <strong>{{ fmtPct(s.totalReturnPercent) }}</strong>
-                  </td>
-                </tr>
-                <tr class="scenario-highlight">
-                  <td>{{ t('summary.exit.annualizedReturn') }} <HelpIcon help-key="summary.exit.annualizedReturn" /></td>
-                  <td v-for="s in result.exitAnalysis.scenarios" :key="s.label" :class="[valClass(s.annualizedReturnPercent), { 'scenario-base': s.label === 'base' }]">
-                    <strong>{{ fmtPct(s.annualizedReturnPercent) }}</strong>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </KalkCard>
+      </section>
 
     </div><!-- /property -->
 
@@ -849,7 +898,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { KalkCard, HelpIcon } from '@/components';
+import { HelpIcon } from '@/components';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUiStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -918,7 +967,7 @@ const maxCapex = computed(() => {
 const timelineYears = computed(() => {
   if (!result.value || !project.value) return [];
   const start = project.value.purchase.purchaseDate.year;
-  const end = start + result.value.exitAnalysis.holdingPeriodYears;
+  const end = Math.max(start, project.value.endPeriod.year);
   const years: number[] = [];
   for (let y = start; y <= end; y++) years.push(y);
   return years;
@@ -1056,10 +1105,16 @@ function getRecurringExtensionPercent(row: { category: string; cycleYears: numbe
 }
 
 // Formatters
+// Werte, die auf 0 runden, ohne Vorzeichen anzeigen (verhindert "-0 €")
+function noNegZero(v: number): number {
+  return Math.abs(v) < 0.5 ? 0 : v;
+}
 function fmtCur(v: number): string {
+  v = noNegZero(v);
   return new Intl.NumberFormat(locale.value, { style: 'currency', currency: currency.value, maximumFractionDigits: 0 }).format(v);
 }
 function fmtCompact(v: number): string {
+  v = noNegZero(v);
   if (Math.abs(v) >= 1_000_000) {
     return new Intl.NumberFormat(locale.value, { style: 'currency', currency: currency.value, notation: 'compact', maximumFractionDigits: 1 }).format(v);
   }
@@ -1070,7 +1125,16 @@ function fmtPct(v: number): string {
 }
 
 function npvClass(v: number) { return { pos: v >= 0, neg: v < 0 }; }
-function valClass(v: number) { return { pos: v >= 0, neg: v < 0 }; }
+function valClass(v: number) { return { pos: v > 0, neg: v < 0 }; }
+function signClass(v: number) { return { neg: v < 0 }; }
+function statusBadgeClass(status: string): string {
+  switch (status) {
+    case 'OK': return 'badge-success';
+    case 'Renewed': return 'badge-info';
+    case 'Overdue': return 'badge-error';
+    default: return 'badge-neutral';
+  }
+}
 function sumCol(key: keyof YearlyCashflowRow): number {
   if (!result.value) return 0;
   return result.value.yearlyCashflows.reduce((s, r) => s + (r[key] as number), 0);
@@ -1122,6 +1186,9 @@ async function calculate() {
   try {
     let r: CalculationResult;
     if (authStore.isAuthenticated) {
+      // Server rechnet mit den gespeicherten Projektdaten → vorher aktuellen Stand speichern
+      const synced = await projectStore.syncProjectToServer();
+      if (!synced) throw new Error('Sync failed');
       r = await projectsApi.calculate(project.value.id);
     } else {
       r = await calculationApi.calculateAnonymous(project.value);
@@ -1141,108 +1208,188 @@ defineExpose({ calculate });
 </script>
 
 <style scoped>
-.summary-page { display: flex; flex-direction: column; gap: var(--kalk-space-6); }
+/* ============================================
+ * LAYOUT
+ * ============================================ */
+.summary-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kalk-space-6);
+  min-width: 0;
+}
 
-/* Tab Bar */
+.tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kalk-space-6);
+  min-width: 0;
+}
+
+.block-title {
+  margin: 0 0 var(--kalk-space-3);
+}
+
+.block-gap {
+  margin-bottom: var(--kalk-space-5);
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--kalk-space-6);
+}
+
+@media (max-width: 760px) {
+  .two-col { grid-template-columns: 1fr; }
+}
+
+.panel { min-width: 0; }
+
+.panel-body-rows {
+  padding-top: var(--kalk-space-2);
+  padding-bottom: var(--kalk-space-3);
+}
+
+.panel-subtitle :deep(.help-icon-btn) { vertical-align: middle; }
+
+/* ============================================
+ * TAB BAR (understated underline)
+ * ============================================ */
 .tab-bar {
   display: flex;
-  gap: var(--kalk-space-1);
-  border-bottom: 2px solid var(--kalk-gray-200);
+  gap: var(--kalk-space-6);
+  border-bottom: 1px solid var(--kalk-border);
   position: sticky;
   top: 0;
   z-index: 10;
-  background: var(--kalk-gray-50, #f9fafb);
-  padding: 0;
+  background: var(--kalk-canvas);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 .tab-bar::-webkit-scrollbar { display: none; }
+
 .tab-btn {
-  flex: 1;
-  min-width: 0;
-  padding: var(--kalk-space-3) var(--kalk-space-4);
+  flex: 0 0 auto;
+  padding: var(--kalk-space-3) 0;
   font-family: var(--kalk-font-family);
   font-size: var(--kalk-text-sm);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--kalk-gray-500);
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
+  margin-bottom: -1px;
   cursor: pointer;
   white-space: nowrap;
-  transition: color 0.15s, border-color 0.15s;
+  transition: color 0.12s, border-color 0.12s;
 }
-.tab-btn:hover { color: var(--kalk-gray-700); }
+.tab-btn:hover { color: var(--kalk-gray-800); }
 .tab-btn.active {
-  color: var(--kalk-accent-600);
-  border-bottom-color: var(--kalk-accent-500);
-}
-
-/* Tab Content */
-.tab-content { display: flex; flex-direction: column; gap: var(--kalk-space-6); }
-
-/* Collapsible Warnings Card */
-.warnings-card {
-  border: 1px solid var(--kalk-gray-200);
-  border-radius: var(--kalk-radius-md);
-  overflow: hidden;
-  background: #fff;
-}
-.warnings-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: var(--kalk-space-3) var(--kalk-space-4);
-  background: var(--kalk-gray-50);
-  border: none;
-  cursor: pointer;
-  font-family: var(--kalk-font-family);
-  font-size: var(--kalk-text-sm);
+  color: var(--kalk-navy-900);
   font-weight: 600;
-  color: var(--kalk-gray-700);
-  transition: background 0.15s;
+  border-bottom-color: var(--kalk-navy-900);
 }
-.warnings-card-header:hover { background: var(--kalk-gray-100); }
-.warnings-card-header.has-critical { background: #fef2f2; color: #991b1b; }
-.warnings-card-header.has-critical:hover { background: #fee2e2; }
-.warnings-card-title {
-  display: flex;
-  align-items: center;
-  gap: var(--kalk-space-2);
+
+@media (max-width: 480px) {
+  .tab-bar { gap: var(--kalk-space-5); }
 }
-.warnings-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 700;
-  background: var(--kalk-gray-200);
-  color: var(--kalk-gray-700);
+
+/* ============================================
+ * KPI STRIPS
+ * ============================================ */
+.kpi-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.kpi-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+@media (max-width: 640px) {
+  .kpi-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-.warnings-badge.critical { background: #fee2e2; color: #991b1b; }
-.chevron-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  color: var(--kalk-gray-400);
-  transition: transform 0.2s;
-}
-.chevron-icon.open { transform: rotate(180deg); }
-.warnings-card-body {
+
+.kpi {
   display: flex;
   flex-direction: column;
-  gap: var(--kalk-space-2);
-  padding: var(--kalk-space-3) var(--kalk-space-4);
+  min-width: 0;
 }
 
-/* Empty state */
+.kpi-label {
+  display: block;
+}
+
+.kpi-label :deep(.help-icon-btn) {
+  width: 14px;
+  height: 14px;
+  margin-left: 2px;
+  vertical-align: -3px;
+}
+
+.kpi-value {
+  margin-top: auto;
+  padding-top: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpi-unit {
+  margin-left: 2px;
+  font-size: var(--kalk-text-sm);
+  font-weight: 500;
+  color: var(--kalk-gray-500);
+}
+
+.kpi-hero .kpi-value {
+  font-family: var(--kalk-font-serif);
+  font-size: var(--kalk-text-3xl);
+  line-height: 1.1;
+}
+
+.kpi-warn {
+  box-shadow: inset 3px 0 0 var(--kalk-caution);
+}
+.kpi-warn .kpi-value { color: var(--kalk-caution); }
+
+.kpi-compact .kpi-value { font-size: var(--kalk-text-lg); }
+.kpi-value-text { white-space: normal; }
+
+.kpi.mc-below { box-shadow: inset 3px 0 0 var(--kalk-positive); }
+.kpi.mc-below .kpi-value { color: var(--kalk-positive); }
+.kpi.mc-above { box-shadow: inset 3px 0 0 var(--kalk-caution); }
+.kpi.mc-above .kpi-value { color: var(--kalk-caution); }
+
+@media (max-width: 640px) {
+  .kpi { padding: var(--kalk-space-3) var(--kalk-space-4); }
+  .kpi-value { font-size: var(--kalk-text-lg); }
+  .kpi-hero .kpi-value { font-size: var(--kalk-text-2xl); }
+}
+
+/* Value colours */
+.pos { color: var(--kalk-positive); }
+.neg { color: var(--kalk-negative); }
+.warn { color: var(--kalk-caution); }
+.kpi-value.neg { color: var(--kalk-negative); }
+
+/* ============================================
+ * DATA ROWS (extensions)
+ * ============================================ */
+.data-row .data-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.data-value.pos { color: var(--kalk-positive); }
+.data-value.neg { color: var(--kalk-negative); }
+.data-row.subtotal {
+  border-top: 1px solid var(--kalk-border-strong);
+}
+.data-row.subtotal .data-label { color: var(--kalk-gray-800); font-weight: 600; }
+.data-row.strong-row .data-label { color: var(--kalk-gray-800); font-weight: 600; }
+.data-row.muted-row .data-label { color: var(--kalk-gray-500); }
+.data-row.total .data-value.pos { color: var(--kalk-positive); }
+.data-row.total .data-value.neg { color: var(--kalk-negative); }
+
+/* ============================================
+ * EMPTY STATE
+ * ============================================ */
 .empty-result-state {
   display: flex;
   flex-direction: column;
@@ -1251,482 +1398,503 @@ defineExpose({ calculate });
   text-align: center;
   padding: var(--kalk-space-12) var(--kalk-space-6);
   min-height: 300px;
+  background: var(--kalk-surface);
+  border: 1px solid var(--kalk-border);
+  border-radius: var(--kalk-radius-lg);
 }
-
 .empty-result-icon {
-  width: 64px;
-  height: 64px;
-  color: var(--kalk-gray-300);
-  margin-bottom: var(--kalk-space-6);
+  width: 48px;
+  height: 48px;
+  color: var(--kalk-gray-400);
+  margin-bottom: var(--kalk-space-5);
 }
-
-.empty-result-icon svg {
-  width: 100%;
-  height: 100%;
-}
-
+.empty-result-icon svg { width: 100%; height: 100%; }
 .empty-result-title {
   font-size: var(--kalk-text-lg);
   font-weight: 600;
-  color: var(--kalk-gray-700);
-  margin: 0 0 var(--kalk-space-3);
+  color: var(--kalk-gray-900);
+  margin: 0 0 var(--kalk-space-2);
 }
-
 .empty-result-text {
   font-size: var(--kalk-text-sm);
-  color: var(--kalk-gray-500);
-  max-width: 360px;
+  color: var(--kalk-gray-600);
+  max-width: 380px;
   line-height: 1.6;
   margin: 0;
 }
-
-.empty-result-text strong {
-  color: var(--kalk-accent-600);
-  font-weight: 600;
-}
-
+.empty-result-text strong { color: var(--kalk-navy-800); font-weight: 600; }
 .calculating-indicator {
   display: flex;
   align-items: center;
   gap: var(--kalk-space-3);
   margin-top: var(--kalk-space-6);
   font-size: var(--kalk-text-sm);
-  color: var(--kalk-accent-600);
-  font-weight: 500;
+  color: var(--kalk-gray-700);
 }
-
-/* Overview */
-.overview-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--kalk-space-4); }
-@media (max-width: 600px) { .overview-grid { grid-template-columns: 1fr; } }
-.overview-item { display: flex; flex-direction: column; padding: var(--kalk-space-4); background: var(--kalk-gray-50); border-radius: var(--kalk-radius-md); }
-.overview-item .label { font-size: var(--kalk-text-sm); color: var(--kalk-gray-500); margin-bottom: var(--kalk-space-1); }
-.overview-item .value { font-size: var(--kalk-text-lg); font-weight: 600; color: var(--kalk-gray-900); font-variant-numeric: tabular-nums; }
-.overview-item .value.highlight { color: var(--kalk-accent-600); }
-
-/* Calculate */
-.calculate-prompt { text-align: center; padding: var(--kalk-space-8); }
-.calculate-prompt p { color: var(--kalk-gray-500); margin-bottom: var(--kalk-space-6); }
-
-/* Buttons */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--kalk-space-2); font-family: var(--kalk-font-family); font-weight: 600; border-radius: var(--kalk-radius-md); border: none; cursor: pointer; transition: all 0.15s; }
-.btn-lg { height: 48px; padding: 0 var(--kalk-space-8); font-size: var(--kalk-text-base); }
-.btn-primary { background: var(--kalk-accent-500); color: #fff; }
-.btn-primary:hover { background: var(--kalk-accent-600); }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn-outline { background: #fff; color: var(--kalk-gray-700); border: 1.5px solid var(--kalk-gray-300); height: 40px; padding: 0 var(--kalk-space-5); font-size: var(--kalk-text-sm); }
-.btn-outline:hover { background: var(--kalk-gray-50); }
-.spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--kalk-gray-200);
+  border-top-color: var(--kalk-navy-700);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Warnings */
-.warning-item { display: flex; align-items: center; gap: var(--kalk-space-3); padding: var(--kalk-space-3) var(--kalk-space-4); border-radius: var(--kalk-radius-md); font-size: var(--kalk-text-sm); }
-.warning-item.info { background: var(--kalk-gray-50); color: var(--kalk-primary-700); }
-.warning-item.warning { background: #fefce8; color: #92400e; }
-.warning-item.critical { background: #fef2f2; color: #991b1b; }
-.warning-icon { width: 20px; height: 20px; flex-shrink: 0; }
+/* ============================================
+ * RISK
+ * ============================================ */
+.risk-grid { display: flex; flex-direction: column; gap: var(--kalk-space-5); }
+.risk-item { display: flex; flex-direction: column; gap: var(--kalk-space-2); }
+.risk-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--kalk-space-3);
+  flex-wrap: wrap;
+}
+.risk-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--kalk-text-sm);
+  color: var(--kalk-gray-700);
+}
+.risk-gauge { height: 4px; background: var(--kalk-gray-100); border-radius: var(--kalk-radius-sm); overflow: hidden; }
+.risk-fill { height: 100%; }
+.risk-fill.risk-low { background: var(--kalk-positive); }
+.risk-fill.risk-medium { background: var(--kalk-caution); }
+.risk-fill.risk-high,
+.risk-fill.risk-critical { background: var(--kalk-negative); }
+.risk-score { font-size: var(--kalk-text-sm); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--kalk-gray-900); }
+.risk-max { color: var(--kalk-gray-500); font-weight: 500; }
+.risk-level { margin-left: var(--kalk-space-2); font-size: var(--kalk-text-xs); font-weight: 600; }
+.risk-score.risk-low .risk-level { color: var(--kalk-positive); }
+.risk-score.risk-medium .risk-level { color: var(--kalk-caution); }
+.risk-score.risk-high .risk-level,
+.risk-score.risk-critical .risk-level { color: var(--kalk-negative); }
 
-/* Metrics */
-.metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--kalk-space-4); }
-.metrics-grid.compact { grid-template-columns: repeat(3, 1fr); }
-@media (max-width: 600px) { .metrics-grid, .metrics-grid.compact { grid-template-columns: repeat(2, 1fr); } }
-.metric-item { display: flex; flex-direction: column; align-items: center; padding: var(--kalk-space-4) var(--kalk-space-3); background: var(--kalk-gray-50); border-radius: var(--kalk-radius-md); text-align: center; }
-.metric-item.accent { background: var(--kalk-accent-50); border: 1px solid rgba(16, 185, 129, 0.2); }
-.metric-item.warn { background: #fefce8; border: 1px solid rgba(217, 119, 6, 0.2); }
-.metric-label { font-size: var(--kalk-text-xs); color: var(--kalk-gray-500); margin-bottom: var(--kalk-space-1); }
-.metric-value { font-size: var(--kalk-text-xl); font-weight: 700; color: var(--kalk-gray-900); font-variant-numeric: tabular-nums; }
+/* ============================================
+ * WARNINGS
+ * ============================================ */
+.warnings-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--kalk-space-3) var(--kalk-space-5);
+  background: var(--kalk-surface);
+  border: none;
+  cursor: pointer;
+  font-family: var(--kalk-font-family);
+  font-size: var(--kalk-text-sm);
+  font-weight: 600;
+  color: var(--kalk-gray-800);
+  text-align: left;
+}
+.warnings-card-header:hover { background: var(--kalk-gray-50); }
+.warnings-card-header.open { border-bottom: 1px solid var(--kalk-border); }
+.warnings-card-header .warning-icon { color: var(--kalk-caution); }
+.warnings-card-header.has-critical .warning-icon { color: var(--kalk-negative); }
+.warnings-card-title { display: flex; align-items: center; gap: var(--kalk-space-2); }
+.chevron-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--kalk-gray-400);
+  transition: transform 0.15s;
+}
+.chevron-icon.open { transform: rotate(180deg); }
+.warnings-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kalk-space-2);
+  padding: var(--kalk-space-4) var(--kalk-space-5);
+  max-height: 480px;
+  overflow-y: auto;
+}
+.warning-icon { width: 16px; height: 16px; flex-shrink: 0; }
+.warning-item { align-items: flex-start; }
+.warning-item .warning-icon { margin-top: 2px; }
 
-/* === CASHFLOW CHART === */
-.chart-container { padding: var(--kalk-space-2) 0; }
-.bar-chart { display: flex; align-items: flex-end; gap: 2px; height: 180px; padding: 0 var(--kalk-space-2); border-bottom: 1px solid var(--kalk-gray-200); }
-.bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; height: 100%; }
-.bar-stack { display: flex; flex-direction: column-reverse; width: 100%; max-width: 32px; height: 100%; justify-content: flex-start; }
-.bar { width: 100%; border-radius: 2px 2px 0 0; transition: height 0.3s; min-height: 1px; }
-.bar-noi { background: var(--kalk-accent-500); opacity: 0.85; }
-.bar-debt { background: var(--kalk-primary-700); }
+/* ============================================
+ * CHARTS
+ * ============================================ */
+.chart-container { min-width: 0; }
+.bar-chart,
+.financing-chart,
+.pv-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 180px;
+  margin-bottom: 20px;
+  padding: 0 var(--kalk-space-1);
+  border-bottom: 1px solid var(--kalk-border-strong);
+}
+.financing-chart { height: 160px; gap: 3px; }
+.pv-chart { position: relative; }
+
+.bar-group { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; position: relative; height: 100%; }
+.bar-stack { display: flex; flex-direction: column-reverse; width: 100%; max-width: 28px; height: 100%; justify-content: flex-start; }
+.bar { width: 100%; min-height: 1px; }
+.bar-noi { background: var(--kalk-navy-700); }
+.bar-debt { background: var(--kalk-navy-200); }
 .bar-tax { background: var(--kalk-gray-400); }
-.bar-cf-marker { position: absolute; left: 50%; transform: translateX(-50%); width: 8px; height: 8px; border-radius: 50%; background: var(--kalk-primary-900); border: 1.5px solid #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.15); z-index: 2; }
-.bar-cf-marker.negative { background: #b91c1c; }
-.bar-label { font-size: 10px; color: var(--kalk-gray-500); margin-top: var(--kalk-space-1); }
-
-/* === FINANCING CHART === */
-.financing-chart { display: flex; align-items: flex-end; gap: 3px; height: 160px; padding: 0 var(--kalk-space-2); border-bottom: 1px solid var(--kalk-gray-200); }
-.fin-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
-.fin-bar { width: 100%; max-width: 36px; background: var(--kalk-primary-800); border-radius: 2px 2px 0 0; transition: height 0.3s; display: flex; align-items: flex-start; justify-content: center; min-height: 2px; }
-.fin-ltv-label { font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.9); padding-top: 2px; }
-
-/* Legend */
-.chart-legend { display: flex; flex-wrap: wrap; gap: var(--kalk-space-4); justify-content: center; margin-top: var(--kalk-space-3); font-size: var(--kalk-text-xs); color: var(--kalk-gray-500); }
-.legend-item { display: flex; align-items: center; gap: var(--kalk-space-1); }
-.swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-.swatch-noi { background: var(--kalk-accent-500); opacity: 0.85; }
-.swatch-debt { background: var(--kalk-primary-700); }
-.swatch-tax { background: var(--kalk-gray-400); }
-.swatch-cf { background: var(--kalk-primary-900); border-radius: 50%; width: 8px; height: 8px; }
-.swatch-debt-bar { background: var(--kalk-primary-800); }
-
-/* === PROPERTY VALUE FORECAST === */
-.pv-chart { display: flex; align-items: flex-end; gap: 2px; height: 180px; padding: 0 var(--kalk-space-2); border-bottom: 1px solid var(--kalk-gray-200); position: relative; }
-.pv-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
-.pv-bar { width: 100%; max-width: 32px; background: var(--kalk-primary-700); opacity: 0.7; border-radius: 2px 2px 0 0; transition: height 0.3s; min-height: 2px; position: relative; }
-.pv-bar:hover { opacity: 1; }
-.pv-condition-warn { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 700; color: #92400e; }
-.pv-baseline { position: absolute; left: 0; right: 0; border-top: 1.5px dashed var(--kalk-gray-400); z-index: 1; pointer-events: none; }
-.pv-baseline-label { position: absolute; right: 0; top: -14px; font-size: 9px; font-weight: 600; color: var(--kalk-gray-500); background: #fff; padding: 0 var(--kalk-space-1); }
-.pv-baseline-legend { position: relative; padding-left: 16px; }
-.pv-baseline-legend::before { content: ''; position: absolute; left: 0; top: 50%; width: 10px; border-top: 1.5px dashed var(--kalk-gray-400); }
-.swatch-pv { background: var(--kalk-primary-700); opacity: 0.7; }
-
-/* Market Comparison Banner */
-.market-comparison { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--kalk-space-4); margin-bottom: var(--kalk-space-6); }
-@media (max-width: 600px) { .market-comparison { grid-template-columns: 1fr; } }
-.mc-item { display: flex; flex-direction: column; padding: var(--kalk-space-3) var(--kalk-space-4); background: var(--kalk-gray-50); border-radius: var(--kalk-radius-md); }
-.mc-item span { font-size: var(--kalk-text-xs); color: var(--kalk-gray-500); margin-bottom: var(--kalk-space-1); }
-.mc-item strong { font-size: var(--kalk-text-sm); color: var(--kalk-gray-900); font-variant-numeric: tabular-nums; }
-.mc-item.mc-below { border-left: 3px solid var(--kalk-accent-500); }
-.mc-item.mc-below strong { color: #047857; }
-.mc-item.mc-above { border-left: 3px solid #d97706; }
-.mc-item.mc-above strong { color: #92400e; }
-.mc-item.mc-at { border-left: 3px solid var(--kalk-gray-400); }
-
-/* Forecast Explanation */
-.forecast-explanation { margin-top: var(--kalk-space-6); }
-.explanation-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--kalk-space-2); }
-.explanation-list li { font-size: var(--kalk-text-sm); color: var(--kalk-gray-600); padding: var(--kalk-space-2) var(--kalk-space-3); border-left: 2px solid var(--kalk-gray-200); line-height: 1.5; }
-.explanation-list li.summary { border-left-color: var(--kalk-primary-700); font-weight: 500; color: var(--kalk-gray-800); }
-.explanation-list li.overdueComponents { border-left-color: #d97706; }
-.explanation-list li.investments { border-left-color: var(--kalk-accent-500); }
-.explanation-list li.meanReversion { border-left-color: var(--kalk-primary-500); }
-.explanation-list li.componentDeterioration { border-left-color: #dc2626; }
-
-/* === COMPONENT DETERIORATION (CARD LAYOUT) === */
-.comp-det-status { display: inline-block; padding: 2px 8px; border-radius: var(--kalk-radius-sm); font-size: var(--kalk-text-xs); font-weight: 500; }
-.status-OK { background: #dcfce7; color: #166534; }
-.status-Renewed { background: #dbeafe; color: #1e40af; }
-.status-Overdue { background: #fee2e2; color: #991b1b; }
-.status-OverdueAtPurchase { background: var(--kalk-gray-100); color: var(--kalk-gray-500); }
-
-/* Summary Strip */
-.cdet-summary-strip {
-  display: flex; align-items: center; gap: var(--kalk-space-3); flex-wrap: wrap;
-  margin-bottom: var(--kalk-space-4); padding: var(--kalk-space-3) var(--kalk-space-4);
-  background: var(--kalk-gray-50); border-radius: var(--kalk-radius-md);
+.bar-cf-marker {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--kalk-navy-950);
+  border: 1.5px solid var(--kalk-surface);
+  z-index: 2;
 }
-.cdet-counter {
-  display: flex; align-items: center; gap: var(--kalk-space-1);
-  padding: var(--kalk-space-1) var(--kalk-space-3); border-radius: 999px;
-  font-size: var(--kalk-text-xs); font-weight: 500;
-}
-.cdet-counter.status-OK { background: #dcfce7; color: #166534; }
-.cdet-counter.status-Renewed { background: #dbeafe; color: #1e40af; }
-.cdet-counter.status-Overdue { background: #fee2e2; color: #991b1b; }
-.cdet-counter.status-OverdueAtPurchase { background: var(--kalk-gray-100); color: var(--kalk-gray-500); }
-.cdet-counter-num { font-weight: 700; font-size: var(--kalk-text-sm); font-variant-numeric: tabular-nums; }
-.cdet-impact-total {
-  margin-left: auto; display: flex; flex-direction: column; align-items: flex-end;
+.bar-cf-marker.negative { background: var(--kalk-negative); }
+.bar-label {
+  position: absolute;
+  bottom: -18px;
+  font-size: var(--kalk-text-2xs);
+  color: var(--kalk-gray-500);
   font-variant-numeric: tabular-nums;
 }
-.cdet-impact-label { font-size: var(--kalk-text-xs); color: var(--kalk-gray-500); }
-.cdet-impact-total strong { font-size: var(--kalk-text-sm); font-weight: 700; }
-@media (max-width: 400px) {
-  .cdet-impact-total {
-    margin-left: 0; width: 100%; flex-direction: row; justify-content: space-between;
-    align-items: center; padding-top: var(--kalk-space-2); border-top: 1px solid var(--kalk-gray-200);
-  }
+
+.fin-bar-group,
+.pv-bar-group { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; position: relative; }
+.fin-bar {
+  width: 100%;
+  max-width: 32px;
+  background: var(--kalk-navy-600);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 2px;
+  overflow: hidden;
+}
+.fin-ltv-label { font-size: 9px; font-weight: 600; color: var(--kalk-surface); padding-top: 3px; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 480px) {
+  .fin-ltv-label { display: none; }
 }
 
-/* Card Grid */
-.cdet-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--kalk-space-3); align-items: start; }
+.pv-bar { width: 100%; max-width: 28px; background: var(--kalk-navy-600); min-height: 2px; position: relative; }
+.pv-bar:hover { background: var(--kalk-navy-800); }
+.pv-condition-warn { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 700; color: var(--kalk-caution); }
+.pv-baseline { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--kalk-gray-500); z-index: 1; pointer-events: none; }
+.pv-baseline-label {
+  position: absolute;
+  right: 0;
+  top: -16px;
+  font-size: var(--kalk-text-2xs);
+  font-weight: 600;
+  color: var(--kalk-gray-600);
+  background: var(--kalk-surface);
+  padding: 0 var(--kalk-space-1);
+  font-variant-numeric: tabular-nums;
+}
+.pv-baseline-legend { position: relative; padding-left: 16px; }
+.pv-baseline-legend::before { content: ''; position: absolute; left: 0; top: 50%; width: 10px; border-top: 1px dashed var(--kalk-gray-500); }
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kalk-space-2) var(--kalk-space-5);
+  margin-top: var(--kalk-space-4);
+  font-size: var(--kalk-text-xs);
+  color: var(--kalk-gray-600);
+}
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.swatch { width: 10px; height: 10px; border-radius: 1px; display: inline-block; }
+.swatch-noi { background: var(--kalk-navy-700); }
+.swatch-debt { background: var(--kalk-navy-200); }
+.swatch-tax { background: var(--kalk-gray-400); }
+.swatch-cf { background: var(--kalk-navy-950); border-radius: 50%; width: 8px; height: 8px; }
+.swatch-debt-bar { background: var(--kalk-navy-600); }
+.swatch-pv { background: var(--kalk-navy-600); }
+
+/* Tax bridge */
+.tax-bridge { display: flex; flex-direction: column; gap: 6px; }
+.bridge-year { display: flex; align-items: center; gap: var(--kalk-space-3); }
+.bridge-year-label { width: 36px; font-size: var(--kalk-text-xs); font-weight: 600; color: var(--kalk-gray-600); text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.bridge-bars { flex: 1; min-width: 0; display: flex; height: 14px; overflow: hidden; background: var(--kalk-gray-50); }
+.bridge-bar { height: 100%; min-width: 1px; }
+.bridge-bar.income { background: var(--kalk-navy-700); }
+.bridge-bar.afa { background: var(--kalk-navy-400); }
+.bridge-bar.interest { background: var(--kalk-navy-200); }
+.bridge-bar.operating { background: var(--kalk-gray-400); }
+.bridge-bar.maintenance { background: var(--kalk-gray-300); }
+.bridge-result { font-size: var(--kalk-text-xs); font-weight: 600; color: var(--kalk-gray-800); white-space: nowrap; min-width: 110px; text-align: right; font-variant-numeric: tabular-nums; }
+.bridge-result.negative { color: var(--kalk-negative); }
+.swatch-income { background: var(--kalk-navy-700); }
+.swatch-afa { background: var(--kalk-navy-400); }
+.swatch-interest-b { background: var(--kalk-navy-200); }
+.swatch-operating { background: var(--kalk-gray-400); }
+.swatch-maintenance { background: var(--kalk-gray-300); }
+
+@media (max-width: 480px) {
+  .bridge-year { gap: var(--kalk-space-2); }
+  .bridge-result { min-width: 0; font-size: var(--kalk-text-2xs); }
+}
+
+/* ============================================
+ * TABLES
+ * ============================================ */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+.table-bordered-top { border-top: 1px solid var(--kalk-border); }
+
+.data-table th :deep(.help-icon-btn) { vertical-align: middle; width: 14px; height: 14px; }
+.data-table td.neg { color: var(--kalk-negative); }
+.data-table td.pos { color: var(--kalk-positive); }
+.data-table td.warn { color: var(--kalk-caution); font-weight: 600; }
+
+.cashflow-table { min-width: 1000px; font-size: var(--kalk-text-xs); }
+.cashflow-table th,
+.cashflow-table td { white-space: nowrap; padding: 8px 10px; }
+.cashflow-table th:first-child,
+.cashflow-table td:first-child { padding-left: var(--kalk-space-5); }
+.cashflow-table th:last-child,
+.cashflow-table td:last-child { padding-right: var(--kalk-space-5); }
+.cashflow-table .sticky-col { text-align: left; position: sticky; left: 0; background: var(--kalk-surface); z-index: 2; border-right: 1px solid var(--kalk-border); }
+.cashflow-table th.sticky-col { background: var(--kalk-gray-50); z-index: 3; }
+.cashflow-table .year-col { font-weight: 600; color: var(--kalk-gray-900); }
+.cashflow-table .highlight-col { background: var(--kalk-navy-50); font-weight: 600; }
+.cashflow-table th.highlight-col { background: var(--kalk-navy-100); color: var(--kalk-navy-900); }
+.cashflow-table tbody tr:hover td.highlight-col { background: var(--kalk-navy-100); }
+.cashflow-table tfoot td {
+  background: var(--kalk-gray-50);
+  font-weight: 700;
+  color: var(--kalk-gray-900);
+  border-top: 1px solid var(--kalk-gray-900);
+  border-bottom: none;
+}
+.cashflow-table tfoot td.neg { color: var(--kalk-negative); }
+.cashflow-table tfoot td.pos { color: var(--kalk-positive); }
+.cashflow-table tfoot .sticky-col { background: var(--kalk-gray-50); }
+.cashflow-table tfoot td.highlight-col { background: var(--kalk-navy-100); }
+
+.scenario-table th,
+.scenario-table td { white-space: nowrap; }
+.scenario-table th:first-child,
+.scenario-table td:first-child { padding-left: var(--kalk-space-5); }
+.scenario-table th:last-child,
+.scenario-table td:last-child { padding-right: var(--kalk-space-5); }
+.scenario-table .scenario-label-col { min-width: 160px; }
+.scenario-table td:first-child { text-align: left; color: var(--kalk-gray-700); }
+.scenario-table th.scenario-col { min-width: 120px; vertical-align: bottom; }
+.scenario-rate { display: block; font-weight: 400; font-size: var(--kalk-text-2xs); color: var(--kalk-gray-500); text-transform: none; letter-spacing: 0; }
+.scenario-table .scenario-base { background: var(--kalk-navy-50); }
+.scenario-table th.scenario-base { color: var(--kalk-navy-900); background: var(--kalk-navy-100); }
+.scenario-subtotal td { border-top: 1px solid var(--kalk-border-strong); font-weight: 600; }
+.scenario-total td { border-top: 1px solid var(--kalk-gray-900); font-weight: 700; color: var(--kalk-gray-900); }
+.scenario-total td.neg { color: var(--kalk-negative); }
+.scenario-total td.pos { color: var(--kalk-positive); }
+.scenario-highlight td { font-weight: 600; }
+.scenario-table td :deep(.help-icon-btn) { vertical-align: middle; }
+
+/* ============================================
+ * PROPERTY: EXPLANATION
+ * ============================================ */
+.forecast-explanation { border-top: 1px solid var(--kalk-border); }
+.explanation-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--kalk-space-2); }
+.explanation-list li {
+  font-size: var(--kalk-text-sm);
+  color: var(--kalk-gray-700);
+  padding: 2px 0 2px var(--kalk-space-3);
+  border-left: 2px solid var(--kalk-gray-200);
+  line-height: 1.55;
+}
+.explanation-list li.summary { border-left-color: var(--kalk-navy-800); font-weight: 600; color: var(--kalk-gray-900); }
+.explanation-list li.overdueComponents { border-left-color: var(--kalk-caution); }
+.explanation-list li.investments { border-left-color: var(--kalk-navy-400); }
+.explanation-list li.meanReversion { border-left-color: var(--kalk-navy-400); }
+.explanation-list li.componentDeterioration { border-left-color: var(--kalk-negative); }
+
+/* ============================================
+ * COMPONENT DETERIORATION
+ * ============================================ */
+.cdet-summary-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kalk-space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--kalk-space-4);
+  padding-bottom: var(--kalk-space-4);
+  border-bottom: 1px solid var(--kalk-border);
+}
+.cdet-counters { display: flex; flex-wrap: wrap; gap: var(--kalk-space-2); }
+.cdet-counter-num { font-variant-numeric: tabular-nums; font-weight: 700; }
+.cdet-impact-total { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.cdet-impact-total strong { font-size: var(--kalk-text-lg); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--kalk-navy-900); }
+.cdet-impact-total strong.neg { color: var(--kalk-negative); }
+.cdet-impact-total strong.pos { color: var(--kalk-positive); }
+
+.cdet-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--kalk-space-3); align-items: start; }
 @media (max-width: 600px) { .cdet-grid { grid-template-columns: 1fr; } }
-@media (min-width: 900px) { .cdet-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 900px) { .cdet-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
 .cdet-card {
-  position: relative; display: flex; flex-direction: column;
-  padding: var(--kalk-space-3) var(--kalk-space-4); background: #fff;
-  border: 1px solid var(--kalk-gray-200); border-radius: var(--kalk-radius-md);
-  cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s;
-  border-left: 3px solid var(--kalk-gray-300);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: var(--kalk-space-3) var(--kalk-space-4);
+  background: var(--kalk-surface);
+  border: 1px solid var(--kalk-border);
+  border-radius: var(--kalk-radius-md);
+  cursor: pointer;
+  transition: border-color 0.12s;
+  min-width: 0;
 }
-.cdet-card:hover { box-shadow: var(--kalk-shadow-sm); border-color: var(--kalk-gray-300); }
-.cdet-card:focus-visible { outline: 2px solid var(--kalk-accent-500); outline-offset: 2px; }
-.cdet-card.cdet-OK { border-left-color: #16a34a; }
-.cdet-card.cdet-Renewed { border-left-color: #2563eb; }
-.cdet-card.cdet-Overdue { border-left-color: #dc2626; background: #fef2f2; }
-.cdet-card.cdet-OverdueAtPurchase { border-left-color: var(--kalk-gray-400); }
+.cdet-card:hover { border-color: var(--kalk-border-strong); }
+.cdet-card:focus-visible { outline: 2px solid var(--kalk-navy-500); outline-offset: 2px; }
 
-.cdet-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--kalk-space-2); }
-.cdet-card-name { font-size: var(--kalk-text-sm); font-weight: 600; color: var(--kalk-gray-900); }
+.cdet-card-header { display: flex; justify-content: space-between; align-items: center; gap: var(--kalk-space-2); margin-bottom: var(--kalk-space-3); }
+.cdet-card-name { font-size: var(--kalk-text-sm); font-weight: 600; color: var(--kalk-gray-900); min-width: 0; }
 
-.cdet-card-metrics { display: flex; gap: var(--kalk-space-3); flex-wrap: wrap; }
-.cdet-metric { display: flex; flex-direction: column; min-width: 0; }
-.cdet-metric-label { font-size: 10px; color: var(--kalk-gray-500); text-transform: uppercase; letter-spacing: 0.04em; }
-.cdet-metric-value { font-size: var(--kalk-text-sm); font-weight: 600; color: var(--kalk-gray-800); font-variant-numeric: tabular-nums; }
+.cdet-card-metrics { display: flex; gap: var(--kalk-space-4); flex-wrap: wrap; }
+.cdet-metric { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.cdet-metric-label { font-size: 10px; font-weight: 600; color: var(--kalk-gray-500); text-transform: uppercase; letter-spacing: var(--kalk-tracking-caps); }
+.cdet-metric-value { font-size: var(--kalk-text-sm); font-weight: 600; color: var(--kalk-gray-900); font-variant-numeric: tabular-nums; }
+.cdet-metric-value.pos { color: var(--kalk-positive); }
+.cdet-metric-value.neg { color: var(--kalk-negative); }
 
-/* Lifecycle Bar */
-.cdet-lifecycle-bar { height: 4px; background: var(--kalk-gray-100); border-radius: 2px; margin-top: var(--kalk-space-2); overflow: hidden; }
-.cdet-lifecycle-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease-out; }
-.cdet-fill-OK { background: #16a34a; }
-.cdet-fill-Renewed { background: #2563eb; }
-.cdet-fill-Overdue { background: #dc2626; }
+.cdet-lifecycle-bar { height: 3px; background: var(--kalk-gray-100); margin-top: var(--kalk-space-3); overflow: hidden; }
+.cdet-lifecycle-fill { height: 100%; }
+.cdet-fill-OK { background: var(--kalk-navy-600); }
+.cdet-fill-Renewed { background: var(--kalk-navy-400); }
+.cdet-fill-Overdue { background: var(--kalk-negative); }
 .cdet-fill-OverdueAtPurchase { background: var(--kalk-gray-400); }
 
-/* Expand Hint (mobile only) */
 .cdet-expand-hint { display: flex; justify-content: center; margin-top: var(--kalk-space-1); color: var(--kalk-gray-400); }
-.cdet-expand-hint svg { transition: transform 0.2s; }
+.cdet-expand-hint svg { transition: transform 0.15s; }
 .cdet-expand-hint svg.rotated { transform: rotate(180deg); }
 
-/* Detail Section */
 .cdet-detail {
-  margin-top: var(--kalk-space-3); padding-top: var(--kalk-space-3);
-  border-top: 1px solid var(--kalk-gray-100); display: flex; flex-direction: column; gap: var(--kalk-space-2);
+  margin-top: var(--kalk-space-3);
+  padding-top: var(--kalk-space-3);
+  border-top: 1px solid var(--kalk-gray-100);
+  display: flex;
+  flex-direction: column;
+  gap: var(--kalk-space-2);
 }
-
-/* Mobile: collapse/expand behavior */
 @media (max-width: 899px) {
   .cdet-detail { display: none; }
   .cdet-card.expanded .cdet-detail { display: flex; }
 }
-
-/* Desktop: always show detail, hide chevron, no click affordance */
 @media (min-width: 900px) {
   .cdet-card { cursor: default; }
-  .cdet-card:hover { box-shadow: none; }
+  .cdet-card:hover { border-color: var(--kalk-border); }
   .cdet-expand-hint { display: none; }
 }
 .cdet-detail-row {
-  display: flex; justify-content: space-between; align-items: center;
-  font-size: var(--kalk-text-xs); color: var(--kalk-gray-600);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--kalk-space-3);
+  font-size: var(--kalk-text-xs);
+  color: var(--kalk-gray-600);
 }
-.cdet-detail-row strong { color: var(--kalk-gray-800); font-variant-numeric: tabular-nums; }
+.cdet-detail-row strong,
+.cdet-detail-row .num { color: var(--kalk-gray-900); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cdet-detail-row strong.pos { color: var(--kalk-positive); }
 .cdet-priced-in-hint {
-  font-size: var(--kalk-text-xs); color: var(--kalk-gray-500); line-height: 1.5;
-  padding: var(--kalk-space-2) var(--kalk-space-3); background: var(--kalk-gray-50);
-  border-radius: var(--kalk-radius-sm); margin-bottom: var(--kalk-space-1);
+  font-size: var(--kalk-text-xs);
+  color: var(--kalk-gray-600);
+  line-height: 1.5;
+  padding: var(--kalk-space-2) var(--kalk-space-3);
+  background: var(--kalk-gray-50);
+  border-left: 2px solid var(--kalk-gray-300);
 }
-.cdet-detail-row strong.positive { color: #16a34a; }
-
 .cdet-recurring {
-  padding: var(--kalk-space-2) var(--kalk-space-3); background: var(--kalk-gray-50);
-  border-radius: var(--kalk-radius-sm); margin-top: var(--kalk-space-1);
+  padding: var(--kalk-space-2) var(--kalk-space-3);
+  background: var(--kalk-gray-50);
+  border-left: 2px solid var(--kalk-navy-400);
 }
-.cdet-recurring-badge {
-  display: inline-block; font-size: 10px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.05em; color: var(--kalk-accent-700); margin-bottom: var(--kalk-space-2);
-}
+.cdet-recurring-badge { margin-bottom: var(--kalk-space-2); }
 .cdet-recurring-details { display: flex; flex-direction: column; gap: var(--kalk-space-1); }
 
-/* Bottom Totals */
-.cdet-totals {
-  margin-top: var(--kalk-space-4); padding-top: var(--kalk-space-3);
-  border-top: 2px solid var(--kalk-gray-200); display: flex; flex-direction: column; gap: var(--kalk-space-2);
-}
-.cdet-total-row {
-  display: flex; justify-content: space-between; align-items: center;
-  font-size: var(--kalk-text-sm); padding: var(--kalk-space-2) var(--kalk-space-3); border-radius: var(--kalk-radius-sm);
-}
-.cdet-total-row span { color: var(--kalk-gray-600); }
-.cdet-total-row strong { font-weight: 600; font-variant-numeric: tabular-nums; }
-.cdet-total-row.negative { background: #fef2f2; }
-.cdet-total-row.negative strong { color: #dc2626; }
-.cdet-total-row.positive { background: #ecfdf5; }
-.cdet-total-row.positive strong { color: #16a34a; }
+.cdet-totals { margin-top: var(--kalk-space-4); padding-top: var(--kalk-space-2); border-top: 1px solid var(--kalk-border); }
 
-/* === STEUER-BRIDGE === */
-.tax-bridge { display: flex; flex-direction: column; gap: var(--kalk-space-2); }
-.bridge-year { display: flex; align-items: center; gap: var(--kalk-space-3); }
-.bridge-year-label { width: 36px; font-size: var(--kalk-text-xs); font-weight: 600; color: var(--kalk-gray-600); text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
-.bridge-bars { flex: 1; display: flex; height: 18px; border-radius: 2px; overflow: hidden; }
-.bridge-bar { height: 100%; min-width: 2px; }
-.bridge-bar.income { background: var(--kalk-accent-500); opacity: 0.8; }
-.bridge-bar.afa { background: var(--kalk-primary-800); }
-.bridge-bar.interest { background: var(--kalk-primary-700); opacity: 0.75; }
-.bridge-bar.operating { background: var(--kalk-gray-400); }
-.bridge-bar.maintenance { background: var(--kalk-gray-300); }
-.bridge-result { font-size: var(--kalk-text-xs); font-weight: 600; color: var(--kalk-gray-700); white-space: nowrap; min-width: 100px; text-align: right; font-variant-numeric: tabular-nums; }
-.bridge-result.negative { color: #b91c1c; }
-.bridge-legend { margin-top: var(--kalk-space-4); }
-.swatch-income { background: var(--kalk-accent-500); opacity: 0.8; }
-.swatch-afa { background: var(--kalk-primary-800); }
-.swatch-interest-b { background: var(--kalk-primary-700); opacity: 0.75; }
-.swatch-operating { background: var(--kalk-gray-400); }
-.swatch-maintenance { background: var(--kalk-gray-300); }
+@media (max-width: 400px) {
+  .cdet-impact-total { align-items: flex-start; width: 100%; }
+}
 
-/* === CAPEX TIMELINE (HORIZONTAL) === */
-
-/* Axis */
-.captl-axis {
-  position: relative; margin-bottom: var(--kalk-space-6);
-  padding: var(--kalk-space-4) var(--kalk-space-2) var(--kalk-space-8);
-}
-.captl-track {
-  position: relative; height: 2px; background: var(--kalk-gray-200); border-radius: 1px;
-}
-.captl-year-tick {
-  position: absolute; top: -4px; transform: translateX(-50%);
-  width: 1px; height: 10px; background: var(--kalk-gray-300);
-}
+/* ============================================
+ * CAPEX TIMELINE
+ * ============================================ */
+.captl-axis { position: relative; margin-bottom: var(--kalk-space-4); padding: var(--kalk-space-4) var(--kalk-space-3) var(--kalk-space-8); }
+.captl-track { position: relative; height: 1px; background: var(--kalk-border-strong); }
+.captl-year-tick { position: absolute; top: -4px; transform: translateX(-50%); width: 1px; height: 9px; background: var(--kalk-gray-300); }
 .captl-year-label {
-  position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
-  font-size: 10px; font-weight: 600; color: var(--kalk-gray-500);
-  font-variant-numeric: tabular-nums; white-space: nowrap;
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: var(--kalk-text-2xs);
+  color: var(--kalk-gray-500);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .captl-dot {
-  position: absolute; top: 50%; transform: translate(-50%, -50%);
-  border-radius: 50%; min-width: 8px; min-height: 8px;
-  border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  min-width: 8px;
+  min-height: 8px;
+  border: 1.5px solid var(--kalk-surface);
   z-index: 1;
 }
-.captl-dot.MaintenanceExpense { background: var(--kalk-accent-500); }
-.captl-dot.AcquisitionCost { background: var(--kalk-primary-700); }
-.captl-dot.ImprovementCost { background: var(--kalk-primary-900); }
-.captl-dot.NotDeductible { background: var(--kalk-gray-400); }
+.captl-dot.MaintenanceExpense, .captl-dot-inline.MaintenanceExpense { background: var(--kalk-navy-400); }
+.captl-dot.AcquisitionCost, .captl-dot-inline.AcquisitionCost { background: var(--kalk-navy-700); }
+.captl-dot.ImprovementCost, .captl-dot-inline.ImprovementCost { background: var(--kalk-navy-950); }
+.captl-dot.NotDeductible, .captl-dot-inline.NotDeductible { background: var(--kalk-gray-400); }
 
-/* Grouped list */
-.captl-groups {
-  display: flex; flex-direction: column; gap: var(--kalk-space-1);
-}
+.captl-groups { display: flex; flex-direction: column; border-top: 1px solid var(--kalk-border); }
 .captl-group {
-  display: flex; align-items: baseline; gap: var(--kalk-space-3);
+  display: flex;
+  align-items: baseline;
+  gap: var(--kalk-space-3);
   padding: var(--kalk-space-2) 0;
-  border-bottom: 1px solid var(--kalk-gray-50);
+  border-bottom: 1px solid var(--kalk-gray-100);
 }
-.captl-group:last-child { border-bottom: none; }
-.captl-group-year {
-  width: 40px; flex-shrink: 0; font-size: var(--kalk-text-xs); font-weight: 700;
-  color: var(--kalk-gray-600); font-variant-numeric: tabular-nums;
-}
-.captl-group-items { flex: 1; display: flex; flex-direction: column; gap: var(--kalk-space-1); }
-.captl-group-item {
-  display: flex; align-items: center; gap: var(--kalk-space-2);
-  font-size: var(--kalk-text-xs); color: var(--kalk-gray-700);
-}
-.captl-dot-inline {
-  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
-}
-.captl-dot-inline.MaintenanceExpense { background: var(--kalk-accent-500); }
-.captl-dot-inline.AcquisitionCost { background: var(--kalk-primary-700); }
-.captl-dot-inline.ImprovementCost { background: var(--kalk-primary-900); }
-.captl-dot-inline.NotDeductible { background: var(--kalk-gray-400); }
-.captl-item-name { flex: 1; font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.captl-item-amount { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.captl-item-tax {
-  font-size: 10px; color: var(--kalk-gray-400); white-space: nowrap; flex-shrink: 0;
-}
+.captl-group-year { width: 40px; flex-shrink: 0; font-size: var(--kalk-text-xs); font-weight: 600; color: var(--kalk-gray-700); font-variant-numeric: tabular-nums; }
+.captl-group-items { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--kalk-space-1); }
+.captl-group-item { display: flex; align-items: center; gap: var(--kalk-space-2); font-size: var(--kalk-text-sm); color: var(--kalk-gray-800); }
+.captl-dot-inline { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.captl-item-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.captl-item-amount { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 90px; text-align: right; }
+.captl-item-tax { font-size: var(--kalk-text-xs); color: var(--kalk-gray-500); white-space: nowrap; flex-shrink: 0; }
 .captl-group-total {
-  flex-shrink: 0; font-size: var(--kalk-text-xs); font-weight: 700;
-  color: var(--kalk-gray-500); font-variant-numeric: tabular-nums; white-space: nowrap;
-  padding-left: var(--kalk-space-2); border-left: 1px solid var(--kalk-gray-200);
+  flex-shrink: 0;
+  font-size: var(--kalk-text-xs);
+  font-weight: 600;
+  color: var(--kalk-gray-600);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding-left: var(--kalk-space-3);
+  border-left: 1px solid var(--kalk-border);
 }
-
-/* Total row */
-.captl-total {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-top: var(--kalk-space-3); padding-top: var(--kalk-space-3);
-  border-top: 2px solid var(--kalk-gray-200); font-size: var(--kalk-text-sm);
-}
-.captl-total span { color: var(--kalk-gray-600); }
-.captl-total strong { font-weight: 700; font-variant-numeric: tabular-nums; }
-
-/* Mobile: hide axis, show only list */
 @media (max-width: 600px) {
   .captl-axis { display: none; }
   .captl-item-tax { display: none; }
   .captl-group { flex-wrap: wrap; }
+  .captl-item-amount { min-width: 0; }
 }
 
-/* === RISK INDICATORS === */
-.risk-grid { display: flex; flex-direction: column; gap: var(--kalk-space-6); }
-.risk-item { display: flex; flex-direction: column; gap: var(--kalk-space-2); }
-.risk-label { font-size: var(--kalk-text-sm); font-weight: 600; color: var(--kalk-gray-700); }
-.risk-gauge { height: 6px; background: var(--kalk-gray-100); border-radius: 3px; overflow: hidden; }
-.risk-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease-out; }
-.risk-fill.risk-low { background: var(--kalk-accent-500); }
-.risk-fill.risk-medium { background: #d97706; }
-.risk-fill.risk-high { background: #c2410c; }
-.risk-fill.risk-critical { background: #b91c1c; }
-.risk-score { font-size: var(--kalk-text-sm); font-weight: 700; font-variant-numeric: tabular-nums; }
-.risk-score.risk-low { color: #047857; }
-.risk-score.risk-medium { color: #92400e; }
-.risk-score.risk-high { color: #9a3412; }
-.risk-score.risk-critical { color: #991b1b; }
-.risk-level { font-weight: 500; margin-left: var(--kalk-space-2); }
-
-/* === CASHFLOW TABLE === */
-.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 calc(-1 * var(--kalk-space-4)); padding: 0 var(--kalk-space-4); }
-.cashflow-table { width: 100%; min-width: 1000px; border-collapse: collapse; font-size: var(--kalk-text-xs); font-variant-numeric: tabular-nums; }
-.cashflow-table th, .cashflow-table td { padding: var(--kalk-space-2) var(--kalk-space-3); text-align: right; white-space: nowrap; border-bottom: 1px solid var(--kalk-gray-100); }
-.cashflow-table th { background: var(--kalk-gray-50); color: var(--kalk-gray-600); font-weight: 600; position: sticky; top: 0; z-index: 1; }
-.cashflow-table .sticky-col { text-align: left; position: sticky; left: 0; background: #fff; z-index: 2; }
-.cashflow-table th.sticky-col { background: var(--kalk-gray-50); z-index: 3; }
-.cashflow-table .year-col { font-weight: 600; color: var(--kalk-gray-900); }
-.cashflow-table .highlight-col { background: var(--kalk-accent-50); }
-.cashflow-table th.highlight-col { background: rgba(16, 185, 129, 0.08); }
-.cashflow-table tbody tr:hover { background: var(--kalk-gray-50); }
-.cashflow-table tbody tr:hover .sticky-col { background: var(--kalk-gray-50); }
-.cashflow-table tfoot { border-top: 2px solid var(--kalk-gray-300); }
-.cashflow-table tfoot td { background: var(--kalk-gray-50); font-weight: 600; }
-.cashflow-table tfoot .sticky-col { background: var(--kalk-gray-50); }
-
-/* Colors */
-.pos { color: #047857; }
-.neg { color: #991b1b; }
-.warn { color: #92400e; }
-
-/* === TAX SUMMARY === */
-.tax-grid { display: flex; flex-direction: column; gap: var(--kalk-space-2); }
-.tax-row { display: flex; justify-content: space-between; align-items: center; padding: var(--kalk-space-3) var(--kalk-space-4); border-radius: var(--kalk-radius-sm); font-size: var(--kalk-text-sm); }
-.tax-row span { color: var(--kalk-gray-600); }
-.tax-row strong { font-variant-numeric: tabular-nums; color: var(--kalk-gray-900); }
-.tax-row.separator { border-top: 1px solid var(--kalk-gray-200); margin-top: var(--kalk-space-2); padding-top: var(--kalk-space-4); }
-.tax-row.highlight { background: var(--kalk-gray-50); font-weight: 600; }
-.tax-row.rule-triggered { background: #fefce8; }
-.tax-row.rule-triggered strong { color: #92400e; }
-.tax-row.tax-row-info { background: #fffbeb; }
-.tax-row.tax-row-info span { color: var(--kalk-gray-500); font-style: italic; }
-.hint-text { color: var(--kalk-gray-500) !important; font-style: italic; }
-
-/* === EXIT ANALYSIS === */
-.exit-subtitle { font-size: var(--kalk-text-sm); color: var(--kalk-gray-500); margin-bottom: var(--kalk-space-4); }
-
-.exit-meta { display: flex; gap: var(--kalk-space-4); margin-bottom: var(--kalk-space-6); }
-@media (max-width: 600px) { .exit-meta { flex-direction: column; } }
-.exit-meta-item { flex: 1; display: flex; flex-direction: column; padding: var(--kalk-space-3) var(--kalk-space-4); background: var(--kalk-gray-50); border-radius: var(--kalk-radius-md); }
-.exit-meta-item span { font-size: var(--kalk-text-xs); color: var(--kalk-gray-500); margin-bottom: var(--kalk-space-1); }
-.exit-meta-item strong { font-size: var(--kalk-text-sm); color: var(--kalk-gray-900); }
-.exit-meta-item.speculation-active { border-left: 3px solid #92400e; }
-.exit-meta-item.speculation-active strong { color: #92400e; }
-
-.exit-section-title { font-size: var(--kalk-text-sm); font-weight: 600; color: var(--kalk-gray-700); margin-bottom: var(--kalk-space-3); padding-bottom: var(--kalk-space-2); border-bottom: 1px solid var(--kalk-gray-200); }
-
+/* ============================================
+ * EXIT
+ * ============================================ */
 .exit-pnl { margin-bottom: var(--kalk-space-6); }
-.exit-pnl-row { display: flex; justify-content: space-between; align-items: center; padding: var(--kalk-space-2) var(--kalk-space-3); font-size: var(--kalk-text-sm); }
-.exit-pnl-row span { color: var(--kalk-gray-600); }
-.exit-pnl-row strong { font-variant-numeric: tabular-nums; }
-.exit-pnl-total { border-top: 2px solid var(--kalk-gray-300); margin-top: var(--kalk-space-2); padding-top: var(--kalk-space-3); background: var(--kalk-gray-50); border-radius: var(--kalk-radius-sm); }
-.exit-pnl-total span { font-weight: 600; color: var(--kalk-gray-900); }
 
-.exit-scenarios { margin-top: var(--kalk-space-2); }
-.scenario-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.scenario-table { width: 100%; border-collapse: collapse; font-size: var(--kalk-text-xs); font-variant-numeric: tabular-nums; }
-.scenario-table th, .scenario-table td { padding: var(--kalk-space-2) var(--kalk-space-3); text-align: right; white-space: nowrap; border-bottom: 1px solid var(--kalk-gray-100); }
-.scenario-table th { background: var(--kalk-gray-50); color: var(--kalk-gray-600); font-weight: 600; font-size: var(--kalk-text-xs); }
-.scenario-table .scenario-label-col { text-align: left; min-width: 140px; }
-.scenario-table td:first-child { text-align: left; color: var(--kalk-gray-600); font-weight: 500; }
-.scenario-rate { display: block; font-weight: 400; font-size: 10px; color: var(--kalk-gray-400); }
-.scenario-col { min-width: 120px; }
-.scenario-base { background: var(--kalk-gray-50); }
-.scenario-subtotal td { border-top: 1.5px solid var(--kalk-gray-300); font-weight: 600; }
-.scenario-total td { border-top: 2px solid var(--kalk-gray-400); background: var(--kalk-gray-50); font-weight: 700; }
-.scenario-highlight td { background: var(--kalk-gray-50); font-weight: 600; }
-
-/* === TOTALS === */
-.totals-section { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--kalk-space-4); }
-@media (max-width: 600px) { .totals-section { grid-template-columns: 1fr; } }
-.total-item { display: flex; flex-direction: column; align-items: center; padding: var(--kalk-space-5); background: var(--kalk-gray-50); border-radius: var(--kalk-radius-md); text-align: center; }
-.total-item.accent { background: var(--kalk-primary-900); color: #fff; }
-.total-item span { font-size: var(--kalk-text-xs); color: var(--kalk-gray-500); margin-bottom: var(--kalk-space-2); }
-.total-item.accent span { color: rgba(255,255,255,0.8); }
-.total-item strong { font-size: var(--kalk-text-lg); font-weight: 700; font-variant-numeric: tabular-nums; }
-.total-item.accent strong { color: #fff; }
-
-.actions { display: flex; justify-content: center; gap: var(--kalk-space-4); }
+/* ============================================
+ * ACTIONS
+ * ============================================ */
+.actions { display: flex; justify-content: flex-end; gap: var(--kalk-space-3); }
 </style>

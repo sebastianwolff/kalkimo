@@ -241,6 +241,43 @@ public class PropertyValueForecastTests
         Assert.Equal(0.70m, result.ImprovementValueFactor);
     }
 
+    [Fact]
+    public void Calculate_ValueUplift_IndependentOfTaxClassification()
+    {
+        // Gleiche Maßnahme, nur steuerlich anders eingeordnet (z.B. 15%-Grenze) → gleicher Wertbeitrag
+        var maintenance = TestProjectBuilder.CreateStandardProject().WithCapEx(
+            TestProjectBuilder.CreateMeasure("m1", CapExCategory.Other, 30_000m, 2027,
+                taxClass: TaxClassification.MaintenanceExpense));
+        var acquisition = TestProjectBuilder.CreateStandardProject().WithCapEx(
+            TestProjectBuilder.CreateMeasure("m1", CapExCategory.Other, 30_000m, 2027,
+                taxClass: TaxClassification.AcquisitionRelatedCosts));
+
+        var upliftM = PropertyValueForecastCalculator.Calculate(maintenance, 2025, 2035)
+            .Scenarios.First(s => s.Label == "base").YearlyValues[^1].ImprovementUplift;
+        var upliftA = PropertyValueForecastCalculator.Calculate(acquisition, 2025, 2035)
+            .Scenarios.First(s => s.Label == "base").YearlyValues[^1].ImprovementUplift;
+
+        Assert.Equal(21_000m, upliftM);
+        Assert.Equal(upliftM, upliftA);
+    }
+
+    [Fact]
+    public void Calculate_ValueFactorPercent_PerMeasure_IsApplied()
+    {
+        var project = TestProjectBuilder.CreateStandardProject().WithCapEx(
+            TestProjectBuilder.CreateMeasure("m1", CapExCategory.Other, 20_000m, 2027) with { ValueFactorPercent = 90m },
+            TestProjectBuilder.CreateMeasure("m2", CapExCategory.Other, 10_000m, 2028) with { ValueFactorPercent = 0m });
+
+        var result = PropertyValueForecastCalculator.Calculate(project, 2025, 2035);
+        var baseRows = result.Scenarios.First(s => s.Label == "base").YearlyValues;
+
+        Assert.Equal(0m, baseRows.First(r => r.Year == 2026).ImprovementUplift);
+        Assert.Equal(18_000m, baseRows.First(r => r.Year == 2027).ImprovementUplift);
+        Assert.Equal(18_000m, baseRows[^1].ImprovementUplift);
+        // Effektiver Faktor: 18.000 / 30.000 = 60%
+        Assert.Equal(0.60m, result.ImprovementValueFactor);
+    }
+
     #endregion
 
     #region Component Deterioration

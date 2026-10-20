@@ -74,7 +74,7 @@ public static class FrontendProjectMapper
             Costs = costs,
             TaxProfile = MapTaxProfile(request.TaxProfile),
             CapEx = capEx,
-            Valuation = new ValuationConfiguration()
+            Valuation = MapValuation(request.Valuation)
         };
     }
 
@@ -175,12 +175,18 @@ public static class FrontendProjectMapper
     {
         var purchaseDate = new DateOnly(dto.PurchaseDate.Year, dto.PurchaseDate.Month, 1);
 
-        var acquisitionCosts = dto.Costs?.Select(c => new AcquisitionCost
+        var acquisitionCosts = dto.Costs?.Select(c =>
         {
-            Type = MapAcquisitionCostType(c.Name),
-            Amount = MapMoney(c.Amount, currency),
-            Description = c.Name,
-            IsCapitalizable = true
+            var type = MapAcquisitionCostType(c.Name);
+            return new AcquisitionCost
+            {
+                Type = type,
+                Amount = MapMoney(c.Amount, currency),
+                Description = c.Name,
+                // Finanzierungskosten (Grundschuldbestellung etc.) sind sofort abziehbare
+                // Werbungskosten und gehören nicht zu den Anschaffungskosten
+                IsCapitalizable = type != AcquisitionCostType.FinancingCosts
+            };
         }).ToList() ?? [];
 
         return new Purchase
@@ -212,16 +218,42 @@ public static class FrontendProjectMapper
     {
         Id = dto.Id,
         Name = dto.Name,
-        Type = LoanType.Annuity,
+        Type = string.IsNullOrEmpty(dto.Type) ? LoanType.Annuity : ParseEnum<LoanType>(dto.Type),
         Principal = MapMoney(dto.Principal, currency),
         DisbursementDate = new DateOnly(dto.StartDate.Year, dto.StartDate.Month, 1),
         InterestRatePercent = dto.InterestRatePercent,
         InitialRepaymentPercent = dto.InitialRepaymentPercent,
         FixedInterestPeriodMonths = dto.FixedInterestYears * 12,
+        TilgungsfreieAnlaufjahre = Math.Max(0, dto.GracePeriodYears ?? 0),
         AnnualSpecialRepaymentAllowed = dto.SpecialRepaymentPercentPerYear.HasValue
             ? MapMoney(dto.Principal, currency) * (dto.SpecialRepaymentPercentPerYear.Value / 100)
+            : null,
+        // Anschlussfinanzierung nur bei begrenzter Zinsbindung und angegebenem Anschlusszins
+        Refinancing = dto.FixedInterestYears > 0 && dto.RefinancingInterestRatePercent.HasValue
+            ? new RefinancingScenario
+            {
+                InterestRatePercent = dto.RefinancingInterestRatePercent.Value,
+                RepaymentPercent = dto.RefinancingRepaymentPercent ?? dto.InitialRepaymentPercent
+            }
             : null
     };
+
+    // === Valuation ===
+
+    /// <summary>Default-Wertsteigerung p.a., entspricht dem Basisszenario der Wertprognose</summary>
+    internal const decimal DefaultMarketGrowthRatePercent = 1.5m;
+
+    private static ValuationConfiguration MapValuation(ValuationDto? dto)
+    {
+        var defaults = new ValuationConfiguration();
+        return defaults with
+        {
+            MarketGrowthRatePercent = dto?.MarketGrowthRatePercent ?? DefaultMarketGrowthRatePercent,
+            PlannedSaleDate = dto?.PlannedSaleDate != null ? MapYearMonth(dto.PlannedSaleDate) : null,
+            SaleCostsPercent = dto?.SaleCostsPercent ?? defaults.SaleCostsPercent,
+            DiscountRatePercent = dto?.DiscountRatePercent ?? defaults.DiscountRatePercent
+        };
+    }
 
     // === Rent ===
 
@@ -278,6 +310,7 @@ public static class FrontendProjectMapper
                 EstimatedCost = MapMoney(m.Amount, currency),
                 TaxClassification = ParseEnum<TaxClassification>(m.TaxClassification, MapTaxClassification),
                 DistributionYears = m.DistributionYears,
+                ValueFactorPercent = m.ValueFactorPercent,
                 IsExecuted = true,
                 IsNecessary = false,
                 Priority = MeasurePriority.Medium,
@@ -380,6 +413,10 @@ public static class FrontendProjectMapper
     private static AcquisitionCostType MapAcquisitionCostType(string name)
     {
         var lower = name.ToLowerInvariant();
+        // Vor "Notar/Grundbuch" prüfen: Notar- und Grundbuchkosten der Grundschuld sind Finanzierungskosten
+        if (lower.Contains("grundschuld") || lower.Contains("hypothek") || lower.Contains("finanzierung")
+            || lower.Contains("bereitstellung") || lower.Contains("schätzkosten") || lower.Contains("mortgage")
+            || lower.Contains("financing")) return AcquisitionCostType.FinancingCosts;
         if (lower.Contains("notar") || lower.Contains("grundbuch")) return AcquisitionCostType.Notary;
         if (lower.Contains("grunderwerbsteuer") || lower.Contains("transfer")) return AcquisitionCostType.TransferTax;
         if (lower.Contains("makler") || lower.Contains("broker")) return AcquisitionCostType.BrokerFee;

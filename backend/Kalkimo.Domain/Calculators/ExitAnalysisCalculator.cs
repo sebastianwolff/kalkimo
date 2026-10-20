@@ -7,25 +7,22 @@ namespace Kalkimo.Domain.Calculators;
 ///
 /// Für jedes Szenario der PropertyValueForecast wird berechnet:
 /// - Verkaufserlös abzgl. Verkaufskosten
-/// - Veräußerungsgewinn (§23 EStG)
-/// - Spekulationssteuer (1.000€ Freigrenze, 10-Jahres-Frist)
-/// - Netto-Verkaufserlös
-/// - Gesamtrendite und annualisierte Rendite
+/// - Veräußerungsgewinn und -steuer über <see cref="TaxCalculator.CalculateCapitalGainsTax"/>
+///   (§23 EStG bzw. gewerbliche Einkünfte bei Kapitalgesellschaften)
+/// - Netto-Verkaufserlös nach Ablösung der Restschuld
+/// - Gesamtrendite und Eigenkapital-IRR
 /// </summary>
 public static class ExitAnalysisCalculator
 {
-    /// <summary>Verkaufsnebenkosten in % (~3,57% Makler + ~1,5% Notar)</summary>
+    /// <summary>Verkaufsnebenkosten in % (~3,57% Makler + ~1,5% Notar), falls nicht konfiguriert</summary>
     private const decimal DefaultSaleCostsPercent = 5.0m;
-
-    /// <summary>§23 Abs. 3 S. 5 EStG: Freigrenze 1.000 EUR (ab 2024, Wachstumschancengesetz)</summary>
-    private const decimal CapitalGainsExemptionThreshold = 1_000m;
-
-    /// <summary>§23 Abs. 1 S. 1 Nr. 1 EStG: 10-Jahres-Spekulationsfrist</summary>
-    private const int SpeculationPeriodYears = 10;
 
     /// <summary>
     /// Berechnet die vollständige Exit-Analyse
     /// </summary>
+    /// <param name="taxCalculator">Gemeinsame Steuerlogik (Default: neue Instanz)</param>
+    /// <param name="exitPeriod">Verkaufszeitpunkt (Default: Ende des Betrachtungszeitraums)</param>
+    /// <param name="executedMeasures">Durchgeführte Maßnahmen für aktivierte HK (Default: aus Projekt)</param>
     public static ExitAnalysisResult Calculate(
         Project project,
         PropertyValueForecastResult forecast,
@@ -37,91 +34,71 @@ public static class ExitAnalysisCalculator
         MoneyTimeSeries taxPayment,
         MoneyTimeSeries outstandingDebt,
         MoneyTimeSeries reserveBalance,
-        MoneyTimeSeries depreciation)
+        MoneyTimeSeries depreciation,
+        TaxCalculator? taxCalculator = null,
+        YearMonth? exitPeriod = null,
+        IEnumerable<CapExMeasure>? executedMeasures = null)
     {
-        var startYear = project.StartPeriod.Year;
-        var endYear = project.EndPeriod.Year;
-        var holdingPeriodYears = endYear - startYear;
-        var purchasePrice = project.Purchase.PurchasePrice.Amount;
-        var purchaseCosts = project.Purchase.TotalAcquisitionCosts.Amount;
+        taxCalculator ??= new TaxCalculator(new SystemDateProvider());
+        var exit = exitPeriod ?? project.EndPeriod;
+        var purchase = project.Purchase;
+        var purchasePeriod = YearMonth.FromDate(purchase.PurchaseDate);
         var equity = project.Financing.TotalEquity.Amount;
-        var effectiveTaxRate = project.TaxProfile.EffectiveTaxRatePercent;
         var currency = project.Currency;
+        var measures = (executedMeasures ?? project.CapEx?.Measures.Where(m => m.IsExecuted) ?? []).ToList();
 
-        // Check speculation period — day-precise like TaxCalculator
-        var purchaseDate = project.Purchase.PurchaseDate;
-        var exitDate = new DateOnly(endYear, 12, 31);
-        var tenYearDeadline = purchaseDate.AddYears(SpeculationPeriodYears);
-        var isWithinSpeculationPeriod = exitDate <= tenYearDeadline;
+        // Haltedauer in vollen Jahren (Anschaffungsmonat bis einschließlich Exit-Monat)
+        var holdingPeriodYears = (YearMonth.MonthsBetween(purchasePeriod, exit) + 1) / 12;
 
-        // Accumulate totals from time series
-        var totalCFAfterTax = cashflowAfterTax.Sum().Amount;
-        var totalGrossIncome = grossRent.Sum().Amount;
-        var totalOperatingCostsAmount = operatingCosts.Sum().Amount;
-        var totalDebtServiceAmount = debtService.Sum().Amount;
-        var totalCapexAmount = capExPayments.Sum().Amount;
-        var totalTaxPaid = taxPayment.Sum().Amount;
+        // Summen bis zum Exit
+        decimal SumUntilExit(MoneyTimeSeries series) =>
+            series.Where(p => p.Period <= exit).Sum(p => p.Value.Amount);
 
-        // Reserve balance at end
-        var endPeriod = project.EndPeriod;
-        var totalMaintenanceReserveAmount = reserveBalance.HasValue(endPeriod)
-            ? reserveBalance[endPeriod].Amount
-            : 0m;
+        var totalCFAfterTax = SumUntilExit(cashflowAfterTax);
+        var outstandingDebtAtExit = outstandingDebt.HasValue(exit) ? outstandingDebt[exit].Amount : 0m;
+        var reserveAtExit = reserveBalance.HasValue(exit) ? reserveBalance[exit].Amount : 0m;
 
-        // Outstanding debt at exit (last month)
-        var outstandingDebtAtExit = outstandingDebt.HasValue(endPeriod)
-            ? outstandingDebt[endPeriod].Amount
-            : 0m;
+        // Steuerliche Basis: AfA und aktivierte Maßnahmen bis zum Exit
+        var accumulatedDepreciation = new Money(SumUntilExit(depreciation), currency);
+        var capitalizedImprovements = taxCalculator
+            .GetCapitalizedMeasureCosts(purchase, measures)
+            .Where(c => c.Period <= exit)
+            .Aggregate(Money.Zero(currency), (sum, c) => sum + c.Amount);
 
-        // Accumulated depreciation (AfA) reduces the tax basis at sale
-        var accumulatedDepreciation = depreciation.Sum().Amount;
-
-        // Tax basis at sale: Purchase + acquisition costs + capitalized improvements - accumulated AfA
-        // §23 EStG: Anschaffungskosten minus bisher in Anspruch genommene AfA
-        var taxBasisAtSale = purchasePrice + purchaseCosts;
-        if (project.CapEx != null)
-        {
-            taxBasisAtSale += project.CapEx.Measures
-                .Where(m => m.TaxClassification == TaxClassification.ManufacturingCosts ||
-                           m.TaxClassification == TaxClassification.AcquisitionRelatedCosts)
-                .Sum(m => m.EstimatedCost.Amount);
-        }
-        taxBasisAtSale -= accumulatedDepreciation;
+        var saleDate = exit.ToFirstDayOfMonth();
+        var isWithinSpeculationPeriod = project.TaxProfile.OwnershipType != OwnershipType.Corporation
+            && !project.Valuation.CapitalGainsTax.OwnerOccupiedExemption
+            && saleDate <= purchase.PurchaseDate.AddYears(project.Valuation.CapitalGainsTax.HoldingPeriodYears);
 
         var saleCostsPercent = project.Valuation.SaleCostsPercent > 0
             ? project.Valuation.SaleCostsPercent
             : DefaultSaleCostsPercent;
 
-        // Build exit scenarios from property value forecast scenarios
         var exitScenarios = forecast.Scenarios.Select(scenario =>
         {
-            var propertyValue = scenario.FinalValue;
+            var propertyValue = GetValueAtExit(scenario, exit);
             var saleCosts = propertyValue * saleCostsPercent / 100;
-            // §23 EStG: Veräußerungsgewinn = Veräußerungserlös - Veräußerungskosten - (um AfA geminderte Anschaffungskosten)
-            var capitalGain = propertyValue - saleCosts - taxBasisAtSale;
 
-            // §23 Abs. 3 S. 5 EStG: Freigrenze 1.000 EUR
-            // Bei Gewinn > 1.000 EUR → gesamter Gewinn steuerpflichtig (kein Freibetrag!)
-            decimal capitalGainsTax = 0;
-            if (isWithinSpeculationPeriod && capitalGain > CapitalGainsExemptionThreshold)
-            {
-                capitalGainsTax = capitalGain * effectiveTaxRate / 100;
-            }
+            var taxResult = taxCalculator.CalculateCapitalGainsTax(
+                purchase,
+                new Money(propertyValue, currency),
+                new Money(saleCosts, currency),
+                accumulatedDepreciation,
+                saleDate,
+                project.TaxProfile,
+                project.Valuation.CapitalGainsTax,
+                capitalizedImprovements);
 
+            var capitalGainsTax = taxResult.TaxAmount.Amount;
             var netSaleProceeds = propertyValue - saleCosts - capitalGainsTax - outstandingDebtAtExit;
             var totalReturn = netSaleProceeds + totalCFAfterTax - equity;
             var totalReturnPercent = equity > 0 ? totalReturn / equity * 100 : 0;
-            // Annualized return via CAGR: (endValue/startValue)^(1/n) - 1
-            // Guard against negative endValue (net loss → Math.Pow returns NaN → decimal overflow)
-            decimal annualizedReturn = 0;
-            if (equity > 0 && holdingPeriodYears > 0)
-            {
-                var returnMultiple = (equity + totalReturn) / equity;
-                if (returnMultiple > 0)
-                {
-                    annualizedReturn = ((decimal)Math.Pow((double)returnMultiple, 1.0 / holdingPeriodYears) - 1) * 100;
-                }
-            }
+
+            // Eigenkapital-IRR nach Steuern (berücksichtigt den zeitlichen Anfall der Cashflows)
+            var annualizedReturn = equity > 0
+                ? MetricsCalculator.CalculateIrr(
+                    project.Financing.TotalEquity, cashflowAfterTax, new Money(netSaleProceeds, currency), exit)
+                : 0m;
 
             return new ExitScenario
             {
@@ -129,7 +106,7 @@ public static class ExitAnalysisCalculator
                 AnnualAppreciationPercent = scenario.AnnualAppreciationPercent,
                 PropertyValueAtExit = propertyValue,
                 SaleCosts = saleCosts,
-                CapitalGain = capitalGain,
+                CapitalGain = taxResult.Gain.Amount,
                 CapitalGainsTax = capitalGainsTax,
                 NetSaleProceeds = netSaleProceeds,
                 TotalReturn = totalReturn,
@@ -142,19 +119,28 @@ public static class ExitAnalysisCalculator
         {
             HoldingPeriodYears = holdingPeriodYears,
             IsWithinSpeculationPeriod = isWithinSpeculationPeriod,
-            PurchasePrice = purchasePrice,
-            TotalPurchaseCosts = purchaseCosts,
+            PurchasePrice = purchase.PurchasePrice.Amount,
+            TotalPurchaseCosts = purchase.TotalAcquisitionCosts.Amount,
             EquityInvested = equity,
             TotalCashflowAfterTax = totalCFAfterTax,
             OutstandingDebtAtExit = outstandingDebtAtExit,
-            TotalGrossIncome = totalGrossIncome,
-            TotalOperatingCosts = totalOperatingCostsAmount,
-            TotalDebtService = totalDebtServiceAmount,
-            TotalCapex = totalCapexAmount,
-            TotalTaxPaid = totalTaxPaid,
-            TotalMaintenanceReserve = totalMaintenanceReserveAmount,
+            TotalGrossIncome = SumUntilExit(grossRent),
+            TotalOperatingCosts = SumUntilExit(operatingCosts),
+            TotalDebtService = SumUntilExit(debtService),
+            TotalCapex = SumUntilExit(capExPayments),
+            TotalTaxPaid = SumUntilExit(taxPayment),
+            TotalMaintenanceReserve = reserveAtExit,
             SaleCostsPercent = saleCostsPercent,
             Scenarios = exitScenarios
         };
+    }
+
+    /// <summary>
+    /// Wert des Szenarios im Exit-Jahr (Jahreswerte der Prognose); Fallback: Endwert
+    /// </summary>
+    private static decimal GetValueAtExit(PropertyValueScenario scenario, YearMonth exit)
+    {
+        var row = scenario.YearlyValues.FirstOrDefault(r => r.Year == exit.Year);
+        return row?.EstimatedValue ?? scenario.FinalValue;
     }
 }

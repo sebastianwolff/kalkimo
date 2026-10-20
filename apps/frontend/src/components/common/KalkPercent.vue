@@ -162,7 +162,7 @@ function showHelp() {
 }
 
 .help-button:hover {
-  color: var(--kalk-accent-500);
+  color: var(--kalk-navy-600);
 }
 
 .help-icon {
@@ -173,8 +173,8 @@ function showHelp() {
 .percent-input-wrapper {
   display: flex;
   align-items: center;
-  background-color: #ffffff;
-  border: 1.5px solid var(--kalk-gray-200);
+  background-color: var(--kalk-surface);
+  border: 1px solid var(--kalk-border-strong);
   border-radius: var(--kalk-radius-md);
   transition: border-color 0.15s, box-shadow 0.15s;
   padding-right: var(--kalk-space-4);
@@ -182,7 +182,7 @@ function showHelp() {
 }
 
 .percent-input-wrapper:hover {
-  border-color: var(--kalk-gray-300);
+  border-color: var(--kalk-gray-400);
 }
 
 .percent-input-wrapper.is-focused {
@@ -195,7 +195,7 @@ function showHelp() {
 }
 
 .percent-input-wrapper.has-error.is-focused {
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+  box-shadow: 0 0 0 3px rgba(161, 44, 44, 0.18);
 }
 
 .percent-input {
@@ -203,13 +203,13 @@ function showHelp() {
   padding: var(--kalk-space-3) var(--kalk-space-2) var(--kalk-space-3) var(--kalk-space-4);
   font-family: var(--kalk-font-family);
   font-size: var(--kalk-text-base);
-  font-variant-numeric: tabular-nums;
+  
   color: var(--kalk-gray-900);
   background: transparent;
   border: none;
   outline: none;
   text-align: right;
-  min-height: 48px;
+  min-height: 42px;
 }
 
 .percent-input::placeholder {

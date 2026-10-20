@@ -101,22 +101,26 @@ public class CalculationOrchestrator
         var (rentAdjustment, costSavings) = CashflowCalculator.CalculateMeasureImpacts(
             effectiveCapEx, grossRent, startPeriod, endPeriod, currency);
 
-        // Apply rent adjustments: create adjusted gross rent, then recalculate effective rent
+        // Apply rent adjustments to gross and effective rent (adjustment bears the same vacancy share)
+        effectiveRent = CashflowCalculator.ApplyRentAdjustment(
+            grossRent, effectiveRent, rentAdjustment, effectiveProject.Rent.VacancyRatePercent);
         grossRent = grossRent.Add(rentAdjustment);
-        effectiveRent = CashflowCalculator.CalculateEffectiveRent(
-            grossRent, effectiveProject.Rent, startPeriod, endPeriod, currency);
 
-        // Apply cost savings to operating costs
+        // Apply cost savings to operating costs (savings cannot push costs below zero)
         var adjustedOperatingCosts = new MoneyTimeSeries(startPeriod, endPeriod, currency);
         foreach (var period in adjustedOperatingCosts.Periods)
-            adjustedOperatingCosts[period] = operatingCosts[period] - costSavings[period];
+        {
+            var adjusted = operatingCosts[period] - costSavings[period];
+            adjustedOperatingCosts[period] = adjusted.Amount < 0 ? Money.Zero(currency) : adjusted;
+        }
         operatingCosts = adjustedOperatingCosts;
 
         // === 6. NOI (Net Operating Income) ===
-        // NOI = Effective Rent + Service Charge Income - Operating Costs
+        // NOI = Effective Rent + umgelegte Nebenkosten (max. umlagefähige Kosten) - Operating Costs
         var noi = CashflowCalculator.CalculateNoi(
             effectiveRent,
             serviceChargeIncome,
+            transferableCosts,
             operatingCosts,
             startPeriod,
             endPeriod,
@@ -138,15 +142,23 @@ public class CalculationOrchestrator
             currency);
 
         // === 9. Steuern ===
-        // Calculate maintenance expenses for tax purposes (using effectiveCapEx with recurring expansions)
-        var maintenanceExpense = CalculateMaintenanceExpenseForTax(effectiveProject, effectiveCapEx, startPeriod, endPeriod);
+        // Steuerlich relevant sind nur durchgeführte Maßnahmen (inkl. expandierter wiederkehrender)
+        var executedMeasures = effectiveCapEx?.Measures.Where(m => m.IsExecuted).ToList() ?? [];
 
-        // Other deductions (non-transferable costs that are tax deductible)
-        var otherDeductions = CalculateOtherTaxDeductions(effectiveProject.Costs, livingArea, startPeriod, endPeriod, currency);
+        var maintenanceExpense = CalculateMaintenanceExpenseForTax(effectiveProject, executedMeasures, startPeriod, endPeriod);
+
+        // Einnahmen (§21 EStG): tatsächlich vereinnahmte Kaltmiete + Umlagen
+        var rentalIncome = effectiveRent.Add(serviceChargeIncome);
+
+        // Werbungskosten: abzugsfähige Betriebskosten (umlagefähig + nicht umlagefähig)
+        // + sofort abziehbare Kaufnebenkosten (z.B. Grundschuldbestellung)
+        var otherDeductions = CalculateOtherTaxDeductions(
+            effectiveProject.Costs, operatingCosts, effectiveProject.Purchase, livingArea, startPeriod, endPeriod, currency);
 
         var taxTimeSeries = _taxCalculator.CalculateTaxTimeSeries(
             effectiveProject,
-            grossRent,
+            executedMeasures,
+            rentalIncome,
             aggregatedFinancing.TotalInterest,
             maintenanceExpense,
             otherDeductions,
@@ -183,57 +195,56 @@ public class CalculationOrchestrator
             startPeriod,
             endPeriod);
 
-        // === 13. Verkaufserlös (falls geplant) ===
-        Money? saleNetProceeds = null;
-        TaxSummary taxSummary;
+        // === 13. Exit (geplanter Verkauf, sonst fiktiver Verkauf am Horizontende) ===
+        var plannedSaleDate = effectiveProject.Valuation.PlannedSaleDate;
+        var isSalePlanned = plannedSaleDate.HasValue
+            && plannedSaleDate.Value >= startPeriod
+            && plannedSaleDate.Value <= endPeriod;
+        var exitPeriod = isSalePlanned ? plannedSaleDate!.Value : endPeriod;
 
-        if (effectiveProject.Valuation.PlannedSaleDate.HasValue)
-        {
-            var saleDate = effectiveProject.Valuation.PlannedSaleDate.Value;
-            if (saleDate <= endPeriod)
-            {
-                var salePrice = propertyValue[saleDate];
-                var saleCosts = salePrice * effectiveProject.Valuation.SaleCostsPercent / 100;
+        var salePrice = propertyValue[exitPeriod];
+        var saleCosts = salePrice * effectiveProject.Valuation.SaleCostsPercent / 100;
 
-                // Calculate capital gains tax
-                var accumulatedDepreciation = taxTimeSeries.Depreciation.Sum();
-                var capitalGainsResult = _taxCalculator.CalculateCapitalGainsTax(
-                    effectiveProject.Purchase,
-                    salePrice,
-                    saleCosts,
-                    accumulatedDepreciation,
-                    saleDate.ToFirstDayOfMonth(),
-                    effectiveProject.TaxProfile,
-                    effectiveProject.Valuation.CapitalGainsTax);
+        // Nur die bis zum Verkauf in Anspruch genommene AfA mindert die Anschaffungskosten
+        var accumulatedDepreciation = taxTimeSeries.Depreciation
+            .Where(p => p.Period <= exitPeriod)
+            .Aggregate(Money.Zero(currency), (sum, p) => sum + p.Value);
 
-                saleNetProceeds = salePrice - saleCosts - capitalGainsResult.TaxAmount;
+        // Bis zum Verkauf aktivierte Maßnahmen erhöhen die Anschaffungskosten
+        var capitalizedImprovements = _taxCalculator
+            .GetCapitalizedMeasureCosts(effectiveProject.Purchase, executedMeasures)
+            .Where(c => c.Period <= exitPeriod)
+            .Aggregate(Money.Zero(currency), (sum, c) => sum + c.Amount);
 
-                taxSummary = BuildTaxSummary(
-                    effectiveProject, taxTimeSeries, aggregatedFinancing.TotalInterest, maintenanceExpense, operatingCosts, capitalGainsResult);
-            }
-            else
-            {
-                taxSummary = BuildTaxSummary(
-                    effectiveProject, taxTimeSeries, aggregatedFinancing.TotalInterest, maintenanceExpense, operatingCosts, null);
-            }
-        }
-        else
-        {
-            taxSummary = BuildTaxSummary(
-                effectiveProject, taxTimeSeries, aggregatedFinancing.TotalInterest, maintenanceExpense, operatingCosts, null);
-        }
+        var capitalGainsResult = _taxCalculator.CalculateCapitalGainsTax(
+            effectiveProject.Purchase,
+            salePrice,
+            saleCosts,
+            accumulatedDepreciation,
+            exitPeriod.ToFirstDayOfMonth(),
+            effectiveProject.TaxProfile,
+            effectiveProject.Valuation.CapitalGainsTax,
+            capitalizedImprovements);
+
+        // Dem Eigenkapital fließt der Erlös erst nach Ablösung der Restschuld zu
+        var outstandingDebtAtExit = aggregatedFinancing.TotalOutstandingDebt[exitPeriod];
+        var exitEquityProceeds = salePrice - saleCosts - capitalGainsResult.TaxAmount - outstandingDebtAtExit;
+
+        // Steuerübersicht weist Veräußerungssteuer nur bei tatsächlich geplantem Verkauf aus
+        var taxSummary = BuildTaxSummary(
+            effectiveProject, executedMeasures, taxTimeSeries, rentalIncome, aggregatedFinancing.TotalInterest,
+            maintenanceExpense, otherDeductions, isSalePlanned ? capitalGainsResult : null);
 
         // === 14. Kennzahlen ===
         var equity = effectiveProject.Financing.TotalEquity;
-        var initialInvestment = effectiveProject.Purchase.TotalInvestment;
 
         // Verwende konfigurierbaren Diskontierungszins aus Valuation
         var discountRate = effectiveProject.Valuation.EffectiveDiscountRate;
 
         var metrics = MetricsCalculator.CalculateAllMetrics(
-            initialInvestment,
             equity,
             noi,
+            effectiveRent,
             cashflowBeforeTax,
             cashflowAfterTax,
             aggregatedFinancing.TotalDebtService,
@@ -243,10 +254,16 @@ public class CalculationOrchestrator
             effectiveProject.Property,
             effectiveProject.CapEx,
             reserveBalance,
-            saleNetProceeds,
+            exitEquityProceeds,
+            exitPeriod,
             discountRate,
             startPeriod,
-            endPeriod);
+            endPeriod) with
+        {
+            ExitPeriod = exitPeriod,
+            IsExitPlanned = isSalePlanned,
+            ExitEquityProceeds = exitEquityProceeds
+        };
 
         // === 16. Warnungen ===
         var warnings = GenerateWarnings(
@@ -265,7 +282,8 @@ public class CalculationOrchestrator
             effectiveProject.Investors,
             effectiveProject.Financing,
             cashflowBeforeTax,
-            saleNetProceeds,
+            exitEquityProceeds,
+            exitPeriod,
             discountRate,
             startPeriod,
             endPeriod,
@@ -287,7 +305,10 @@ public class CalculationOrchestrator
             taxTimeSeries.TaxPayment,
             aggregatedFinancing.TotalOutstandingDebt,
             reserveBalance,
-            taxTimeSeries.Depreciation);
+            taxTimeSeries.Depreciation,
+            _taxCalculator,
+            exitPeriod,
+            executedMeasures);
 
         // === 19. Jahresaggregation ===
         var result = new CalculationResult
@@ -342,7 +363,7 @@ public class CalculationOrchestrator
             YearlyCashflows = YearlyAggregationService.AggregateToYearlyCashflowRows(
                 result, grossRent, capExPayments, maintenanceExpense, propertyValue),
             TaxBridge = YearlyAggregationService.AggregateToTaxBridgeRows(
-                result, grossRent, maintenanceExpense)
+                result, rentalIncome, maintenanceExpense, otherDeductions)
         };
 
         return result;
@@ -467,24 +488,27 @@ public class CalculationOrchestrator
     }
 
     /// <summary>
-    /// Berechnet steuerlich absetzbare Instandhaltungskosten
+    /// Berechnet steuerlich absetzbare Instandhaltungskosten (sofort oder nach §82b EStDV verteilt).
+    /// Aktivierte Maßnahmen (Herstellungskosten, anschaffungsnahe HK) wirken über die AfA.
     /// </summary>
-    private MoneyTimeSeries CalculateMaintenanceExpenseForTax(Project project, CapExConfiguration? effectiveCapEx, YearMonth startPeriod, YearMonth endPeriod)
+    private MoneyTimeSeries CalculateMaintenanceExpenseForTax(
+        Project project,
+        IReadOnlyList<CapExMeasure> executedMeasures,
+        YearMonth startPeriod,
+        YearMonth endPeriod)
     {
-        var result = new MoneyTimeSeries(startPeriod, endPeriod);
-        var capEx = effectiveCapEx ?? project.CapEx;
+        var result = new MoneyTimeSeries(startPeriod, endPeriod, project.Currency);
 
-        if (capEx == null)
+        if (executedMeasures.Count == 0)
             return result;
 
-        // Check for 15% rule
+        // 15%-Regel auf Basis der durchgeführten Maßnahmen
         var acquisitionRelatedResult = _taxCalculator.CheckAcquisitionRelatedCosts(
             project.Purchase,
-            capEx.Measures);
+            executedMeasures);
 
-        foreach (var measure in capEx.Measures.Where(m => m.IsExecuted))
+        foreach (var measure in executedMeasures)
         {
-            // Classify the measure (considering 15% rule)
             var classification = _taxCalculator.ClassifyMeasure(
                 measure,
                 acquisitionRelatedResult,
@@ -493,58 +517,52 @@ public class CalculationOrchestrator
             switch (classification)
             {
                 case TaxClassification.MaintenanceExpense:
-                    // Sofort absetzbar im Jahr der Durchführung
-                    var monthsInYear = Enumerable.Range(1, 12)
-                        .Select(m => new YearMonth(measure.PlannedPeriod.Year, m))
-                        .Where(p => p >= startPeriod && p <= endPeriod)
-                        .ToList();
-
-                    if (monthsInYear.Any())
-                    {
-                        var monthlyDeduction = measure.EstimatedCost / monthsInYear.Count;
-                        foreach (var period in monthsInYear)
-                        {
-                            result[period] += monthlyDeduction.Round();
-                        }
-                    }
+                    // Sofort absetzbar im Jahr der Durchführung (gezahlter Betrag inkl. Puffer)
+                    DistributeOverYear(result, measure.PlannedPeriod.Year, measure.CostWithBuffer, startPeriod, endPeriod);
                     break;
 
                 case TaxClassification.MaintenanceExpenseDistributed:
                     // §82b EStDV - Verteilung über 2-5 Jahre
                     var distributionYears = measure.DistributionYears ?? 5;
-                    var deductions = _taxCalculator.CalculateMaintenanceDistribution(measure, distributionYears);
-
-                    foreach (var deduction in deductions)
+                    foreach (var deduction in _taxCalculator.CalculateMaintenanceDistribution(measure, distributionYears))
                     {
-                        var yearPeriods = Enumerable.Range(1, 12)
-                            .Select(m => new YearMonth(deduction.Year, m))
-                            .Where(p => p >= startPeriod && p <= endPeriod)
-                            .ToList();
-
-                        if (yearPeriods.Any())
-                        {
-                            var monthlyDeduction = deduction.Amount / yearPeriods.Count;
-                            foreach (var period in yearPeriods)
-                            {
-                                result[period] += monthlyDeduction.Round();
-                            }
-                        }
+                        DistributeOverYear(result, deduction.Year, deduction.Amount, startPeriod, endPeriod);
                     }
                     break;
 
-                // ManufacturingCosts and AcquisitionRelatedCosts are capitalized (added to AfA basis)
-                // and not deducted as maintenance expense
+                // ManufacturingCosts und AcquisitionRelatedCosts werden aktiviert (AfA-Zeitreihe)
             }
         }
 
         return result;
     }
 
+    private static void DistributeOverYear(MoneyTimeSeries series, int year, Money amount, YearMonth startPeriod, YearMonth endPeriod)
+    {
+        var months = Enumerable.Range(1, 12)
+            .Select(m => new YearMonth(year, m))
+            .Where(p => p >= startPeriod && p <= endPeriod)
+            .ToList();
+
+        if (months.Count == 0)
+            return;
+
+        var monthly = (amount / months.Count).Round();
+        foreach (var period in months)
+        {
+            series[period] += monthly;
+        }
+    }
+
     /// <summary>
-    /// Berechnet sonstige steuerliche Abzüge (nicht-umlagefähige Kosten)
+    /// Berechnet sonstige Werbungskosten:
+    /// abzugsfähige Betriebskosten (umlagefähige und nicht umlagefähige, nach Maßnahmen-Einsparungen)
+    /// + sofort abziehbare Kaufnebenkosten im Zahlungsmonat.
     /// </summary>
     private static MoneyTimeSeries CalculateOtherTaxDeductions(
         CostConfiguration costs,
+        MoneyTimeSeries operatingCosts,
+        Purchase purchase,
         decimal livingAreaSqm,
         YearMonth startPeriod,
         YearMonth endPeriod,
@@ -554,17 +572,12 @@ public class CalculationOrchestrator
 
         foreach (var period in result.Periods)
         {
-            var totalDeductions = Money.Zero(currency);
+            var nonDeductible = Money.Zero(currency);
             var periodDate = period.ToFirstDayOfMonth();
             var yearsElapsed = period.Year - startPeriod.Year;
 
-            foreach (var item in costs.Items)
+            foreach (var item in costs.Items.Where(i => !i.IsTaxDeductible))
             {
-                // Only tax-deductible, non-transferable costs
-                if (!item.IsTaxDeductible || item.Classification == CostClassification.Transferable)
-                    continue;
-
-                // Check time range
                 if (item.StartDate.HasValue && periodDate < item.StartDate.Value)
                     continue;
                 if (item.EndDate.HasValue && periodDate > item.EndDate.Value)
@@ -574,13 +587,20 @@ public class CalculationOrchestrator
                     ? new Money(item.AmountPerSqmPerYear.Value * livingAreaSqm / 12, currency)
                     : item.MonthlyAmount;
 
-                var inflatedAmount = baseAmount *
+                nonDeductible += baseAmount *
                     (decimal)Math.Pow(1 + (double)item.AnnualInflationPercent / 100, yearsElapsed);
-
-                totalDeductions += inflatedAmount;
             }
 
-            result[period] = totalDeductions.Round();
+            result[period] = (operatingCosts[period] - nonDeductible).Round();
+        }
+
+        // Nicht aktivierungspflichtige Kaufnebenkosten (z.B. Grundschuld) sofort abziehbar
+        var purchasePeriod = YearMonth.FromDate(purchase.PurchaseDate);
+        foreach (var cost in purchase.AcquisitionCosts.Where(c => !c.IsCapitalizable))
+        {
+            var period = cost.PaymentDate.HasValue ? YearMonth.FromDate(cost.PaymentDate.Value) : purchasePeriod;
+            if (period >= startPeriod && period <= endPeriod)
+                result[period] += cost.Amount;
         }
 
         return result;
@@ -591,33 +611,28 @@ public class CalculationOrchestrator
     /// </summary>
     private TaxSummary BuildTaxSummary(
         Project project,
+        IReadOnlyList<CapExMeasure> executedMeasures,
         TaxTimeSeries taxTimeSeries,
+        MoneyTimeSeries rentalIncome,
         MoneyTimeSeries interestExpense,
         MoneyTimeSeries maintenanceExpense,
-        MoneyTimeSeries operatingCosts,
+        MoneyTimeSeries otherDeductions,
         CapitalGainsTaxResult? capitalGainsResult)
     {
-        var acquisitionRelatedResult = project.CapEx != null
-            ? _taxCalculator.CheckAcquisitionRelatedCosts(project.Purchase, project.CapEx.Measures)
-            : new AcquisitionRelatedCostsResult { IsTriggered = false };
+        var acquisitionRelatedResult = _taxCalculator.CheckAcquisitionRelatedCosts(project.Purchase, executedMeasures);
 
-        // Build maintenance distributions
-        var distributions = new List<MaintenanceDistribution>();
-        if (project.CapEx != null)
-        {
-            foreach (var measure in project.CapEx.Measures.Where(m =>
-                m.IsExecuted && m.TaxClassification == TaxClassification.MaintenanceExpenseDistributed))
+        // Build maintenance distributions (nur Maßnahmen, die nicht durch die 15%-Regel aktiviert werden)
+        var distributions = executedMeasures
+            .Where(m => _taxCalculator.ClassifyMeasure(m, acquisitionRelatedResult, project.Purchase.PurchaseDate)
+                        == TaxClassification.MaintenanceExpenseDistributed)
+            .Select(m => new MaintenanceDistribution
             {
-                var years = measure.DistributionYears ?? 5;
-                distributions.Add(new MaintenanceDistribution
-                {
-                    MeasureId = measure.Id,
-                    TotalAmount = measure.EstimatedCost,
-                    DistributionYears = years,
-                    StartYear = measure.PlannedPeriod.Year
-                });
-            }
-        }
+                MeasureId = m.Id,
+                TotalAmount = m.CostWithBuffer,
+                DistributionYears = m.DistributionYears ?? 5,
+                StartYear = m.PlannedPeriod.Year
+            })
+            .ToList();
 
         // Build yearly summaries
         var yearlySummaries = new Dictionary<int, TaxYearSummary>();
@@ -626,43 +641,30 @@ public class CalculationOrchestrator
 
         for (var year = startYear; year <= endYear; year++)
         {
-            var yearPeriods = Enumerable.Range(1, 12)
-                .Select(m => new YearMonth(year, m))
-                .Where(p => p >= project.StartPeriod && p <= project.EndPeriod)
-                .ToList();
-
-            if (!yearPeriods.Any())
+            if (!rentalIncome.Periods.Any(p => p.Year == year))
                 continue;
-
-            var grossIncome = yearPeriods.Aggregate(Money.Zero(), (sum, p) => sum + taxTimeSeries.TaxableIncome[p]);
-            var depreciation = yearPeriods.Aggregate(Money.Zero(), (sum, p) => sum + taxTimeSeries.Depreciation[p]);
-            var interest = yearPeriods.Aggregate(Money.Zero(), (sum, p) => sum + interestExpense[p]);
-            var maintenance = yearPeriods.Aggregate(Money.Zero(), (sum, p) => sum + maintenanceExpense[p]);
-            var taxPayment = yearPeriods.Aggregate(Money.Zero(), (sum, p) => sum + taxTimeSeries.TaxPayment[p]);
 
             yearlySummaries[year] = new TaxYearSummary
             {
                 Year = year,
-                GrossIncome = grossIncome,
-                Depreciation = depreciation,
-                InterestExpense = interest,
-                MaintenanceExpense = maintenance,
-                OtherDeductions = Money.Zero(),
-                TaxableIncome = grossIncome - depreciation - interest - maintenance,
-                TaxPayment = taxPayment
+                GrossIncome = rentalIncome.SumForYear(year),
+                Depreciation = taxTimeSeries.Depreciation.SumForYear(year),
+                InterestExpense = interestExpense.SumForYear(year),
+                MaintenanceExpense = maintenanceExpense.SumForYear(year),
+                OtherDeductions = otherDeductions.SumForYear(year),
+                TaxableIncome = taxTimeSeries.TaxableIncome.SumForYear(year),
+                TaxPayment = taxTimeSeries.TaxPayment.SumForYear(year)
             };
         }
 
-        // Compute depreciation basis and rate from actual property data
-        var depreciationBasis = _taxCalculator.CalculateEffectiveDepreciationBase(project.Purchase, project.CapEx);
-        var depreciationRate = project.TaxProfile.CustomDepreciationRatePercent
-            ?? DepreciationRates.GetAnnualRate(project.Property.ConstructionYear);
+        var depreciationBasis = _taxCalculator.CalculateEffectiveDepreciationBase(project.Purchase, executedMeasures);
+        var depreciationRate = TaxCalculator.GetDepreciationRate(project.Property, project.TaxProfile);
         var annualDepreciation = _taxCalculator.CalculateAnnualDepreciation(
-            project.Purchase, project.Property, project.TaxProfile, project.CapEx);
+            project.Purchase, project.Property, project.TaxProfile, executedMeasures);
         var effectiveTaxRate = project.TaxProfile.EffectiveTaxRatePercent;
 
         // Total deductions and tax savings
-        var totalOperatingDeduction = operatingCosts.Sum();
+        var totalOperatingDeduction = otherDeductions.Sum();
         var totalDeductions = taxTimeSeries.Depreciation.Sum() + interestExpense.Sum() +
                               maintenanceExpense.Sum() + totalOperatingDeduction;
         var totalTaxSavings = (totalDeductions * effectiveTaxRate / 100).Round();
@@ -766,6 +768,23 @@ public class CalculationOrchestrator
                         RelatedField = "DSCR"
                     });
                 }
+            }
+        }
+
+        // Zinsbindung endet im Analysezeitraum ohne Anschlusskondition → Sollzins wird fortgeschrieben
+        foreach (var loan in project.Financing.Loans.Where(l => l.Refinancing == null && l.FixedInterestPeriodMonths > 0))
+        {
+            var fixedInterestEnd = YearMonth.FromDate(loan.DisbursementDate).AddMonths(loan.FixedInterestPeriodMonths);
+            if (fixedInterestEnd < endPeriod)
+            {
+                warnings.Add(new CalculationWarning
+                {
+                    Type = WarningType.RefinancingAssumed,
+                    Message = $"Zinsbindung von '{loan.Name}' endet {fixedInterestEnd}; ohne Anschlusszins wird mit {loan.InterestRatePercent:0.##} % weitergerechnet",
+                    Severity = WarningSeverity.Warning,
+                    Period = fixedInterestEnd,
+                    RelatedField = "Financing"
+                });
             }
         }
 

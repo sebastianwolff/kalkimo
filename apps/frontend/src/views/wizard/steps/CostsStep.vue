@@ -2,7 +2,7 @@
   <KalkCard :title="t('costs.title')">
     <!-- Maintenance Reserve Section -->
     <div class="reserve-section">
-      <h4 class="section-label">{{ t('costs.maintenanceReserve.title') }}</h4>
+      <h4 class="section-title">{{ t('costs.maintenanceReserve.title') }}</h4>
       <p class="reserve-hint">{{ t('costs.maintenanceReserve.hint') }}</p>
       <div class="reserve-fields">
         <KalkCurrency
@@ -20,96 +20,93 @@
       </div>
     </div>
 
-    <div class="section-divider"></div>
+    <div class="items-section">
+      <div class="block-header">
+        <h4 class="section-title">{{ t('costs.items') }}</h4>
+        <button type="button" class="btn btn-outline btn-sm" @click="addCostItem">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+          </svg>
+          {{ t('costs.addItem') }}
+        </button>
+      </div>
 
-    <div class="section-header">
-      <h4 class="section-label">{{ t('costs.items') }}</h4>
-      <button type="button" class="btn btn-outline btn-sm" @click="addCostItem">
-        <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-        </svg>
-        {{ t('costs.addItem') }}
-      </button>
-    </div>
+      <div v-if="costItems.length === 0" class="empty-row">
+        <span>Keine laufenden Kosten konfiguriert</span>
+        <button type="button" class="btn btn-ghost btn-sm" @click="addDefaultCosts">
+          Typische Kosten hinzufügen
+        </button>
+      </div>
 
-    <div v-if="costItems.length === 0" class="empty-state">
-      <p>Keine laufenden Kosten konfiguriert</p>
-      <button type="button" class="btn btn-accent btn-sm" @click="addDefaultCosts">
-        Typische Kosten hinzufügen
-      </button>
-    </div>
-
-    <div v-else class="costs-list">
-      <div
-        v-for="item in costItems"
-        :key="item.id"
-        class="cost-card"
-      >
-        <div class="cost-card-header">
+      <div v-else class="line-table">
+        <div class="line-row line-head">
+          <span>{{ t('costs.item.name') }}</span>
+          <span class="num">{{ t('costs.item.monthlyAmount') }} <HelpIcon help-key="costs.monthlyAmount" /></span>
+          <span>{{ t('costs.item.isTransferable') }} <HelpIcon help-key="costs.isTransferable" /></span>
+          <span></span>
+        </div>
+        <div
+          v-for="item in costItems"
+          :key="item.id"
+          class="line-row"
+        >
           <input
             v-model="item.name"
             type="text"
-            class="cost-name-input"
+            class="form-input line-name"
             placeholder="Kostenart"
+            :aria-label="t('costs.item.name')"
           />
+          <div class="line-amount">
+            <KalkCurrency
+              v-model="item.monthlyAmount"
+              :currency="currency"
+            />
+          </div>
+          <label class="checkbox-label" :title="'Auf Mieter umlegbar'">
+            <input
+              type="checkbox"
+              v-model="item.isTransferable"
+              class="checkbox-input"
+            />
+            <span class="checkbox-custom"></span>
+            <span class="checkbox-text">{{ t('costs.item.isTransferable') }}</span>
+          </label>
           <button
             type="button"
-            class="delete-btn"
+            class="icon-btn"
             @click="removeCostItem(item.id)"
             :title="t('common.delete')"
+            :aria-label="t('common.delete')"
           >
-            <svg viewBox="0 0 20 20" fill="currentColor">
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
           </button>
         </div>
-
-        <div class="cost-card-body">
-          <div class="cost-fields">
-            <KalkCurrency
-              v-model="item.monthlyAmount"
-              :label="t('costs.item.monthlyAmount')"
-              :currency="currency"
-              help-key="costs.monthlyAmount"
-            />
-            <div class="checkbox-field">
-              <label class="checkbox-label">
-                <input
-                  type="checkbox"
-                  v-model="item.isTransferable"
-                  class="checkbox-input"
-                />
-                <span class="checkbox-custom"></span>
-                <span class="checkbox-text">{{ t('costs.item.isTransferable') }} <HelpIcon help-key="costs.isTransferable" /></span>
-              </label>
-              <p class="checkbox-hint">Auf Mieter umlegbar</p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
-    <div class="costs-summary">
-      <div class="summary-row">
-        <span>{{ t('costs.totalMonthly') }}:</span>
-        <strong>{{ formatCurrency(totalMonthly) }}</strong>
+    <div class="summary-box statement">
+      <div class="data-row">
+        <span class="data-label strong">{{ t('costs.totalMonthly') }}</span>
+        <span class="data-value">{{ formatCurrency(totalMonthly) }}</span>
       </div>
-      <div class="summary-row">
-        <span>{{ t('costs.transferable') }}:</span>
-        <span>{{ formatCurrency(transferableTotal) }}</span>
+      <div class="data-row sub">
+        <span class="data-label">{{ t('costs.transferable') }}</span>
+        <span class="data-value">{{ formatCurrency(transferableTotal) }}</span>
       </div>
-      <div class="summary-row">
-        <span>{{ t('costs.nonTransferable') }}:</span>
-        <span class="highlight">{{ formatCurrency(nonTransferableTotal) }}</span>
+      <div class="data-row sub">
+        <span class="data-label">{{ t('costs.nonTransferable') }}</span>
+        <span class="data-value">{{ formatCurrency(nonTransferableTotal) }}</span>
       </div>
-      <div v-if="maintenanceReserveMonthly > 0" class="summary-divider"></div>
-      <div v-if="maintenanceReserveMonthly > 0" class="summary-row">
-        <span>{{ t('costs.maintenanceReserve.title') }}:</span>
-        <span class="highlight-warn">{{ formatCurrency(maintenanceReserveMonthly) }}</span>
+      <div class="data-row">
+        <span class="data-label">{{ t('costs.maintenanceReserve.title') }}</span>
+        <span class="data-value">{{ formatCurrency(maintenanceReserveMonthly) }}</span>
       </div>
-      <div v-if="maintenanceReserveMonthly > 0" class="summary-row summary-total">
-        <span>{{ t('costs.totalWithReserve') }}:</span>
-        <strong>{{ formatCurrency(totalMonthly + maintenanceReserveMonthly) }}</strong>
+      <div class="data-row total">
+        <span class="data-label">{{ t('costs.totalWithReserve') }}</span>
+        <span class="data-value">{{ formatCurrency(totalMonthly + maintenanceReserveMonthly) }}</span>
       </div>
     </div>
   </KalkCard>
@@ -231,177 +228,126 @@ watch([maintenanceReserveMonthly, maintenanceReserveIncrease], syncCostsToStore)
 </script>
 
 <style scoped>
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--kalk-space-4);
-}
-
-.section-label {
-  font-size: var(--kalk-text-base);
-  font-weight: 600;
-  color: var(--kalk-gray-900);
+.reserve-section .section-title {
   margin: 0;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--kalk-space-2);
-  font-family: var(--kalk-font-family);
-  font-weight: 600;
-  border-radius: var(--kalk-radius-md);
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.btn-sm {
-  height: 36px;
-  padding: 0 var(--kalk-space-4);
-  font-size: var(--kalk-text-xs);
-}
-
-.btn-outline {
-  background: #ffffff;
-  color: var(--kalk-gray-700);
-  border: 1.5px solid var(--kalk-gray-300);
-}
-
-.btn-outline:hover {
-  background: var(--kalk-gray-50);
-  border-color: var(--kalk-gray-400);
-}
-
-.btn-accent {
-  background: var(--kalk-accent-500);
-  color: #ffffff;
-}
-
-.btn-accent:hover {
-  background: var(--kalk-accent-600);
-}
-
-.btn-icon {
-  width: 16px;
-  height: 16px;
-}
-
-.empty-state {
-  text-align: center;
-  padding: var(--kalk-space-8);
-  background: var(--kalk-gray-50);
-  border-radius: var(--kalk-radius-md);
-  border: 2px dashed var(--kalk-gray-200);
-}
-
-.empty-state p {
+.reserve-hint {
+  font-size: var(--kalk-text-sm);
   color: var(--kalk-gray-500);
-  margin: 0 0 var(--kalk-space-4);
+  margin: var(--kalk-space-1) 0 var(--kalk-space-4);
 }
 
-.costs-list {
+.reserve-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--kalk-space-4);
+}
+
+.items-section {
+  margin-top: var(--kalk-space-1);
+  padding-top: var(--kalk-space-5);
+  border-top: 1px solid var(--kalk-border);
+}
+
+.block-header {
   display: flex;
-  flex-direction: column;
-  gap: var(--kalk-space-3);
-}
-
-.cost-card {
-  background: #ffffff;
-  border: 1px solid var(--kalk-gray-200);
-  border-radius: var(--kalk-radius-md);
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.cost-card:hover {
-  border-color: var(--kalk-gray-300);
-  box-shadow: var(--kalk-shadow-sm);
-}
-
-.cost-card-header {
-  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: var(--kalk-space-3);
+  margin-bottom: var(--kalk-space-3);
+}
+
+.block-header .section-title {
+  margin: 0;
+}
+
+.empty-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--kalk-space-2) var(--kalk-space-4);
   padding: var(--kalk-space-3) var(--kalk-space-4);
+  font-size: var(--kalk-text-sm);
+  color: var(--kalk-gray-500);
+  background: var(--kalk-gray-50);
+  border: 1px solid var(--kalk-border);
+  border-radius: var(--kalk-radius-md);
+}
+
+.empty-row .btn-ghost {
+  color: var(--kalk-navy-700);
+  padding: 0 var(--kalk-space-2);
+}
+
+/* Kostenpositionen als Tabelle */
+.line-table {
+  border: 1px solid var(--kalk-border);
+  border-radius: var(--kalk-radius-md);
+  background: var(--kalk-surface);
+}
+
+.line-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) 112px 32px;
+  gap: var(--kalk-space-3);
+  align-items: center;
+  padding: var(--kalk-space-2) var(--kalk-space-2) var(--kalk-space-2) var(--kalk-space-3);
   border-bottom: 1px solid var(--kalk-gray-100);
 }
 
-.cost-name-input {
-  flex: 1;
-  padding: var(--kalk-space-2) var(--kalk-space-3);
-  font-family: var(--kalk-font-family);
-  font-size: var(--kalk-text-sm);
-  font-weight: 600;
-  color: var(--kalk-gray-900);
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid transparent;
-  outline: none;
-  transition: border-color 0.15s;
+.line-row:last-child {
+  border-bottom: none;
 }
 
-.cost-name-input:focus {
-  border-bottom-color: var(--kalk-accent-500);
+.line-head {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  background: var(--kalk-gray-50);
+  border-bottom: 1px solid var(--kalk-border);
 }
 
-.cost-name-input::placeholder {
-  color: var(--kalk-gray-400);
-  font-weight: 500;
-}
-
-.delete-btn {
-  display: flex;
+.line-head span {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  border-radius: var(--kalk-radius-sm);
-  color: var(--kalk-gray-400);
-  cursor: pointer;
-  transition: all 0.15s;
-  flex-shrink: 0;
+  gap: 2px;
+  font-size: var(--kalk-text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--kalk-tracking-caps);
+  text-transform: uppercase;
+  color: var(--kalk-gray-500);
 }
 
-.delete-btn:hover {
-  background: var(--kalk-error-bg);
-  color: var(--kalk-error);
+.line-head .num {
+  justify-content: flex-end;
 }
 
-.delete-btn svg {
-  width: 18px;
-  height: 18px;
+.line-name {
+  height: 40px;
+  font-size: var(--kalk-text-sm);
 }
 
-.cost-card-body {
-  padding: var(--kalk-space-4);
+.line-amount {
+  min-width: 0;
 }
 
-.cost-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--kalk-space-4);
-  align-items: start;
+.line-amount :deep(.form-group) {
+  margin-bottom: 0;
 }
 
-@media (max-width: 600px) {
-  .cost-fields {
-    grid-template-columns: 1fr;
-  }
-}
-
-.checkbox-field {
-  padding-top: var(--kalk-space-6);
+/* Kompakte Eingabe innerhalb der Tabellenzeile */
+.line-amount :deep(.currency-input) {
+  min-height: 0;
+  height: 38px;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: var(--kalk-space-3);
+  gap: var(--kalk-space-2);
   cursor: pointer;
 }
 
@@ -413,120 +359,133 @@ watch([maintenanceReserveMonthly, maintenanceReserveIncrease], syncCostsToStore)
 }
 
 .checkbox-custom {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--kalk-gray-300);
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--kalk-gray-400);
   border-radius: var(--kalk-radius-sm);
-  background: #ffffff;
-  transition: all 0.15s;
+  background: var(--kalk-surface);
+  transition: background-color 0.12s, border-color 0.12s;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
+.checkbox-label:hover .checkbox-custom {
+  border-color: var(--kalk-gray-600);
+}
+
 .checkbox-input:checked + .checkbox-custom {
-  background: var(--kalk-accent-500);
-  border-color: var(--kalk-accent-500);
+  background: var(--kalk-navy-800);
+  border-color: var(--kalk-navy-800);
 }
 
 .checkbox-input:checked + .checkbox-custom::after {
   content: '';
-  width: 6px;
-  height: 10px;
-  border: solid #ffffff;
-  border-width: 0 2px 2px 0;
+  width: 4px;
+  height: 8px;
+  border: solid var(--kalk-surface);
+  border-width: 0 1.5px 1.5px 0;
   transform: rotate(45deg);
   margin-bottom: 2px;
 }
 
-.checkbox-input:focus + .checkbox-custom {
+.checkbox-input:focus-visible + .checkbox-custom {
   box-shadow: 0 0 0 3px var(--kalk-ring-color);
 }
 
 .checkbox-text {
   font-size: var(--kalk-text-sm);
-  font-weight: 500;
   color: var(--kalk-gray-700);
 }
 
-.checkbox-hint {
-  margin: var(--kalk-space-1) 0 0 calc(20px + var(--kalk-space-3));
-  font-size: var(--kalk-text-xs);
-  color: var(--kalk-gray-500);
-}
-
-.costs-summary {
-  margin-top: var(--kalk-space-8);
-  padding: var(--kalk-space-6);
-  background: var(--kalk-gray-50);
-  border-radius: var(--kalk-radius-md);
-}
-
-.summary-row {
+.icon-btn {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: var(--kalk-space-1) 0;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--kalk-radius-md);
+  color: var(--kalk-gray-400);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.12s, background-color 0.12s, border-color 0.12s;
 }
 
-.summary-row span {
-  color: var(--kalk-gray-600);
-  font-size: var(--kalk-text-sm);
+.icon-btn:hover {
+  color: var(--kalk-negative);
+  background: var(--kalk-negative-bg);
+  border-color: var(--kalk-negative-border);
 }
 
-.summary-row strong {
-  color: var(--kalk-gray-900);
-  font-variant-numeric: tabular-nums;
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
-.highlight {
-  color: var(--kalk-accent-600);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.highlight-warn {
-  color: var(--kalk-warning, #b45309);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.reserve-section {
-  margin-bottom: var(--kalk-space-6);
-}
-
-.reserve-hint {
-  font-size: var(--kalk-text-xs);
-  color: var(--kalk-gray-500);
-  margin: var(--kalk-space-1) 0 var(--kalk-space-4);
-}
-
-.reserve-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--kalk-space-4);
-}
-
-@media (max-width: 600px) {
-  .reserve-fields {
-    grid-template-columns: 1fr;
+@media (min-width: 641px) {
+  /* In der Tabellenansicht steht die Beschriftung im Spaltenkopf */
+  .checkbox-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 }
 
-.section-divider {
-  height: 1px;
-  background: var(--kalk-gray-200);
-  margin: var(--kalk-space-6) 0;
+@media (max-width: 640px) {
+  .reserve-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .line-head {
+    display: none;
+  }
+
+  .line-row {
+    grid-template-columns: minmax(0, 1fr) 32px;
+    row-gap: var(--kalk-space-2);
+    padding: var(--kalk-space-3);
+  }
+
+  .line-amount {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .checkbox-label {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
 }
 
-.summary-divider {
-  height: 1px;
-  background: var(--kalk-gray-200);
-  margin: var(--kalk-space-2) 0;
+.statement {
+  margin-top: var(--kalk-space-6);
+  background: var(--kalk-surface);
 }
 
-.summary-total {
-  padding-top: var(--kalk-space-2);
+.statement .data-label.strong {
+  color: var(--kalk-gray-900);
+  font-weight: 600;
+}
+
+.statement .data-row.sub {
+  padding: 6px 0 6px var(--kalk-space-4);
+}
+
+.statement .data-row.sub .data-label,
+.statement .data-row.sub .data-value {
+  font-size: var(--kalk-text-sm);
+  font-weight: 400;
+  color: var(--kalk-gray-500);
+}
+
+.statement .data-row.total .data-value {
+  font-size: var(--kalk-text-lg);
 }
 </style>

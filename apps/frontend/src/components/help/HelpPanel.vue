@@ -7,7 +7,7 @@
           <div class="help-panel-header">
             <h3 class="help-panel-title">{{ panelTitle }}</h3>
             <button type="button" class="help-panel-close" @click="uiStore.closeHelp()" :aria-label="t('common.close')">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -118,17 +118,17 @@ watch(() => uiStore.isHelpPanelOpen, (isOpen) => {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(7, 21, 38, 0.35);
   display: flex;
   justify-content: flex-end;
 }
 
 .help-panel {
-  width: 380px;
+  width: 400px;
   max-width: 100%;
   height: 100%;
-  background: #ffffff;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+  background: var(--kalk-surface);
+  border-left: 1px solid var(--kalk-border-strong);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -138,15 +138,19 @@ watch(() => uiStore.isHelpPanelOpen, (isOpen) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--kalk-space-5) var(--kalk-space-6);
-  border-bottom: 1px solid var(--kalk-gray-100);
+  gap: var(--kalk-space-4);
+  min-height: var(--kalk-header-height);
+  padding: var(--kalk-space-3) var(--kalk-space-4) var(--kalk-space-3) var(--kalk-space-6);
+  border-bottom: 1px solid var(--kalk-border);
   flex-shrink: 0;
 }
 
 .help-panel-title {
+  font-family: var(--kalk-font-family);
   font-size: var(--kalk-text-lg);
   font-weight: 600;
-  color: var(--kalk-gray-900);
+  color: var(--kalk-navy-900);
+  letter-spacing: 0;
   margin: 0;
 }
 
@@ -158,16 +162,18 @@ watch(() => uiStore.isHelpPanelOpen, (isOpen) => {
   height: 32px;
   padding: 0;
   background: none;
-  border: none;
+  border: 1px solid transparent;
   border-radius: var(--kalk-radius-md);
-  color: var(--kalk-gray-400);
+  color: var(--kalk-gray-500);
   cursor: pointer;
-  transition: color 0.15s, background-color 0.15s;
+  flex-shrink: 0;
+  transition: color 0.12s, background-color 0.12s, border-color 0.12s;
 }
 
 .help-panel-close:hover {
-  color: var(--kalk-gray-600);
+  color: var(--kalk-gray-900);
   background: var(--kalk-gray-50);
+  border-color: var(--kalk-border);
 }
 
 .help-panel-body {
@@ -178,47 +184,61 @@ watch(() => uiStore.isHelpPanelOpen, (isOpen) => {
 
 .help-panel-summary {
   font-size: var(--kalk-text-base);
-  color: var(--kalk-gray-700);
   line-height: 1.6;
-  margin: 0 0 var(--kalk-space-6);
+  color: var(--kalk-gray-800);
   font-weight: 500;
+  margin: 0 0 var(--kalk-space-5);
 }
 
 .help-panel-detail {
-  font-size: var(--kalk-text-sm);
-  color: var(--kalk-gray-600);
-  line-height: 1.7;
-  border-top: 1px solid var(--kalk-gray-100);
+  font-size: var(--kalk-text-base);
+  line-height: 1.6;
+  color: var(--kalk-gray-700);
+  border-top: 1px solid var(--kalk-border);
   padding-top: var(--kalk-space-5);
+}
+
+.help-panel-detail :deep(p) {
+  color: inherit;
+  margin: 0 0 var(--kalk-space-3);
 }
 
 .help-panel-detail :deep(b),
 .help-panel-detail :deep(strong) {
-  color: var(--kalk-gray-800);
+  color: var(--kalk-gray-900);
   font-weight: 600;
 }
 
-.help-panel-detail :deep(ul) {
+.help-panel-detail :deep(ul),
+.help-panel-detail :deep(ol) {
   padding-left: var(--kalk-space-5);
   margin: var(--kalk-space-3) 0;
 }
 
 .help-panel-detail :deep(li) {
-  margin-bottom: var(--kalk-space-2);
+  margin-bottom: var(--kalk-space-1);
+}
+
+.help-panel-detail :deep(code) {
+  font-family: var(--kalk-font-mono);
+  font-size: 0.9em;
+  padding: 0 3px;
+  background: var(--kalk-gray-100);
+  border-radius: var(--kalk-radius-sm);
 }
 
 .help-panel-related {
   margin-top: var(--kalk-space-6);
   padding-top: var(--kalk-space-5);
-  border-top: 1px solid var(--kalk-gray-100);
+  border-top: 1px solid var(--kalk-border);
 }
 
 .help-panel-related-title {
-  font-size: var(--kalk-text-xs);
+  font-size: var(--kalk-text-2xs);
   font-weight: 600;
   color: var(--kalk-gray-500);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--kalk-tracking-caps);
   margin: 0 0 var(--kalk-space-3);
 }
 
@@ -231,31 +251,34 @@ watch(() => uiStore.isHelpPanelOpen, (isOpen) => {
 .help-panel-related-link {
   display: inline-flex;
   align-items: center;
-  padding: var(--kalk-space-1) var(--kalk-space-3);
+  padding: 3px 8px;
+  font-family: var(--kalk-font-family);
   font-size: var(--kalk-text-xs);
   font-weight: 500;
-  color: var(--kalk-accent-600);
-  background: var(--kalk-accent-50);
-  border: 1px solid var(--kalk-accent-200);
-  border-radius: var(--kalk-radius-full);
+  line-height: 1.4;
+  color: var(--kalk-gray-700);
+  background: var(--kalk-gray-100);
+  border: 1px solid var(--kalk-border);
+  border-radius: var(--kalk-radius-sm);
   cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
+  transition: background-color 0.12s, color 0.12s, border-color 0.12s;
 }
 
 .help-panel-related-link:hover {
-  background: var(--kalk-accent-100);
-  color: var(--kalk-accent-700);
+  background: var(--kalk-navy-50);
+  border-color: var(--kalk-navy-200);
+  color: var(--kalk-navy-800);
 }
 
-/* Transition */
+/* Transition: dezentes Einschieben, kein Bounce */
 .help-panel-enter-active,
 .help-panel-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity 0.18s ease;
 }
 
 .help-panel-enter-active .help-panel,
 .help-panel-leave-active .help-panel {
-  transition: transform 0.25s ease;
+  transition: transform 0.2s ease-out;
 }
 
 .help-panel-enter-from,
@@ -265,13 +288,21 @@ watch(() => uiStore.isHelpPanelOpen, (isOpen) => {
 
 .help-panel-enter-from .help-panel,
 .help-panel-leave-to .help-panel {
-  transform: translateX(100%);
+  transform: translateX(24px);
 }
 
-/* Mobile */
 @media (max-width: 480px) {
   .help-panel {
     width: 100%;
+    border-left: none;
+  }
+
+  .help-panel-header {
+    padding-left: var(--kalk-space-4);
+  }
+
+  .help-panel-body {
+    padding: var(--kalk-space-5) var(--kalk-space-4);
   }
 }
 </style>

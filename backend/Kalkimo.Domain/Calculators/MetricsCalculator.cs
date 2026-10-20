@@ -11,19 +11,26 @@ public static class MetricsCalculator
     /// Berechnet den Internen Zinsfuß (IRR) aus einer Cashflow-Zeitreihe
     /// Newton-Raphson Verfahren
     /// </summary>
+    /// <param name="initialInvestment">Anfangsauszahlung in t=0 (bei EK-Rendite: Eigenkapital)</param>
+    /// <param name="cashflows">Laufende Cashflows ab t=1</param>
+    /// <param name="terminalValue">Endwert (z.B. Netto-Verkaufserlös nach Restschuld), fällt in der Exit-Periode an</param>
+    /// <param name="exitPeriod">Letzte berücksichtigte Periode (Verkauf); spätere Cashflows werden ignoriert</param>
     public static decimal CalculateIrr(
         Money initialInvestment,
         MoneyTimeSeries cashflows,
-        Money? terminalValue = null)
+        Money? terminalValue = null,
+        YearMonth? exitPeriod = null)
     {
         var cfList = new List<decimal> { -initialInvestment.Amount };
 
         foreach (var (period, value) in cashflows)
         {
+            if (exitPeriod.HasValue && period > exitPeriod.Value)
+                break;
             cfList.Add(value.Amount);
         }
 
-        // Terminalwert (z.B. Verkaufserlös) zum letzten Cashflow addieren
+        // Terminalwert (z.B. Verkaufserlös) zum Cashflow der Exit-Periode addieren
         if (terminalValue.HasValue)
         {
             cfList[^1] += terminalValue.Value.Amount;
@@ -108,20 +115,23 @@ public static class MetricsCalculator
         MoneyTimeSeries cashflows,
         decimal annualDiscountRatePercent,
         Money? terminalValue = null,
-        string currency = "EUR")
+        string currency = "EUR",
+        YearMonth? exitPeriod = null)
     {
         var monthlyRate = annualDiscountRatePercent / 100 / 12;
         var npv = -initialInvestment.Amount;
 
-        int month = 1;
+        int month = 0;
         foreach (var (period, value) in cashflows)
         {
+            if (exitPeriod.HasValue && period > exitPeriod.Value)
+                break;
+            month++;
             var discountFactor = (decimal)Math.Pow(1 + (double)monthlyRate, -month);
             npv += value.Amount * discountFactor;
-            month++;
         }
 
-        // Terminalwert diskontieren
+        // Terminalwert in der Exit-Periode diskontieren (gleiche Konvention wie IRR)
         if (terminalValue.HasValue)
         {
             var discountFactor = (decimal)Math.Pow(1 + (double)monthlyRate, -month);
@@ -246,13 +256,15 @@ public static class MetricsCalculator
 
     /// <summary>
     /// Berechnet die Break-Even Miete
-    /// Mindestmiete, bei der Cashflow >= 0
+    /// Mindest-Nettokaltmiete (vereinnahmt), bei der der Cashflow vor Steuern >= 0
     /// </summary>
+    /// <param name="monthlyNetOperatingCosts">Nicht durch Nebenkostenvorauszahlungen gedeckte Betriebskosten</param>
+    /// <param name="monthlyDebtService">Kapitaldienst (Zins + Tilgung)</param>
     public static Money CalculateBreakEvenRent(
-        Money monthlyOperatingCosts,
+        Money monthlyNetOperatingCosts,
         Money monthlyDebtService)
     {
-        return (monthlyOperatingCosts + monthlyDebtService).Round();
+        return (monthlyNetOperatingCosts + monthlyDebtService).Round();
     }
 
     /// <summary>
@@ -352,10 +364,16 @@ public static class MetricsCalculator
     /// <summary>
     /// Aggregiert alle Kennzahlen
     /// </summary>
+    /// <remarks>
+    /// IRR, NPV und Equity Multiple sind Eigenkapital-Kennzahlen (gehebelt):
+    /// Anfangsauszahlung = Eigenkapital, laufende Cashflows nach Kapitaldienst,
+    /// Endwert = Verkaufspreis − Verkaufskosten − Veräußerungssteuer − Restschuld.
+    /// Cashflows nach der Exit-Periode bleiben unberücksichtigt.
+    /// </remarks>
     public static InvestmentMetrics CalculateAllMetrics(
-        Money initialInvestment,
         Money equity,
         MoneyTimeSeries noi,
+        MoneyTimeSeries effectiveRent,
         MoneyTimeSeries cashflowBeforeTax,
         MoneyTimeSeries cashflowAfterTax,
         MoneyTimeSeries debtService,
@@ -365,7 +383,8 @@ public static class MetricsCalculator
         Property property,
         CapExConfiguration? capExConfig,
         MoneyTimeSeries reserveBalance,
-        Money? saleNetProceeds,
+        Money? exitEquityProceeds,
+        YearMonth? exitPeriod,
         decimal discountRate,
         YearMonth startPeriod,
         YearMonth endPeriod)
@@ -376,28 +395,41 @@ public static class MetricsCalculator
 
         var cumulativeCf = cashflowAfterTax.Cumulative();
         var totalCashflow = cashflowAfterTax.Sum();
+        var totalCashflowUntilExit = cashflowAfterTax
+            .Where(p => !exitPeriod.HasValue || p.Period <= exitPeriod.Value)
+            .Aggregate(Money.Zero(cashflowAfterTax.Currency), (sum, p) => sum + p.Value);
+
+        var dscrValues = dscr.Where(p => p.Value < decimal.MaxValue).Select(p => p.Value).ToList();
+        var icrValues = icr.Where(p => p.Value < decimal.MaxValue).Select(p => p.Value).ToList();
+
+        // Referenzjahr für Monatswerte: erstes volles Jahr (falls im Horizont), sonst Startjahr
+        var referenceYear = startPeriod.Year + 1 <= endPeriod.Year ? startPeriod.Year + 1 : startPeriod.Year;
+        var referenceMonths = Math.Max(1, noi.Periods.Count(p => p.Year == referenceYear));
+        // Effektivmiete − NOI = Betriebskosten − Nebenkostenvorauszahlungen (nicht gedeckte Kosten)
+        var netOperatingCostsPerMonth =
+            (effectiveRent.SumForYear(referenceYear) - noi.SumForYear(referenceYear)) / referenceMonths;
+        var debtServicePerMonth = debtService.SumForYear(referenceYear) / referenceMonths;
 
         return new InvestmentMetrics
         {
-            IrrBeforeTaxPercent = CalculateIrr(initialInvestment, cashflowBeforeTax, saleNetProceeds),
-            IrrAfterTaxPercent = CalculateIrr(initialInvestment, cashflowAfterTax, saleNetProceeds),
-            NpvBeforeTax = CalculateNpv(initialInvestment, cashflowBeforeTax, discountRate, saleNetProceeds),
-            NpvAfterTax = CalculateNpv(initialInvestment, cashflowAfterTax, discountRate, saleNetProceeds),
+            IrrBeforeTaxPercent = CalculateIrr(equity, cashflowBeforeTax, exitEquityProceeds, exitPeriod),
+            IrrAfterTaxPercent = CalculateIrr(equity, cashflowAfterTax, exitEquityProceeds, exitPeriod),
+            NpvBeforeTax = CalculateNpv(equity, cashflowBeforeTax, discountRate, exitEquityProceeds, cashflowBeforeTax.Currency, exitPeriod),
+            NpvAfterTax = CalculateNpv(equity, cashflowAfterTax, discountRate, exitEquityProceeds, cashflowAfterTax.Currency, exitPeriod),
             RoiPercent = equity.Amount > 0
                 ? Math.Round(totalCashflow.Amount / equity.Amount * 100 / YearMonth.MonthsBetween(startPeriod, endPeriod) * 12, 2)
                 : 0,
             CashOnCashPercent = CalculateCashOnCash(cashflowAfterTax.SumForYear(startPeriod.Year + 1), equity),
-            EquityMultiple = CalculateEquityMultiple(totalCashflow, saleNetProceeds ?? Money.Zero(), equity),
+            EquityMultiple = CalculateEquityMultiple(totalCashflowUntilExit, exitEquityProceeds ?? Money.Zero(), equity),
 
-            DscrMin = dscr.Where(p => p.Value < decimal.MaxValue).Min(p => p.Value),
-            DscrAvg = dscr.Where(p => p.Value < decimal.MaxValue).Average(p => p.Value),
-            IcrMin = icr.Where(p => p.Value < decimal.MaxValue).Min(p => p.Value),
+            // Ohne Kapitaldienst/Zinsen sind DSCR/ICR nicht definiert
+            DscrMin = dscrValues.Count > 0 ? dscrValues.Min() : null,
+            DscrAvg = dscrValues.Count > 0 ? Math.Round(dscrValues.Average(), 2) : null,
+            IcrMin = icrValues.Count > 0 ? icrValues.Min() : null,
             LtvInitialPercent = ltv[startPeriod.AddMonths(1)],
             LtvFinalPercent = ltv[endPeriod],
 
-            BreakEvenRent = CalculateBreakEvenRent(
-                noi.SumForYear(startPeriod.Year) / 12 - cashflowBeforeTax.SumForYear(startPeriod.Year) / 12,
-                debtService.SumForYear(startPeriod.Year) / 12),
+            BreakEvenRent = CalculateBreakEvenRent(netOperatingCostsPerMonth, debtServicePerMonth),
 
             MaintenanceRiskScore = CalculateMaintenanceRiskScore(property, capExConfig, reserveBalance, endPeriod),
             LiquidityRiskScore = CalculateLiquidityRiskScore(cashflowAfterTax, dscr, startPeriod, endPeriod),

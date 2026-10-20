@@ -85,9 +85,10 @@ public class DepreciationTests
         var annualAfa = _calculator.CalculateAnnualDepreciation(purchase, property, taxProfile);
 
         // Assert
-        // Gebäudewert: 320.000€ + 20.000€ NK = 340.000€ Bemessungsgrundlage
-        // AfA 3% = 10.200€ p.a.
-        Assert.Equal(10_200m, annualAfa.Amount);
+        // NK werden im Verhältnis Gebäude/Boden aufgeteilt: Gebäudeanteil 320/400 = 80%
+        // Gebäudewert: 320.000€ + 80% × 20.000€ NK = 336.000€ Bemessungsgrundlage
+        // AfA 3% = 10.080€ p.a.
+        Assert.Equal(10_080m, annualAfa.Amount);
     }
 
     [Fact]

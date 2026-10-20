@@ -640,6 +640,27 @@ public class ProjectsControllerTests : IClassFixture<WebApplicationFactory<Progr
     }
 
     [Fact]
+    public async Task Calculate_UsesSavedFrontendData_NotCreationDefaults()
+    {
+        // Arrange: Projekt anlegen, dann Wizard-Daten (Frontend-JSON) speichern
+        var (client, _) = await CreateAuthenticatedClientAsync();
+        var createResponse = await client.PostAsJsonAsync("/api/projects", CreateTestProjectRequest());
+        var summary = await createResponse.Content.ReadFromJsonAsync<ProjectSummary>();
+
+        var frontendData = Mapping.FrontendProjectMapperTests.CreateValidRequest(purchasePrice: 777_000m);
+        var saveResponse = await client.PutAsJsonAsync($"/api/projects/{summary!.Id}/data", frontendData);
+        saveResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Act
+        var response = await client.PostAsJsonAsync($"/api/projects/{summary.Id}/calculate", new CalculateRequest());
+
+        // Assert: Ergebnis basiert auf den gespeicherten Eingaben
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<CalculationResponseDto>();
+        result!.ExitAnalysis.PurchasePrice.Should().Be(777_000m);
+    }
+
+    [Fact]
     public async Task Calculate_WithoutScenarioId_UsesDefault()
     {
         // Arrange

@@ -2,92 +2,121 @@
   <ion-page>
     <AppHeader :title="t('nav.settings')" />
 
-    <ion-content :fullscreen="true" class="ion-padding">
-      <div class="settings-page">
-        <KalkCard title="Sprache / Language">
-          <ion-list>
-            <ion-item>
-              <ion-label>{{ t('common.appName') }}</ion-label>
-              <ion-select
-                v-model="selectedLocale"
-                interface="popover"
-                @ionChange="changeLocale"
+    <ion-content>
+      <div class="page-content narrow">
+        <header class="page-head">
+          <div>
+            <span class="eyebrow">{{ t('settingsPage.eyebrow') }}</span>
+            <h1 class="page-title">{{ t('nav.settings') }}</h1>
+            <p class="page-subtitle">{{ t('settingsPage.subtitle') }}</p>
+          </div>
+        </header>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">{{ t('settingsPage.general') }}</h2>
+          </div>
+          <div class="setting-row">
+            <div class="setting-text">
+              <span class="setting-label">{{ t('settingsPage.language') }}</span>
+              <span class="setting-hint">{{ t('settingsPage.languageHint') }}</span>
+            </div>
+            <div class="segmented" role="radiogroup" :aria-label="t('settingsPage.language')">
+              <button
+                v-for="opt in languages"
+                :key="opt.value"
+                type="button"
+                role="radio"
+                :aria-checked="locale === opt.value"
+                :class="{ active: locale === opt.value }"
+                @click="changeLocale(opt.value)"
               >
-                <ion-select-option value="de">Deutsch</ion-select-option>
-                <ion-select-option value="en">English</ion-select-option>
-              </ion-select>
-            </ion-item>
-          </ion-list>
-        </KalkCard>
+                {{ opt.label }}
+              </button>
+            </div>
+          </div>
+        </section>
 
-        <KalkCard title="Konto" v-if="isAuthenticated">
-          <ion-list>
-            <ion-item>
-              <ion-label>
-                <h3>E-Mail</h3>
-                <p>{{ userEmail }}</p>
-              </ion-label>
-            </ion-item>
-            <ion-item button @click="handleLogout">
-              <ion-icon slot="start" :icon="logOutOutline" color="danger" />
-              <ion-label color="danger">{{ t('auth.logout') }}</ion-label>
-            </ion-item>
-          </ion-list>
-        </KalkCard>
+        <section v-if="isAuthenticated" class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">{{ t('settingsPage.account') }}</h2>
+          </div>
+          <dl class="definition-list">
+            <div v-if="userName" class="definition-row">
+              <dt>{{ t('settingsPage.name') }}</dt>
+              <dd>{{ userName }}</dd>
+            </div>
+            <div class="definition-row">
+              <dt>{{ t('settingsPage.email') }}</dt>
+              <dd>{{ userEmail }}</dd>
+            </div>
+            <div class="definition-row">
+              <dt>{{ t('settingsPage.role') }}</dt>
+              <dd>{{ isAdmin ? t('nav.roleAdmin') : t('nav.roleUser') }}</dd>
+            </div>
+          </dl>
+          <div class="panel-footer footer-row">
+            <span class="setting-hint">{{ t('settingsPage.logoutHint') }}</span>
+            <button type="button" class="btn btn-danger btn-sm" @click="handleLogout">
+              <ion-icon :icon="logOutOutline" />
+              {{ t('auth.logout') }}
+            </button>
+          </div>
+        </section>
 
-        <KalkCard title="Über die App">
-          <ion-list>
-            <ion-item>
-              <ion-label>
-                <h3>Version</h3>
-                <p>1.0.0-dev</p>
-              </ion-label>
-            </ion-item>
-            <ion-item>
-              <ion-label>
-                <h3>Entwickelt von</h3>
-                <p>Kalkimo Team</p>
-              </ion-label>
-            </ion-item>
-          </ion-list>
-        </KalkCard>
+        <section class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">{{ t('settingsPage.about') }}</h2>
+          </div>
+          <dl class="definition-list">
+            <div class="definition-row">
+              <dt>{{ t('settingsPage.version') }}</dt>
+              <dd class="mono">1.0.0-dev</dd>
+            </div>
+            <div class="definition-row">
+              <dt>{{ t('settingsPage.storage') }}</dt>
+              <dd>{{ t('settingsPage.storageValue') }}</dd>
+            </div>
+            <div class="definition-row">
+              <dt>{{ t('settingsPage.publisher') }}</dt>
+              <dd>Kalkimo</dd>
+            </div>
+          </dl>
+        </section>
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import {
-  IonPage,
-  IonContent,
-  IonList,
-  IonItem,
-  IonLabel,
-  IonSelect,
-  IonSelectOption,
-  IonIcon
-} from '@ionic/vue';
+import { IonPage, IonContent, IonIcon } from '@ionic/vue';
 import { logOutOutline } from 'ionicons/icons';
-import { AppHeader, KalkCard } from '@/components';
+import { AppHeader } from '@/components';
 import { useAuthStore } from '@/stores/authStore';
 import { useProjectStore } from '@/stores/projectStore';
-import { setLocale, getLocale } from '@/i18n';
+import { setLocale } from '@/i18n';
 import { authApi } from '@/api';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const router = useRouter();
 const authStore = useAuthStore();
 const projectStore = useProjectStore();
 
-const selectedLocale = ref(getLocale());
-const isAuthenticated = computed(() => authStore.isAuthenticated);
-const userEmail = computed(() => authStore.user?.email || '');
+const languages: { value: 'de' | 'en'; label: string }[] = [
+  { value: 'de', label: 'Deutsch' },
+  { value: 'en', label: 'English' }
+];
 
-function changeLocale(event: CustomEvent) {
-  setLocale(event.detail.value);
+const isAuthenticated = computed(() => authStore.isAuthenticated);
+const isAdmin = computed(() => authStore.isAdmin);
+const userEmail = computed(() => authStore.user?.email || '');
+const userName = computed(() => authStore.user?.name || '');
+
+function changeLocale(value: 'de' | 'en') {
+  setLocale(value);
 }
 
 async function handleLogout() {
@@ -99,22 +128,106 @@ async function handleLogout() {
 </script>
 
 <style scoped>
-.settings-page {
-  max-width: 600px;
-  margin: 0 auto;
+.panel + .panel {
+  margin-top: var(--kalk-space-5);
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kalk-space-4);
+  padding: var(--kalk-space-4) var(--kalk-space-5);
+  flex-wrap: wrap;
+}
+
+.setting-text {
   display: flex;
   flex-direction: column;
-  gap: var(--kalk-space-6);
 }
 
-ion-list {
+.setting-label {
+  font-size: var(--kalk-text-sm);
+  font-weight: 600;
+  color: var(--kalk-gray-900);
+}
+
+.setting-hint {
+  font-size: var(--kalk-text-xs);
+  color: var(--kalk-gray-500);
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  background: var(--kalk-gray-100);
+  border-radius: var(--kalk-radius-md);
+}
+
+.segmented button {
+  height: 30px;
+  padding: 0 var(--kalk-space-4);
+  font-family: var(--kalk-font-family);
+  font-size: var(--kalk-text-sm);
+  font-weight: 500;
+  color: var(--kalk-gray-600);
   background: transparent;
-  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  cursor: pointer;
 }
 
-ion-item {
-  --background: transparent;
-  --padding-start: 0;
-  --inner-padding-end: 0;
+.segmented button.active {
+  background: var(--kalk-surface);
+  color: var(--kalk-navy-900);
+  box-shadow: 0 1px 2px rgba(11, 31, 54, 0.12);
+}
+
+.definition-list {
+  margin: 0;
+  padding: var(--kalk-space-1) var(--kalk-space-5);
+}
+
+.definition-row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: var(--kalk-space-4);
+  padding: var(--kalk-space-3) 0;
+  border-bottom: 1px solid var(--kalk-gray-100);
+  font-size: var(--kalk-text-sm);
+}
+
+.definition-row:last-child {
+  border-bottom: 0;
+}
+
+.definition-row dt {
+  color: var(--kalk-gray-500);
+}
+
+.definition-row dd {
+  margin: 0;
+  color: var(--kalk-gray-900);
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.mono {
+  font-family: var(--kalk-font-mono);
+  font-size: var(--kalk-text-xs);
+}
+
+.footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kalk-space-4);
+}
+
+@media (max-width: 520px) {
+  .definition-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
 }
 </style>

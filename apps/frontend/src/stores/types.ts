@@ -166,6 +166,18 @@ export interface Loan {
   fixedInterestYears: number;
   startDate: YearMonth;
   specialRepaymentPercentPerYear?: number;
+  type?: 'Annuity' | 'BulletLoan' | 'KfW';
+  gracePeriodYears?: number;               // Tilgungsfreie Anlaufjahre
+  refinancingInterestRatePercent?: number; // Anschlusszins (leer = Sollzins fortgeschrieben)
+  refinancingRepaymentPercent?: number;    // Tilgung Anschluss (leer = anfängliche Tilgung)
+}
+
+// Wertentwicklung und Exit
+export interface Valuation {
+  marketGrowthRatePercent?: number;  // leer = 1,5 % (Basisszenario)
+  plannedSaleDate?: YearMonth;       // leer = fiktiver Verkauf am Ende des Analysezeitraums
+  saleCostsPercent?: number;
+  discountRatePercent?: number;
 }
 
 export interface Financing {
@@ -230,6 +242,7 @@ export interface CapExMeasure {
   scheduledDate: YearMonth;
   taxClassification: TaxClassification;
   distributionYears?: number; // for §82b
+  valueFactorPercent?: number; // Anteil der Kosten, der in den Immobilienwert eingeht (Standard 70)
   impact?: MeasureImpact;
   isRecurring?: boolean;
   recurringConfig?: RecurringMeasureConfig;
@@ -261,6 +274,7 @@ export interface Project {
   costs: CostConfiguration;
   capex: CapExMeasure[];
   taxProfile: TaxProfile;
+  valuation?: Valuation;
   createdAt: string;
   updatedAt: string;
 }
@@ -332,15 +346,18 @@ export interface InvestmentMetrics {
   npvAfterTax: Money;
   cashOnCashPercent: number;
   equityMultiple: number;
-  dscrMin: number;
-  dscrAvg: number;
-  icrMin: number;
+  dscrMin: number | null;         // null = keine Fremdfinanzierung
+  dscrAvg: number | null;
+  icrMin: number | null;
   ltvInitialPercent: number;
   ltvFinalPercent: number;
   breakEvenRent: Money;
   roiPercent: number;
   maintenanceRiskScore: number;   // 0-100
   liquidityRiskScore: number;     // 0-100
+  exitPeriod?: string | null;     // "YYYY-MM", Exit für IRR/NPV
+  isExitPlanned?: boolean;        // false = fiktiver Verkauf am Horizontende
+  exitEquityProceeds?: Money | null; // Erlös nach Kosten, Steuer und Restschuld
 }
 
 // Tax summary

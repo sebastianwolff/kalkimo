@@ -143,6 +143,11 @@
       "summary": "Bestimmt, wie die Investition steuerlich behandelt wird – sofort absetzbar, verteilt oder aktiviert.",
       "detail": "Die steuerliche Klassifizierung hat erheblichen Einfluss auf den Cashflow nach Steuern:<br><br><b>Klassifizierungen:</b><ul><li><b>Sofort absetzbar:</b> Voller Abzug als Werbungskosten im Jahr der Zahlung</li><li><b>§82b-Verteilung:</b> Verteilung auf 2–5 Jahre (bei größeren Erhaltungsaufwendungen)</li><li><b>Aktivierung (Modernisierung):</b> Abschreibung über die Restnutzungsdauer des Gebäudes</li><li><b>Anschaffungsnah:</b> Pflichtaktivierung wenn 15%-Grenze überschritten</li></ul>"
     },
+    "valueFactor": {
+      "title": "Wertwirksamkeit",
+      "summary": "Anteil der Kosten, der sich im Immobilienwert niederschlägt – unabhängig von der steuerlichen Behandlung.",
+      "detail": "Nicht jeder investierte Euro erhöht den Verkaufspreis 1:1. Die Wertwirksamkeit gibt an, welcher Anteil der Kosten in die Wertprognose eingeht.<br><br><b>Richtwerte:</b><ul><li><b>Modernisierung</b> (z.B. neues Bad, energetische Sanierung, Grundrissverbesserung): 70–90 %</li><li><b>Erneuerung eines Bauteils</b> (z.B. Dach, Heizung): 50–70 %</li><li><b>Reine Instandsetzung / Reparatur</b>: 20–40 %</li><li><b>Kosmetik / Geschmackssache</b>: 0–20 %</li></ul>Standard: 70 %. Die steuerliche Einordnung (z.B. 15 %-Grenze) hat keinen Einfluss auf diesen Wert."
+    },
     "costSavings": {
       "title": "Betriebskostenersparnis",
       "summary": "Monatliche Einsparung durch die Maßnahme – verbessert den NOI.",

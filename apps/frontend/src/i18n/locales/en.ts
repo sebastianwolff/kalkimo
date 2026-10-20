@@ -60,7 +60,109 @@ export default {
     settings: 'Settings',
     help: 'Help',
     about: 'About',
-    admin: 'Administration'
+    admin: 'Administration',
+    workspace: 'Workspace',
+    userAdmin: 'User management',
+    roleAdmin: 'Administrator',
+    roleUser: 'Investor',
+    securityNote: 'Data encrypted at rest'
+  },
+
+  home: {
+    eyebrow: 'Overview',
+    greeting: 'Good day',
+    titleGuest: 'Real estate investments, calculated properly',
+    subtitle: 'Bank-standard investment analysis with full German tax logic, scenarios and liquidity planning.',
+    recentProjects: 'Recently edited',
+    allProjects: 'View all projects',
+    colProject: 'Project',
+    colVersion: 'Version',
+    colUpdated: 'Last modified',
+    open: 'Open',
+    noProjects: 'No projects yet.',
+    noProjectsHint: 'Create your first investment project to build a full calculation.',
+    currentProject: 'Current project',
+    currentProjectHint: 'Stored locally in this browser',
+    continue: 'Continue',
+    replace: 'Start over',
+    guestNotice: 'You are using guest mode. One project is stored locally. For multiple projects and encrypted cloud storage,',
+    guestNoticeLink: 'please sign in',
+    startTitle: 'Three steps to a calculation',
+    start1Title: 'Property and purchase',
+    start1Text: 'Property data, purchase price, closing costs and planned measures.',
+    start2Title: 'Financing and operations',
+    start2Text: 'Loans, rents, running costs and tax parameters.',
+    start3Title: 'Review the result',
+    start3Text: 'Returns, cash flow, bank metrics and tax impact over the holding period.',
+    startCta: 'Start calculation',
+    methodTitle: 'Calculation basis',
+    method1: 'Bank metrics: DSCR, LTV, cash-on-cash',
+    method2: 'IRR and NPV before and after tax',
+    method3: 'Depreciation by construction year, 15% rule, §82b EStDV',
+    method4: 'Private sale taxation under §23 EStG',
+    securityTitle: 'Privacy and security',
+    security1: 'Project data encrypted at rest',
+    security2: 'Audit-proof versioning of every change',
+    security3: 'Access restricted to authorised users',
+    newProjectConfirmTitle: 'Create a new project?',
+    newProjectConfirmText: 'Guest mode stores only one project. The existing project will be replaced.',
+    cancel: 'Cancel',
+    login: 'Sign in'
+  },
+
+  projectsPage: {
+    eyebrow: 'Portfolio',
+    subtitle: 'All saved investment projects.',
+    loading: 'Loading projects …',
+    count: '{n} project | {n} projects',
+    colStatus: 'Status',
+    colCreated: 'Created',
+    loginTitle: 'Sign-in required',
+    loginText: 'To manage multiple projects, please sign in or create an account.',
+    loginHint: 'As a guest you can create and calculate a single project.',
+    continueAsGuest: 'Continue as guest',
+    delete: 'Delete'
+  },
+
+  loginPage: {
+    headline: 'Investment decisions on solid ground.',
+    intro: 'Kalkimo evaluates real estate investments the way banks and tax advisors do.',
+    point1: 'Complete tax logic under German law',
+    point2: 'Scenarios, stress tests and liquidity planning',
+    point3: 'Encrypted, versioned project data',
+    welcome: 'Sign in',
+    welcomeText: 'Sign in with your Kalkimo account.',
+    registerTitle: 'Create account',
+    registerText: 'Create an account to store projects securely.',
+    guest: 'Continue without signing in',
+    legal: 'Your data is transmitted and stored encrypted.',
+    noAccount: 'No account yet?',
+    haveAccount: 'Already registered?',
+    pwRequirements: 'Password requirements',
+    or: 'or'
+  },
+
+  settingsPage: {
+    eyebrow: 'Account and application',
+    subtitle: 'Personal preferences and application information.',
+    general: 'General',
+    language: 'Language',
+    languageHint: 'Language of the interface and reports.',
+    account: 'Account',
+    name: 'Name',
+    email: 'Email address',
+    role: 'Role',
+    logoutHint: 'Ends the session on this device.',
+    about: 'About',
+    version: 'Version',
+    publisher: 'Publisher',
+    storage: 'Data storage',
+    storageValue: 'Encrypted, versioned'
+  },
+
+  helpPage: {
+    eyebrow: 'Support',
+    subtitle: 'Guidance, terminology and answers to frequent questions.'
   },
 
   wizard: {
@@ -92,7 +194,19 @@ export default {
     startDate: 'Start Date',
     endDate: 'End Date',
     createdAt: 'Created',
-    updatedAt: 'Last Modified'
+    updatedAt: 'Last Modified',
+    valuation: {
+      title: 'Value Development & Sale',
+      marketGrowth: 'Appreciation p.a.',
+      marketGrowthHint: 'Market value growth for property value, LTV and sale proceeds',
+      saleCosts: 'Sale Costs',
+      saleCostsHint: 'Broker, notary etc. as % of sale price',
+      discountRate: 'Discount Rate',
+      discountRateHint: 'Discount rate for net present value',
+      plannedSale: 'Sale planned before end of analysis period',
+      plannedSaleDate: 'Planned Sale',
+      exitHint: 'Without a planned sale, return and NPV assume a notional sale at the end of the analysis period.'
+    }
   },
 
   property: {
@@ -210,7 +324,12 @@ export default {
       initialRepayment: 'Initial Repayment',
       fixedInterestYears: 'Fixed Interest Period',
       startDate: 'Start Date',
-      specialRepayment: 'Special Repayment p.a.'
+      specialRepayment: 'Special Repayment p.a.',
+      refinancingRate: 'Follow-up Rate',
+      refinancingRateHint: 'After the fixed-rate period. Empty = current rate continues',
+      refinancingRepayment: 'Follow-up Repayment',
+      refinancingRepaymentHint: 'Empty = initial repayment',
+      gracePeriodYears: 'Repayment-free Years'
     },
     summary: {
       totalLoan: 'Total Loans',
@@ -296,12 +415,14 @@ export default {
     title: 'Capital Expenditure',
     measures: 'Planned Measures',
     addMeasure: 'Add Measure',
+    noMeasures: 'No capital measures planned',
     measure: {
       name: 'Name',
       category: 'Category',
       amount: 'Amount',
       scheduledDate: 'Scheduled For',
       taxClassification: 'Tax Classification',
+      valueFactor: 'Value Effect',
       impact: 'Economic Impact',
       costSavings: 'Operating Cost Savings/Month',
       costSavingsHint: 'E.g. lower heating costs after energy renovation',
@@ -331,6 +452,9 @@ export default {
       AcquisitionCost: 'Acquisition Cost (Depreciation)',
       ImprovementCost: 'Improvement Cost (Depreciation)',
       NotDeductible: 'Not Deductible'
+    },
+    valueHint: {
+      noComponent: 'This measure is not assigned to a recorded building component. It raises the value only via its value effect but does not offset component aging. Choose e.g. "Roof" as category if it concerns the roof.'
     },
     totalCapex: 'Total Capital Expenditure',
     suggestMeasures: 'Suggest Measures',
@@ -516,7 +640,7 @@ export default {
         overdueComponents: '{count} components overdue ({names}) — average {avgOverdueYears} years past renewal cycle. This significantly impacts the condition factor.',
         degradation: 'Condition factor declines from {startFactor}% to {endFactor}% over {years} years (−{totalDecline} percentage points) due to natural aging.',
         componentDeterioration: '{uncoveredCount} components become due during holding period without matching CapEx. Estimated deterioration: {uncoveredAmount} €.',
-        investments: '{measureCount} measures planned ({totalAmount} €). Value contribution: {valueUplift} € (70% transfer). Condition improvement: +{conditionBoost} percentage points.',
+        investments: '{measureCount} measures planned ({totalAmount} €). Value contribution: {valueUplift} € (avg. {factorPercent}% transfer). Condition improvement: +{conditionBoost} percentage points.',
         marketAppreciation: 'Market development {rate}% p.a. over {years} years yields +{appreciationPercent}% price appreciation ({appreciationAmount} €).',
         meanReversion: 'Purchase price {gapPercent}% {assessment} regional market value — {direction} of {adjustmentAmount} € (half-life 7 years).',
         summary: 'Estimated value after {years} years (base scenario): {finalValue} € ({changeDirection}{changePercent}% or {changeDirection}{changeAbsolute} € vs. purchase price).',
@@ -611,7 +735,7 @@ export default {
     step3: 'View your key metrics and cashflow projections',
     step4: 'Export reports for your bank or tax advisor',
     contactText: 'For questions or issues, please contact us:',
-    contactEmail: 'support@kalkimo.de',
+    contactEmail: "support{'@'}kalkimo.de",
     faqTopics: {
       afa: 'tax.depreciation',
       rule15: 'summary.tax.rule15',
@@ -631,7 +755,12 @@ export default {
     registeredAt: 'Registered',
     projects: 'Projects',
     noProjects: 'No projects',
-    backToUsers: 'Back to overview'
+    backToUsers: 'Back to overview',
+    retry: 'Try again',
+    subtitle: 'User accounts and project inventory of this installation.',
+    colUser: 'User',
+    colProjects: 'Projects',
+    adminCount: 'Administrators'
   },
 
   errors: {
